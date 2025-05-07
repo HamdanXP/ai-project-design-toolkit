@@ -1,12 +1,14 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { ArrowRight } from "lucide-react";
 import { FeasibilityConstraint } from "@/types/scoping-phase";
+import { StepHeading } from "./common/StepHeading";
+import { RiskIndicator } from "./common/RiskIndicator";
 
 type FeasibilityFormProps = {
   constraints: FeasibilityConstraint[];
@@ -28,10 +30,7 @@ export const FeasibilityForm = ({
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle className="flex items-center text-xl font-semibold">
-          <span className="bg-primary text-primary-foreground rounded-full h-7 w-7 flex items-center justify-center mr-2 text-sm">2</span>
-          Feasibility Constraints
-        </CardTitle>
+        <StepHeading stepNumber={2} title="Feasibility Constraints" />
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground mb-6">Define the practical constraints for your project. These factors will help determine what's realistically achievable.</p>
@@ -81,15 +80,7 @@ export const FeasibilityForm = ({
           <CardContent className="p-4">
             <div className="flex justify-between items-center">
               <h3 className="font-medium">Feasibility Summary</h3>
-              <div className={`px-3 py-1 rounded-full text-white text-sm ${
-                feasibilityRisk === 'low' ? 'bg-green-500' : 
-                feasibilityRisk === 'medium' ? 'bg-yellow-500' : 
-                'bg-red-500'
-              }`}>
-                {feasibilityRisk === 'low' ? 'Low Risk' : 
-                 feasibilityRisk === 'medium' ? 'Medium Risk' : 
-                 'High Risk'}
-              </div>
+              <RiskIndicator risk={feasibilityRisk} />
             </div>
             <Progress value={feasibilityScore} className="h-2 mt-3" />
             <p className="text-sm text-muted-foreground mt-2">

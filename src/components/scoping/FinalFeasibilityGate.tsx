@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
+import { Check, X, AlertTriangle } from "lucide-react";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
 
 type FinalFeasibilityGateProps = {
@@ -135,7 +135,7 @@ export const FinalFeasibilityGate = ({
                     <div key={check.id} className="flex items-center mb-2">
                       {check.answer === 'yes' && <Check className="h-4 w-4 text-green-600 mr-2" />}
                       {check.answer === 'no' && <X className="h-4 w-4 text-red-600 mr-2" />}
-                      {(check.answer !== 'yes' && check.answer !== 'no') && <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />}
+                      {check.answer === 'unknown' && <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />}
                       <span className="text-sm">{check.question}</span>
                     </div>
                   ))}

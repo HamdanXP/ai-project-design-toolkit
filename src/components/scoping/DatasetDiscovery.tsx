@@ -219,7 +219,7 @@ export const DatasetDiscovery = ({
                   Close
                 </Button>
                 <Button onClick={() => {
-                  setSelectedDataset(previewDataset);
+                  handleSelectDataset(previewDataset);
                   setPreviewDataset(null);
                 }}>
                   Select Dataset

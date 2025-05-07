@@ -72,7 +72,7 @@ export const SuitabilityChecklist = ({
                     </Button>
                   </div>
                 </div>
-                {check.answer !== 'unknown' && (
+                {check.answer && (
                   <div className="mt-3 flex items-start">
                     <div className={`mt-1 rounded-full p-1 ${
                       check.answer === 'yes' ? 'bg-green-100 text-green-600' : 

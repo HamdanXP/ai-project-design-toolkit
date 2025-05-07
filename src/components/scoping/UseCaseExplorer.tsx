@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, Bookmark } from "lucide-react";
 import { UseCase } from "@/types/scoping-phase";
 import { useToast } from "@/hooks/use-toast";
+import { StepHeading } from "./common/StepHeading";
 
 type UseCaseExplorerProps = {
   useCases: UseCase[];
@@ -27,10 +28,7 @@ export const UseCaseExplorer = ({
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle className="flex items-center text-xl font-semibold">
-          <span className="bg-primary text-primary-foreground rounded-full h-7 w-7 flex items-center justify-center mr-2 text-sm">1</span>
-          AI Use Case Explorer
-        </CardTitle>
+        <StepHeading stepNumber={1} title="AI Use Case Explorer" />
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground mb-6">Explore different AI approaches that could help address your problem. Select one that best aligns with your project goals.</p>
