@@ -1,14 +1,18 @@
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { FileAttachment } from "./FileAttachment";
+import { Textarea } from "@/components/ui/textarea";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   // Example of projects data - would come from an API in a real app
   const [projects] = useState([
@@ -49,8 +53,14 @@ const HomePage = () => {
     navigate("/project-blueprint");
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
+    
+    // Auto-resize textarea
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
   };
 
   const handleGoToBlueprint = () => {
@@ -61,10 +71,22 @@ const HomePage = () => {
 
   const handleSuggestionClick = (prompt: string) => {
     setInputValue(prompt);
+    
+    // Update textarea height on suggestion click
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+        textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      }
+    }, 10);
   };
 
   const handleViewAll = () => {
     navigate("/my-projects");
+  };
+  
+  const handleFileSelect = (files: File[]) => {
+    setAttachedFiles(files);
   };
 
   return (
@@ -80,23 +102,39 @@ const HomePage = () => {
 
           <Card className="mb-4 md:mb-8 shadow-card-light dark:shadow-card-dark">
             <CardContent className="p-3 md:p-6">
-              <div className="relative flex items-center">
-                <Input
-                  type="text"
+              <div className="relative">
+                <Textarea
+                  ref={textareaRef}
                   value={inputValue}
                   onChange={handleInputChange}
                   placeholder="Ask Lovable to create a portfolio website for my..."
-                  className="pr-12 bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-sm md:text-base"
+                  className="pr-12 bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-sm md:text-base min-h-[40px] resize-none overflow-hidden"
+                  rows={1}
                 />
-                <Button
-                  className="absolute right-0 top-1/2 transform -translate-y-1/2 rounded-full aspect-square p-1.5"
-                  size="icon"
-                  disabled={!inputValue.trim()}
-                  onClick={handleGoToBlueprint}
-                >
-                  <ArrowRight className={`size-4 ${!inputValue.trim() ? 'text-muted-foreground' : ''}`} />
-                </Button>
+                <div className="absolute right-0 bottom-0 flex items-center gap-1 p-1">
+                  <FileAttachment onFileSelect={handleFileSelect} />
+                  <Button
+                    className="rounded-full aspect-square p-1.5"
+                    size="icon"
+                    disabled={!inputValue.trim()}
+                    onClick={handleGoToBlueprint}
+                  >
+                    <Send className={`size-4 ${!inputValue.trim() ? 'text-muted-foreground' : ''}`} />
+                  </Button>
+                </div>
               </div>
+              
+              {attachedFiles.length > 0 && (
+                <div className="pt-2 mt-2 border-t border-border">
+                  <div className="flex flex-wrap gap-2">
+                    {attachedFiles.map((file, index) => (
+                      <div key={index} className="text-xs text-muted-foreground">
+                        {file.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

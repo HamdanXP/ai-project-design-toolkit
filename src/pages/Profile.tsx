@@ -4,15 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User } from "lucide-react";
+import { User, Home } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Profile = () => {
   const [name, setName] = useState("John Doe");
   const [email, setEmail] = useState("john.doe@example.com");
   const [bio, setBio] = useState("I build amazing web applications with Lovable!");
   const [isEditing, setIsEditing] = useState(false);
+  const navigate = useNavigate();
 
   const handleSaveChanges = () => {
     toast({
@@ -26,6 +28,20 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <TopBar />
       <div className="container mx-auto px-4 pt-20 md:pt-24 pb-8">
+        <div className="flex items-center mb-6 gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="flex items-center gap-1" 
+            onClick={() => navigate("/")}
+          >
+            <Home size={16} />
+            <span>Home</span>
+          </Button>
+          <span className="text-muted-foreground">/</span>
+          <span className="text-foreground">Profile</span>
+        </div>
+        
         <div className="max-w-3xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-6">My Profile</h1>
           
