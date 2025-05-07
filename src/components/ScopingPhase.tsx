@@ -314,12 +314,14 @@ export const ScopingPhase = ({
   const moveToNextStep = () => {
     if (activeStep < totalSteps) {
       setActiveStep(prev => prev + 1);
+      onUpdateProgress(activeStep, totalSteps); // Update progress to reflect current step
     }
   };
   
   const moveToPreviousStep = () => {
     if (activeStep > 1) {
       setActiveStep(prev => prev - 1);
+      onUpdateProgress(activeStep - 2, totalSteps); // Update progress to reflect current step
     }
   };
 
@@ -356,6 +358,10 @@ export const ScopingPhase = ({
       return;
     }
     
+    // Update progress to show full completion before calling onCompletePhase
+    onUpdateProgress(totalSteps, totalSteps);
+    
+    // Complete the phase
     onCompletePhase();
   };
 
