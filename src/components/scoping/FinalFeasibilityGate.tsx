@@ -34,17 +34,21 @@ export const FinalFeasibilityGate = ({
   moveToPreviousStep,
   handleCompletePhase,
 }: FinalFeasibilityGateProps) => {
-  // Auto-trigger handleCompletePhase when readyToAdvance is set to true
-  useEffect(() => {
-    if (readyToAdvance === true) {
+  const [phaseCompleting, setPhaseCompleting] = useState(false);
+  
+  // Handle decision to proceed to development phase
+  const handleReadyDecision = (isReady: boolean) => {
+    setReadyToAdvance(isReady);
+    
+    // If the user decides they're ready to proceed, complete the phase
+    if (isReady && !phaseCompleting) {
+      setPhaseCompleting(true);
       // Small delay to allow UI updates before phase completion
-      const timer = setTimeout(() => {
+      setTimeout(() => {
         handleCompletePhase();
       }, 300);
-      
-      return () => clearTimeout(timer);
     }
-  }, [readyToAdvance, handleCompletePhase]);
+  };
 
   return (
     <Card className="mb-6">
@@ -160,7 +164,8 @@ export const FinalFeasibilityGate = ({
             <Button 
               variant={readyToAdvance === false ? "default" : "outline"} 
               className={readyToAdvance === false ? "bg-red-600 hover:bg-red-700" : ""}
-              onClick={() => setReadyToAdvance(false)}
+              onClick={() => handleReadyDecision(false)}
+              disabled={phaseCompleting}
             >
               <X className="h-4 w-4 mr-2" />
               No, Revise Approach
@@ -169,7 +174,8 @@ export const FinalFeasibilityGate = ({
             <Button 
               variant={readyToAdvance === true ? "default" : "outline"}
               className={readyToAdvance === true ? "bg-green-600 hover:bg-green-700" : ""} 
-              onClick={() => setReadyToAdvance(true)}
+              onClick={() => handleReadyDecision(true)}
+              disabled={phaseCompleting}
             >
               <Check className="h-4 w-4 mr-2" />
               Yes, Ready to Proceed
@@ -184,10 +190,13 @@ export const FinalFeasibilityGate = ({
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={moveToPreviousStep}>
+        <Button variant="outline" onClick={moveToPreviousStep} disabled={phaseCompleting}>
           Previous
         </Button>
-        <Button onClick={handleCompletePhase} disabled={readyToAdvance !== true}>
+        <Button 
+          onClick={handleCompletePhase} 
+          disabled={readyToAdvance !== true || phaseCompleting}
+        >
           Complete Phase
         </Button>
       </CardFooter>

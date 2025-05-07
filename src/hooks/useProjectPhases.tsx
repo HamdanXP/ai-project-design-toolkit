@@ -86,6 +86,8 @@ export const useProjectPhases = () => {
   };
 
   const handleCompletePhase = (phaseId: string) => {
+    console.info(`Completing phase: ${phaseId}`);
+    
     // Store phase data in localStorage when a phase is completed
     const phaseData = {
       phaseId,
@@ -101,6 +103,7 @@ export const useProjectPhases = () => {
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
+          console.info(`Setting phase ${phaseId} to completed`);
           return {
             ...phase,
             status: "completed",
@@ -119,25 +122,38 @@ export const useProjectPhases = () => {
     if (currentIndex < phaseOrder.length - 1) {
       const nextPhaseId = phaseOrder[currentIndex + 1];
       
-      // Removed toast notification
+      // Add toast notification for phase completion
+      toast({
+        title: "Phase Completed",
+        description: `You have completed the ${phaseId.charAt(0).toUpperCase() + phaseId.slice(1)} phase. Moving to ${nextPhaseId.charAt(0).toUpperCase() + nextPhaseId.slice(1)} phase.`
+      });
       
-      // Update the next phase to in-progress
-      setPhases(prevPhases => 
-        prevPhases.map(phase => {
-          if (phase.id === nextPhaseId) {
-            return {
-              ...phase,
-              status: "in-progress"
-            };
-          }
-          return phase;
-        })
-      );
+      console.info(`Setting next phase ${nextPhaseId} to in-progress`);
       
-      // Move to the next phase
-      setActivePhaseId(nextPhaseId);
+      // Update the next phase to in-progress in a separate state update
+      setTimeout(() => {
+        setPhases(prevPhases => 
+          prevPhases.map(phase => {
+            if (phase.id === nextPhaseId) {
+              return {
+                ...phase,
+                status: "in-progress"
+              };
+            }
+            return phase;
+          })
+        );
+        
+        // Move to the next phase
+        setActivePhaseId(nextPhaseId);
+      }, 100);
+    } else {
+      // All phases completed
+      toast({
+        title: "All Phases Completed",
+        description: "Congratulations! You have completed all project phases."
+      });
     }
-    // Removed notification for all phases completed
   };
 
   const handleReflectionProgress = (completed: number, total: number) => {
@@ -166,6 +182,12 @@ export const useProjectPhases = () => {
     };
     
     localStorage.setItem('completed_project', JSON.stringify(projectData));
+    
+    toast({
+      title: "Project Completed",
+      description: "Your project has been successfully completed and saved!"
+    });
+    
     navigate('/project-completion');
   };
 
