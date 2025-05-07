@@ -135,7 +135,7 @@ export const ScopingPhase = ({
         },
         {
           id: "uc5",
-8 title: "Food security monitoring",
+          title: "Food security monitoring",
           description: "Track food availability and price indicators to identify at-risk communities.",
           tags: ["Food Security", "Monitoring"],
           selected: false
