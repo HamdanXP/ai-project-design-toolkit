@@ -59,7 +59,7 @@ export const ScopingPhase = ({
   // Final Feasibility state
   const [readyToAdvance, setReadyToAdvance] = useState<boolean | null>(null);
 
-  // Update progress when step changes
+  // Update progress whenever activeStep changes
   useEffect(() => {
     onUpdateProgress(activeStep - 1, totalSteps);
   }, [activeStep, onUpdateProgress]);
@@ -348,13 +348,17 @@ export const ScopingPhase = ({
   // Handle step navigation
   const moveToNextStep = () => {
     if (activeStep < totalSteps) {
-      setActiveStep(prev => prev + 1);
+      const nextStep = activeStep + 1;
+      setActiveStep(nextStep);
+      onUpdateProgress(nextStep - 1, totalSteps);
     }
   };
   
   const moveToPreviousStep = () => {
     if (activeStep > 1) {
-      setActiveStep(prev => prev - 1);
+      const prevStep = activeStep - 1;
+      setActiveStep(prevStep);
+      onUpdateProgress(prevStep - 1, totalSteps);
     }
   };
 
