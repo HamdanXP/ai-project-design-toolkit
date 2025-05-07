@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useRef } from "react";
-import { ProjectPhase } from "@/hooks/useProjectPhases";
+import { ProjectPhase } from "@/types/project";
 
 type ProjectBlueprintSidebarProps = {
   phases: ProjectPhase[];

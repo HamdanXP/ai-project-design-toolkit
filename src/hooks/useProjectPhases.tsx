@@ -1,16 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-
-export type ProjectPhase = {
-  id: string;
-  name: string;
-  status: "not-started" | "in-progress" | "completed";
-  progress: number;
-  totalSteps: number;
-  completedSteps: number;
-};
+import { ProjectPhase } from "@/types/project";
 
 export const useProjectPhases = () => {
   const navigate = useNavigate();

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ReflectionPhase } from "@/components/ReflectionPhase";
 import { ScopingPhase } from "@/components/ScopingPhase";
@@ -6,7 +5,7 @@ import { DevelopmentPhase } from "@/components/DevelopmentPhase";
 import { EvaluationPhase } from "@/components/EvaluationPhase";
 import { PhaseLockedMessage } from "@/components/PhaseLockedMessage";
 import { Button } from "@/components/ui/button";
-import { ProjectPhase } from "@/components/ProjectBlueprintSidebar";
+import { ProjectPhase } from "@/types/project";
 
 type ProjectPhaseContentProps = {
   activePhaseId: string;

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -136,7 +135,7 @@ export const ScopingPhase = ({
         },
         {
           id: "uc5",
-          title: "Food security monitoring",
+8 title: "Food security monitoring",
           description: "Track food availability and price indicators to identify at-risk communities.",
           tags: ["Food Security", "Monitoring"],
           selected: false
@@ -842,6 +841,7 @@ export const ScopingPhase = ({
                     <div className="ml-2 text-sm text-muted-foreground">
                       {check.answer === 'yes' && "This is positive for your project."}
                       {check.answer === 'no' && "This could be a concern. Consider addressing this before proceeding."}
+                      {check.answer === 'unknown' && "More information needed to assess this aspect."}
                     </div>
                   </div>
                 )}
