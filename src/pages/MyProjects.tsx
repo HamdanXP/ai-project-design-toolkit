@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -5,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BackButton } from "@/components/BackButton";
+import { Footer } from "@/components/Footer";
 
 const MyProjects = () => {
   const navigate = useNavigate();
@@ -25,10 +27,14 @@ const MyProjects = () => {
     navigate("/project-blueprint");
   };
 
+  const handleProjectClick = (projectId: number) => {
+    navigate(`/project/${projectId}`);
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <TopBar />
-      <div className="container mx-auto px-4 py-12 pt-24">
+      <div className="container mx-auto px-4 py-12 pt-24 flex-grow">
         <div className="flex items-center mb-8">
           <BackButton />
           <h1 className="text-3xl font-bold text-foreground ml-3">My Projects</h1>
@@ -49,6 +55,7 @@ const MyProjects = () => {
             <div 
               key={project.id}
               className="rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-all cursor-pointer bg-card shadow-card-light dark:shadow-card-dark"
+              onClick={() => handleProjectClick(project.id)}
             >
               <img 
                 src={project.image} 
@@ -62,6 +69,7 @@ const MyProjects = () => {
           ))}
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

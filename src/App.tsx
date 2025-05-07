@@ -9,6 +9,8 @@ import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ProjectBlueprint from "./pages/ProjectBlueprint";
 import MyProjects from "./pages/MyProjects";
+import ProjectDetails from "./pages/ProjectDetails";
+import ProjectCompletion from "./pages/ProjectCompletion";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Profile from "./pages/Profile";
@@ -27,6 +29,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/project-blueprint" element={<ProjectBlueprint />} />
+            <Route path="/project/:projectId" element={<ProjectDetails />} />
+            <Route path="/project-completion" element={<ProjectCompletion />} />
             <Route path="/my-projects" element={<MyProjects />} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />

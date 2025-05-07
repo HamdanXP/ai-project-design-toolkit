@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -81,6 +80,10 @@ const HomePage = () => {
 
   const handleViewAll = () => {
     navigate("/my-projects");
+  };
+
+  const handleProjectClick = (projectId: number) => {
+    navigate(`/project/${projectId}`);
   };
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -242,6 +245,7 @@ const HomePage = () => {
                 <div 
                   key={project.id}
                   className="rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-all cursor-pointer bg-card shadow-card-light dark:shadow-card-dark"
+                  onClick={() => handleProjectClick(project.id)}
                 >
                   <img 
                     src={project.image} 

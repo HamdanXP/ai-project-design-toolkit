@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { TopBar } from "@/components/TopBar";
 import { Button } from "@/components/ui/button";
@@ -10,9 +11,11 @@ import { DevelopmentPhase } from "@/components/DevelopmentPhase";
 import { EvaluationPhase } from "@/components/EvaluationPhase";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { BackButton } from "@/components/BackButton";
+import { useToast } from "@/hooks/use-toast";
 
 const ProjectBlueprint = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [activePhaseId, setActivePhaseId] = useState("reflection");
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
@@ -53,6 +56,9 @@ const ProjectBlueprint = () => {
       completedSteps: 0
     }
   ]);
+
+  // Check if all phases are completed
+  const allPhasesCompleted = phases.every(phase => phase.status === "completed");
 
   useEffect(() => {
     // Close sidebar by default on mobile
@@ -103,18 +109,57 @@ const ProjectBlueprint = () => {
 
   const handleReflectionProgress = (completed: number, total: number) => {
     updatePhaseProgress("reflection", completed, total);
+    
+    // If reflection is completed, automatically move to scoping
+    if (completed === total) {
+      toast({
+        title: "Reflection Phase Completed!",
+        description: "You've completed the Reflection Phase. Moving to Scoping Phase.",
+      });
+      setTimeout(() => setActivePhaseId("scoping"), 500);
+    }
   };
 
   const handleScopingProgress = (completed: number, total: number) => {
     updatePhaseProgress("scoping", completed, total);
+    
+    // If scoping is completed, automatically move to development
+    if (completed === total) {
+      toast({
+        title: "Scoping Phase Completed!",
+        description: "You've completed the Scoping Phase. Moving to Development Phase.",
+      });
+      setTimeout(() => setActivePhaseId("development"), 500);
+    }
   };
 
   const handleDevelopmentProgress = (completed: number, total: number) => {
     updatePhaseProgress("development", completed, total);
+    
+    // If development is completed, automatically move to evaluation
+    if (completed === total) {
+      toast({
+        title: "Development Phase Completed!",
+        description: "You've completed the Development Phase. Moving to Evaluation Phase.",
+      });
+      setTimeout(() => setActivePhaseId("evaluation"), 500);
+    }
   };
 
   const handleEvaluationProgress = (completed: number, total: number) => {
     updatePhaseProgress("evaluation", completed, total);
+    
+    // If evaluation is completed, show project completion notification
+    if (completed === total) {
+      toast({
+        title: "Evaluation Phase Completed!",
+        description: "You've completed all phases of your project!",
+      });
+    }
+  };
+
+  const handleCompleteProject = () => {
+    navigate('/project-completion');
   };
 
   const toggleSidebar = () => {
@@ -163,6 +208,17 @@ const ProjectBlueprint = () => {
             )}
             {activePhaseId === "evaluation" && (
               <EvaluationPhase onUpdateProgress={handleEvaluationProgress} />
+            )}
+            
+            {allPhasesCompleted && (
+              <div className="mt-8 flex justify-center">
+                <Button 
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 py-6 text-lg px-8"
+                  onClick={handleCompleteProject}
+                >
+                  Complete Project
+                </Button>
+              </div>
             )}
           </div>
         </div>
