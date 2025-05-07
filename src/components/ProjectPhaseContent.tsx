@@ -7,6 +7,7 @@ import { EvaluationPhase } from "@/components/EvaluationPhase";
 import { PhaseLockedMessage } from "@/components/PhaseLockedMessage";
 import { Button } from "@/components/ui/button";
 import { ProjectPhase } from "@/types/project";
+import { AIAssistant } from "@/components/AIAssistant";
 
 type ProjectPhaseContentProps = {
   activePhaseId: string;
@@ -85,6 +86,9 @@ export const ProjectPhaseContent = ({
           </Button>
         </div>
       )}
+      
+      {/* Add the AI Assistant */}
+      <AIAssistant />
     </>
   );
 };

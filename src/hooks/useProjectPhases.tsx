@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +25,7 @@ export const useProjectPhases = () => {
       name: "Scoping",
       status: "not-started",
       progress: 0,
-      totalSteps: 6,
+      totalSteps: 5, // Fixed from 6 to 5
       completedSteps: 0
     },
     {

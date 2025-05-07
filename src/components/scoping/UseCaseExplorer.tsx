@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, Bookmark } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { UseCase } from "@/types/scoping-phase";
 import { useToast } from "@/hooks/use-toast";
 import { StepHeading } from "./common/StepHeading";
@@ -76,8 +76,7 @@ export const UseCaseExplorer = ({
                       handleSelectUseCase(useCase);
                     }}
                   >
-                    <Bookmark className="h-4 w-4 mr-2" />
-                    {useCase.selected ? "Selected" : "Select Use Case"}
+                    {useCase.selected ? <><Check className="h-4 w-4 mr-2" /> Selected</> : "Select Use Case"}
                   </Button>
                 </CardContent>
               </Card>
@@ -85,10 +84,7 @@ export const UseCaseExplorer = ({
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex justify-between">
-        <div className="text-sm text-muted-foreground">
-          {selectedUseCase ? `Selected: ${selectedUseCase.title}` : "No use case selected"}
-        </div>
+      <CardFooter className="flex justify-end">
         <Button onClick={moveToNextStep} disabled={!selectedUseCase}>
           Next Step <ArrowRight className="ml-2 h-4 w-4" />
         </Button>

@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { ArrowRight, Check, X, AlertTriangle } from "lucide-react";
 import { DataSuitabilityCheck } from "@/types/scoping-phase";
@@ -12,9 +11,6 @@ type SuitabilityChecklistProps = {
   suitabilityChecks: DataSuitabilityCheck[];
   handleSuitabilityUpdate: (id: string, answer: 'yes' | 'no' | 'unknown') => void;
   suitabilityScore: number;
-  chatQuestion: string;
-  setChatQuestion: (value: string) => void;
-  handleSubmitQuestion: () => void;
   moveToPreviousStep: () => void;
   moveToNextStep: () => void;
 };
@@ -23,9 +19,6 @@ export const SuitabilityChecklist = ({
   suitabilityChecks,
   handleSuitabilityUpdate,
   suitabilityScore,
-  chatQuestion,
-  setChatQuestion,
-  handleSubmitQuestion,
   moveToPreviousStep,
   moveToNextStep,
 }: SuitabilityChecklistProps) => {
@@ -93,45 +86,17 @@ export const SuitabilityChecklist = ({
           ))}
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
-            <Card className="border border-border">
-              <CardHeader className="p-4 pb-2">
-                <h3 className="text-base font-medium">AI Assistant</h3>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <p className="text-sm text-muted-foreground mb-3">
-                  Ask about potential biases or limitations in your chosen dataset.
-                </p>
-                <div className="flex gap-2">
-                  <Input 
-                    placeholder="e.g., Is this data biased or limited in any way?" 
-                    value={chatQuestion}
-                    onChange={(e) => setChatQuestion(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button onClick={handleSubmitQuestion}>
-                    Ask
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div>
-            <Card className="border border-border h-full">
-              <CardContent className="p-4 flex flex-col h-full justify-center">
-                <h3 className="font-medium mb-2">Suitability Score</h3>
-                <Progress value={suitabilityScore} className="h-2 mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  {suitabilityScore <= 40 && "There may be significant data issues to address."}
-                  {suitabilityScore > 40 && suitabilityScore < 75 && "The data appears moderately suitable with some concerns."}
-                  {suitabilityScore >= 75 && "The data appears highly suitable for your project."}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        <Card className="border border-border">
+          <CardContent className="p-4 flex flex-col justify-center">
+            <h3 className="font-medium mb-2">Suitability Score</h3>
+            <Progress value={suitabilityScore} className="h-2 mb-2" />
+            <p className="text-sm text-muted-foreground">
+              {suitabilityScore <= 40 && "There may be significant data issues to address."}
+              {suitabilityScore > 40 && suitabilityScore < 75 && "The data appears moderately suitable with some concerns."}
+              {suitabilityScore >= 75 && "The data appears highly suitable for your project."}
+            </p>
+          </CardContent>
+        </Card>
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button variant="outline" onClick={moveToPreviousStep}>

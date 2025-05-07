@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
@@ -56,7 +55,6 @@ export const ScopingPhase = ({
     { id: "quality", question: "Is the data quality sufficient?", answer: "unknown", description: "" }
   ]);
   const [suitabilityScore, setSuitabilityScore] = useState<number>(0);
-  const [chatQuestion, setChatQuestion] = useState("");
   
   // Final Feasibility state
   const [readyToAdvance, setReadyToAdvance] = useState<boolean | null>(null);
@@ -309,19 +307,6 @@ export const ScopingPhase = ({
     );
   };
 
-  // Handle AI assistant chat
-  const handleSubmitQuestion = () => {
-    // In a real app, this would call an AI API
-    if (!chatQuestion.trim()) return;
-    
-    toast({
-      title: "AI Assistant",
-      description: "This feature would connect to an AI assistant in a production environment.",
-    });
-    
-    setChatQuestion("");
-  };
-
   // Handle constraint updates
   const handleConstraintUpdate = (id: string, value: string | boolean) => {
     setConstraints(prevConstraints =>
@@ -389,30 +374,12 @@ export const ScopingPhase = ({
         </p>
         
         <div className="mt-6">
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
             <div className="flex-1">
               <Progress value={(activeStep / totalSteps) * 100} className="h-2" />
             </div>
-            <div className="ml-4 text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground whitespace-nowrap">
               Step {activeStep} of {totalSteps}
-            </div>
-          </div>
-          
-          <div className="mt-2 flex flex-wrap gap-1 text-xs">
-            <div className={`px-2 py-0.5 rounded-full ${activeStep >= 1 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-              Use Case
-            </div>
-            <div className={`px-2 py-0.5 rounded-full ${activeStep >= 2 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-              Feasibility
-            </div>
-            <div className={`px-2 py-0.5 rounded-full ${activeStep >= 3 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-              Dataset
-            </div>
-            <div className={`px-2 py-0.5 rounded-full ${activeStep >= 4 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-              Suitability
-            </div>
-            <div className={`px-2 py-0.5 rounded-full ${activeStep >= 5 ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-              Review
             </div>
           </div>
         </div>
@@ -463,9 +430,6 @@ export const ScopingPhase = ({
           suitabilityChecks={suitabilityChecks}
           handleSuitabilityUpdate={handleSuitabilityUpdate}
           suitabilityScore={suitabilityScore}
-          chatQuestion={chatQuestion}
-          setChatQuestion={setChatQuestion}
-          handleSubmitQuestion={handleSubmitQuestion}
           moveToPreviousStep={moveToPreviousStep}
           moveToNextStep={moveToNextStep}
         />
