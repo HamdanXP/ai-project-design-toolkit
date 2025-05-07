@@ -4,7 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "./components/ThemeProvider";
@@ -17,7 +16,6 @@ import SignUp from "./pages/SignUp";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import FAQ from "./pages/FAQ";
-import { db } from "./lib/database";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -30,15 +28,6 @@ const queryClient = new QueryClient({
 });
 
 const App = () => {
-  // Initialize database connection when app starts
-  useEffect(() => {
-    const initDb = async () => {
-      await db.initialize();
-    };
-    
-    initDb().catch(console.error);
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark">

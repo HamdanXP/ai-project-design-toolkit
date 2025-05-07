@@ -35,9 +35,6 @@ export const env = {
   // API URLs
   apiUrl: getEnv('VITE_API_URL', '/api'),
   
-  // External services
-  databaseUrl: getEnv('VITE_DATABASE_URL'),
-  
   // Feature flags
   isProduction: import.meta.env.PROD,
   isDevelopment: import.meta.env.DEV,

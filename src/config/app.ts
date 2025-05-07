@@ -18,7 +18,6 @@ export const appConfig = {
   
   // Feature flags
   features: {
-    enableRealDatabase: !!env.databaseUrl,
     isProduction: env.isProduction,
     isDevelopment: env.isDevelopment,
   },

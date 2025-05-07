@@ -28,12 +28,12 @@ export default defineConfig(({ mode }) => {
       // Expose all environment variables with VITE_ prefix to the client
       // This is secure because Vite only exposes variables with this prefix
       // sensitive variables should never start with VITE_
-      ...Object.keys(env).reduce((acc, key) => {
+      ...Object.keys(env).reduce((acc: Record<string, string>, key: string) => {
         if (key.startsWith('VITE_')) {
           acc[`import.meta.env.${key}`] = JSON.stringify(env[key]);
         }
         return acc;
       }, {}),
     }
-  }
+  };
 });
