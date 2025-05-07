@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 
 type Question = {
   id: number;
@@ -27,6 +37,7 @@ export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: Evaluatio
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const totalQuestions = EVALUATION_QUESTIONS.length;
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const handleNext = () => {
     if (currentQuestionIndex < totalQuestions - 1) {
@@ -60,6 +71,12 @@ export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: Evaluatio
     updateProgress();
   };
 
+  const handleCompletePhaseConfirm = () => {
+    if (onCompletePhase) {
+      onCompletePhase();
+    }
+  };
+
   const currentQuestion = EVALUATION_QUESTIONS[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
   const currentAnswer = answers[currentQuestion.id] || "";
@@ -77,6 +94,23 @@ export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: Evaluatio
 
   return (
     <div className="flex flex-col h-full">
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete Evaluation Phase?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to complete the Evaluation Phase? This will mark this phase as complete and move you to the next step.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCompletePhaseConfirm}>
+              Complete Phase
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-2">Evaluation Phase</h2>
         <p className="text-muted-foreground">
@@ -118,7 +152,7 @@ export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: Evaluatio
         
         {isLastQuestion ? (
           <Button
-            onClick={() => onCompletePhase && onCompletePhase()}
+            onClick={() => setConfirmDialogOpen(true)}
             disabled={!isPhaseComplete}
           >
             Complete Phase

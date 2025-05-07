@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 
 type Question = {
   id: number;
@@ -29,6 +39,7 @@ export const ScopingPhase = ({ onUpdateProgress, onCompletePhase }: ScopingPhase
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const totalQuestions = SCOPING_QUESTIONS.length;
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const handleNext = () => {
     if (currentQuestionIndex < totalQuestions - 1) {
@@ -59,6 +70,13 @@ export const ScopingPhase = ({ onUpdateProgress, onCompletePhase }: ScopingPhase
       ...prev,
       [currentQuestion.id]: value
     }));
+    updateProgress();
+  };
+
+  const handleCompletePhaseConfirm = () => {
+    if (onCompletePhase) {
+      onCompletePhase();
+    }
   };
 
   const currentQuestion = SCOPING_QUESTIONS[currentQuestionIndex];
@@ -78,6 +96,23 @@ export const ScopingPhase = ({ onUpdateProgress, onCompletePhase }: ScopingPhase
 
   return (
     <div className="flex flex-col h-full">
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete Scoping Phase?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to complete the Scoping Phase? This will mark this phase as complete and move you to the next step.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCompletePhaseConfirm}>
+              Complete Phase
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-2">Scoping Phase</h2>
         <p className="text-muted-foreground">
@@ -119,7 +154,7 @@ export const ScopingPhase = ({ onUpdateProgress, onCompletePhase }: ScopingPhase
         
         {isLastQuestion ? (
           <Button
-            onClick={onCompletePhase}
+            onClick={() => setConfirmDialogOpen(true)}
             disabled={!isPhaseComplete}
           >
             Complete Phase

@@ -5,6 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 
 type Question = {
   id: number;
@@ -30,6 +40,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const totalQuestions = REFLECTION_QUESTIONS.length;
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
   const handleNext = () => {
     if (currentQuestionIndex < totalQuestions - 1) {
@@ -58,6 +69,13 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
       ...prev,
       [currentQuestion.id]: value
     }));
+    updateProgress();
+  };
+
+  const handleCompletePhaseConfirm = () => {
+    if (onCompletePhase) {
+      onCompletePhase();
+    }
   };
 
   const currentQuestion = REFLECTION_QUESTIONS[currentQuestionIndex];
@@ -66,7 +84,6 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   
   // Check if the user has reached the last question and provided an answer
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
-  const canCompletePhase = isLastQuestion && currentAnswer.trim() !== "";
   
   // Calculate how many questions have been answered
   const answeredQuestionsCount = Object.keys(answers).filter(key => 
@@ -78,6 +95,23 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
 
   return (
     <div className="flex flex-col h-full">
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete Reflection Phase?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to complete the Reflection Phase? This will mark this phase as complete and move you to the next step.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCompletePhaseConfirm}>
+              Complete Phase
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-2">Reflection Phase</h2>
         <p className="text-muted-foreground">
@@ -119,7 +153,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
         
         {isLastQuestion ? (
           <Button
-            onClick={onCompletePhase}
+            onClick={() => setConfirmDialogOpen(true)}
             disabled={!isPhaseComplete}
           >
             Complete Phase
