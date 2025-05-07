@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
@@ -59,6 +58,11 @@ export const ScopingPhase = ({
   
   // Final Feasibility state
   const [readyToAdvance, setReadyToAdvance] = useState<boolean | null>(null);
+
+  // Update progress when step changes
+  useEffect(() => {
+    onUpdateProgress(activeStep - 1, totalSteps);
+  }, [activeStep, onUpdateProgress]);
 
   // Initialize data (in a real app, this would come from an API)
   useEffect(() => {
@@ -232,10 +236,45 @@ export const ScopingPhase = ({
     setSuitabilityScore(score);
   }, [suitabilityChecks]);
 
-  // Update progress when step changes
-  useEffect(() => {
-    onUpdateProgress(activeStep - 1, totalSteps);
-  }, [activeStep, onUpdateProgress]);
+  // Handle phase completion
+  const handleCompletePhase = () => {
+    // Check if the user has completed the necessary steps
+    if (!selectedUseCase) {
+      toast({
+        title: "Missing Use Case",
+        description: "Please select an AI use case before completing.",
+        variant: "destructive"
+      });
+      setActiveStep(1);
+      return;
+    }
+    
+    if (!selectedDataset) {
+      toast({
+        title: "Missing Dataset",
+        description: "Please select a dataset before completing.",
+        variant: "destructive"
+      });
+      setActiveStep(3);
+      return;
+    }
+    
+    if (readyToAdvance !== true) {
+      toast({
+        title: "Final Review Required",
+        description: "Please confirm the project is ready to proceed.",
+        variant: "destructive"
+      });
+      setActiveStep(5);
+      return;
+    }
+    
+    // Update progress to show completion before moving to next phase
+    onUpdateProgress(totalSteps, totalSteps);
+    
+    // Complete the phase
+    onCompletePhase();
+  };
 
   // Handle use case selection
   const handleSelectUseCase = (useCase: UseCase) => {
@@ -246,8 +285,6 @@ export const ScopingPhase = ({
         selected: uc.id === useCase.id
       }))
     );
-    
-    // Removed toast notification
   };
 
   // Handle dataset search and filtering
@@ -283,8 +320,6 @@ export const ScopingPhase = ({
   // Handle dataset selection
   const handleSelectDataset = (dataset: Dataset) => {
     setSelectedDataset(dataset);
-    
-    // Removed toast notification
   };
 
   // Handle dataset preview
@@ -321,42 +356,6 @@ export const ScopingPhase = ({
     if (activeStep > 1) {
       setActiveStep(prev => prev - 1);
     }
-  };
-
-  // Handle phase completion
-  const handleCompletePhase = () => {
-    // Check if the user has completed the necessary steps
-    if (!selectedUseCase) {
-      toast({
-        title: "Missing Use Case",
-        description: "Please select an AI use case before completing.",
-        variant: "destructive"
-      });
-      setActiveStep(1);
-      return;
-    }
-    
-    if (!selectedDataset) {
-      toast({
-        title: "Missing Dataset",
-        description: "Please select a dataset before completing.",
-        variant: "destructive"
-      });
-      setActiveStep(3);
-      return;
-    }
-    
-    if (readyToAdvance !== true) {
-      toast({
-        title: "Final Review Required",
-        description: "Please confirm the project is ready to proceed.",
-        variant: "destructive"
-      });
-      setActiveStep(5);
-      return;
-    }
-    
-    onCompletePhase();
   };
 
   return (
