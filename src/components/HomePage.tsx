@@ -10,7 +10,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
   const [isAttachingFile, setIsAttachingFile] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // Changed to array for multiple files
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
   // Example of projects data - would come from an API in a real app
   const [projects] = useState([
@@ -83,16 +83,14 @@ const HomePage = () => {
   };
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      // Convert FileList to array and append to existing files
-      const newFiles = Array.from(e.target.files);
-      setSelectedFiles(prev => [...prev, ...newFiles]);
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
       setIsAttachingFile(false);
     }
   };
   
-  const handleRemoveFile = (indexToRemove: number) => {
-    setSelectedFiles(prev => prev.filter((_, index) => index !== indexToRemove));
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
   };
 
   return (
@@ -121,22 +119,18 @@ const HomePage = () => {
                   }}
                 />
                 
-                {selectedFiles.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2 mb-1">
-                    {selectedFiles.map((file, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-accent/20 p-2 rounded-md">
-                        <File className="h-4 w-4 text-primary" />
-                        <span className="text-xs text-foreground truncate max-w-[150px]">{file.name}</span>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 w-6 p-0 ml-auto" 
-                          onClick={() => handleRemoveFile(index)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
+                {selectedFile && (
+                  <div className="flex items-center gap-2 mt-2 mb-1 bg-accent/20 p-2 rounded-md">
+                    <File className="h-4 w-4 text-primary" />
+                    <span className="text-xs text-foreground truncate">{selectedFile.name}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0 ml-auto" 
+                      onClick={handleRemoveFile}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
                 )}
                 
@@ -157,13 +151,12 @@ const HomePage = () => {
                           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                             <Image className="h-5 w-5 text-primary" />
                           </div>
-                          <span className="text-xs">Images</span>
+                          <span className="text-xs">Image</span>
                           <input 
                             type="file" 
                             accept="image/*" 
                             className="hidden" 
                             onChange={handleFileChange}
-                            multiple // Allow multiple file selection
                           />
                         </label>
                         
@@ -171,12 +164,11 @@ const HomePage = () => {
                           <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                             <File className="h-5 w-5 text-primary" />
                           </div>
-                          <span className="text-xs">Files</span>
+                          <span className="text-xs">File</span>
                           <input 
                             type="file" 
                             className="hidden" 
                             onChange={handleFileChange}
-                            multiple // Allow multiple file selection
                           />
                         </label>
                       </div>
