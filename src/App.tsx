@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "./components/ThemeProvider";
-import ProjectBlueprint from "./pages/ProjectBlueprint";
 import MyProjects from "./pages/MyProjects";
 import ProjectDetails from "./pages/ProjectDetails";
 import ProjectCompletion from "./pages/ProjectCompletion";
@@ -16,6 +15,10 @@ import SignUp from "./pages/SignUp";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import FAQ from "./pages/FAQ";
+import ReflectionPhasePage from "./pages/phases/ReflectionPhasePage";
+import ScopingPhasePage from "./pages/phases/ScopingPhasePage";
+import DevelopmentPhasePage from "./pages/phases/DevelopmentPhasePage";
+import EvaluationPhasePage from "./pages/phases/EvaluationPhasePage";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -37,8 +40,11 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/project-blueprint" element={<ProjectBlueprint />} />
               <Route path="/project/:projectId" element={<ProjectDetails />} />
+              <Route path="/project/phases/reflection" element={<ReflectionPhasePage />} />
+              <Route path="/project/phases/scoping" element={<ScopingPhasePage />} />
+              <Route path="/project/phases/development" element={<DevelopmentPhasePage />} />
+              <Route path="/project/phases/evaluation" element={<EvaluationPhasePage />} />
               <Route path="/project-completion" element={<ProjectCompletion />} />
               <Route path="/my-projects" element={<MyProjects />} />
               <Route path="/sign-in" element={<SignIn />} />

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { TopBar } from "@/components/TopBar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { BackButton } from "@/components/BackButton";
 import { Calendar, Clock, ArrowRight } from "lucide-react";
 import { Footer } from "@/components/Footer";
+import { ProjectPhase } from "@/components/ProjectBlueprintSidebar";
 
 // This would come from an API in a real app
 const PROJECT_DATA = {
@@ -70,6 +71,53 @@ const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const project = projectId ? PROJECT_DATA[projectId as keyof typeof PROJECT_DATA] : null;
+  const [phases, setPhases] = useState<ProjectPhase[]>([]);
+  
+  useEffect(() => {
+    // Check for existing phases in localStorage
+    const storedPhases = localStorage.getItem('project_phases');
+    if (storedPhases) {
+      setPhases(JSON.parse(storedPhases));
+    } else {
+      // Initialize phases if they don't exist
+      const initialPhases = [
+        {
+          id: "reflection",
+          name: "Reflection",
+          status: "in-progress",
+          progress: 0,
+          totalSteps: 7,
+          completedSteps: 0
+        },
+        {
+          id: "scoping",
+          name: "Scoping",
+          status: "not-started",
+          progress: 0,
+          totalSteps: 6,
+          completedSteps: 0
+        },
+        {
+          id: "development",
+          name: "Development",
+          status: "not-started",
+          progress: 0,
+          totalSteps: 6,
+          completedSteps: 0
+        },
+        {
+          id: "evaluation",
+          name: "Evaluation",
+          status: "not-started",
+          progress: 0,
+          totalSteps: 4,
+          completedSteps: 0
+        }
+      ];
+      setPhases(initialPhases);
+      localStorage.setItem('project_phases', JSON.stringify(initialPhases));
+    }
+  }, []);
   
   // Display loading or 404 state if no project
   if (!project) {
@@ -97,7 +145,18 @@ const ProjectDetails = () => {
   }
 
   const handleContinueProject = () => {
-    navigate('/project-blueprint');
+    // Determine which phase to navigate to based on the phases' status
+    const inProgressPhase = phases.find(phase => phase.status === "in-progress");
+    const notStartedPhase = phases.find(phase => phase.status === "not-started");
+    
+    // Navigate to the first in-progress phase, or first not-started phase, or reflection as a fallback
+    if (inProgressPhase) {
+      navigate(`/project/phases/${inProgressPhase.id}`);
+    } else if (notStartedPhase) {
+      navigate(`/project/phases/${notStartedPhase.id}`);
+    } else {
+      navigate('/project/phases/reflection');
+    }
   };
   
   return (
@@ -181,8 +240,12 @@ const ProjectDetails = () => {
                 <h3 className="text-lg font-medium mb-4">Phase Progress</h3>
                 
                 <div className="space-y-5">
-                  {project.phases.map((phase, index) => (
-                    <div key={index}>
+                  {phases.map((phase) => (
+                    <div key={phase.id} className="cursor-pointer" onClick={() => {
+                      if (phase.status !== "not-started" || phase.id === "reflection") {
+                        navigate(`/project/phases/${phase.id}`);
+                      }
+                    }}>
                       <div className="flex justify-between text-sm mb-1">
                         <span>{phase.name} Phase</span>
                         <span>{phase.progress}%</span>
