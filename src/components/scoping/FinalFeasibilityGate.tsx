@@ -34,17 +34,19 @@ export const FinalFeasibilityGate = ({
   moveToPreviousStep,
   handleCompletePhase,
 }: FinalFeasibilityGateProps) => {
-  // Auto-trigger handleCompletePhase when readyToAdvance is set to true
-  useEffect(() => {
-    if (readyToAdvance === true) {
-      // Small delay to allow UI updates before phase completion
-      const timer = setTimeout(() => {
+  // Mark the phase as completed when the user selects "Yes"
+  const handleReadyToAdvance = (isReady: boolean) => {
+    setReadyToAdvance(isReady);
+    
+    // If the user confirms they are ready to proceed, automatically complete the phase
+    if (isReady) {
+      console.log("User confirmed ready to proceed, completing phase...");
+      // Small delay to allow the UI to update before completing the phase
+      setTimeout(() => {
         handleCompletePhase();
       }, 300);
-      
-      return () => clearTimeout(timer);
     }
-  }, [readyToAdvance, handleCompletePhase]);
+  };
 
   return (
     <Card className="mb-6">
@@ -160,7 +162,7 @@ export const FinalFeasibilityGate = ({
             <Button 
               variant={readyToAdvance === false ? "default" : "outline"} 
               className={readyToAdvance === false ? "bg-red-600 hover:bg-red-700" : ""}
-              onClick={() => setReadyToAdvance(false)}
+              onClick={() => handleReadyToAdvance(false)}
             >
               <X className="h-4 w-4 mr-2" />
               No, Revise Approach
@@ -169,7 +171,7 @@ export const FinalFeasibilityGate = ({
             <Button 
               variant={readyToAdvance === true ? "default" : "outline"}
               className={readyToAdvance === true ? "bg-green-600 hover:bg-green-700" : ""} 
-              onClick={() => setReadyToAdvance(true)}
+              onClick={() => handleReadyToAdvance(true)}
             >
               <Check className="h-4 w-4 mr-2" />
               Yes, Ready to Proceed

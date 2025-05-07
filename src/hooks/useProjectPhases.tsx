@@ -86,6 +86,8 @@ export const useProjectPhases = () => {
   };
 
   const handleCompletePhase = (phaseId: string) => {
+    console.log(`Completing phase: ${phaseId}`);
+    
     // Store phase data in localStorage when a phase is completed
     const phaseData = {
       phaseId,
@@ -97,10 +99,11 @@ export const useProjectPhases = () => {
     // Store in localStorage under a key specific to this phase and project
     localStorage.setItem(`project_phase_${phaseId}`, JSON.stringify(phaseData));
 
-    // Mark the current phase as completed
+    // Mark the current phase as completed and ensure sidebar updates
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
+          console.log(`Setting phase ${phaseId} to completed`);
           return {
             ...phase,
             status: "completed",
@@ -119,12 +122,11 @@ export const useProjectPhases = () => {
     if (currentIndex < phaseOrder.length - 1) {
       const nextPhaseId = phaseOrder[currentIndex + 1];
       
-      // Removed toast notification
-      
       // Update the next phase to in-progress
       setPhases(prevPhases => 
         prevPhases.map(phase => {
           if (phase.id === nextPhaseId) {
+            console.log(`Setting next phase ${nextPhaseId} to in-progress`);
             return {
               ...phase,
               status: "in-progress"
@@ -137,7 +139,6 @@ export const useProjectPhases = () => {
       // Move to the next phase
       setActivePhaseId(nextPhaseId);
     }
-    // Removed notification for all phases completed
   };
 
   const handleReflectionProgress = (completed: number, total: number) => {
