@@ -34,16 +34,17 @@ export const FinalFeasibilityGate = ({
   moveToPreviousStep,
   handleCompletePhase,
 }: FinalFeasibilityGateProps) => {
-  // We'll use a local state to track whether phase completion has been triggered
-  const [completionTriggered, setCompletionTriggered] = useState(false);
-  
-  // Handle phase completion when user selects "Yes, Ready to Proceed"
-  const handleReadyToAdvance = () => {
-    setReadyToAdvance(true);
-    // Directly trigger phase completion
-    handleCompletePhase();
-    setCompletionTriggered(true);
-  };
+  // Auto-trigger handleCompletePhase when readyToAdvance is set to true
+  useEffect(() => {
+    if (readyToAdvance === true) {
+      // Small delay to allow UI updates before phase completion
+      const timer = setTimeout(() => {
+        handleCompletePhase();
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [readyToAdvance, handleCompletePhase]);
 
   return (
     <Card className="mb-6">
@@ -160,7 +161,6 @@ export const FinalFeasibilityGate = ({
               variant={readyToAdvance === false ? "default" : "outline"} 
               className={readyToAdvance === false ? "bg-red-600 hover:bg-red-700" : ""}
               onClick={() => setReadyToAdvance(false)}
-              disabled={completionTriggered}
             >
               <X className="h-4 w-4 mr-2" />
               No, Revise Approach
@@ -169,8 +169,7 @@ export const FinalFeasibilityGate = ({
             <Button 
               variant={readyToAdvance === true ? "default" : "outline"}
               className={readyToAdvance === true ? "bg-green-600 hover:bg-green-700" : ""} 
-              onClick={handleReadyToAdvance}
-              disabled={completionTriggered}
+              onClick={() => setReadyToAdvance(true)}
             >
               <Check className="h-4 w-4 mr-2" />
               Yes, Ready to Proceed
@@ -185,13 +184,10 @@ export const FinalFeasibilityGate = ({
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={moveToPreviousStep} disabled={completionTriggered}>
+        <Button variant="outline" onClick={moveToPreviousStep}>
           Previous
         </Button>
-        <Button 
-          onClick={handleCompletePhase} 
-          disabled={readyToAdvance !== true || completionTriggered}
-        >
+        <Button onClick={handleCompletePhase} disabled={readyToAdvance !== true}>
           Complete Phase
         </Button>
       </CardFooter>
