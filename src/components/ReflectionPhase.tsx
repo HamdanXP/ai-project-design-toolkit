@@ -23,9 +23,10 @@ const REFLECTION_QUESTIONS: Question[] = [
 
 type ReflectionPhaseProps = {
   onUpdateProgress: (completed: number, total: number) => void;
+  onCompletePhase?: () => void;
 };
 
-export const ReflectionPhase = ({ onUpdateProgress }: ReflectionPhaseProps) => {
+export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: ReflectionPhaseProps) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const totalQuestions = REFLECTION_QUESTIONS.length;
@@ -62,6 +63,18 @@ export const ReflectionPhase = ({ onUpdateProgress }: ReflectionPhaseProps) => {
   const currentQuestion = REFLECTION_QUESTIONS[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
   const currentAnswer = answers[currentQuestion.id] || "";
+  
+  // Check if the user has reached the last question and provided an answer
+  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
+  const canCompletePhase = isLastQuestion && currentAnswer.trim() !== "";
+  
+  // Calculate how many questions have been answered
+  const answeredQuestionsCount = Object.keys(answers).filter(key => 
+    answers[parseInt(key)] && answers[parseInt(key)].trim() !== ""
+  ).length;
+  
+  // Phase is complete if all questions are answered
+  const isPhaseComplete = answeredQuestionsCount === totalQuestions;
 
   return (
     <div className="flex flex-col h-full">
@@ -103,12 +116,19 @@ export const ReflectionPhase = ({ onUpdateProgress }: ReflectionPhaseProps) => {
         >
           <ArrowLeft className="mr-2 h-4 w-4" /> Previous
         </Button>
-        <Button
-          onClick={handleNext}
-          disabled={currentQuestionIndex === totalQuestions - 1}
-        >
-          Next <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+        
+        {isLastQuestion ? (
+          <Button
+            onClick={onCompletePhase}
+            disabled={!isPhaseComplete}
+          >
+            Complete Phase
+          </Button>
+        ) : (
+          <Button onClick={handleNext}>
+            Next <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        )}
       </div>
     </div>
   );

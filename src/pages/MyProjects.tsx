@@ -28,6 +28,7 @@ const MyProjects = () => {
   };
 
   const handleProjectClick = (projectId: number) => {
+    // Use the correct path format to match the route in App.tsx
     navigate(`/project/${projectId}`);
   };
 
