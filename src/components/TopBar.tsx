@@ -34,7 +34,7 @@ export function TopBar({ user, onSignIn, onSignUp }: TopBarProps) {
   };
 
   return (
-    <div className="topbar">
+    <div className="topbar fixed top-0 left-0 right-0 z-50 h-16 px-4 flex justify-between items-center border-b border-border bg-background/80 backdrop-blur-md">
       <div className="flex items-center">
         {/* Logo - using a simple placeholder */}
         <div className="text-primary font-bold text-2xl flex items-center">

@@ -1,8 +1,12 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Plus } from "lucide-react";
 
 const HomePage = () => {
+  const navigate = useNavigate();
+  
   // Example of projects data - would come from an API in a real app
   const [projects] = useState([
     { id: 1, name: "Portfolio Website", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Portfolio" },
@@ -18,6 +22,14 @@ const HomePage = () => {
     "3D product viewer"
   ]);
 
+  const handleCreateProject = () => {
+    navigate("/project-blueprint");
+  };
+
+  const handleViewAll = () => {
+    navigate("/my-projects");
+  };
+
   return (
     <div className="pt-20 min-h-screen bg-background">
       <div className="container mx-auto px-4 py-12">
@@ -32,9 +44,6 @@ const HomePage = () => {
           <Card className="mb-8 shadow-card-light dark:shadow-card-dark">
             <CardContent className="p-6">
               <div className="text-left text-foreground mb-2 flex items-center">
-                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center mr-2 flex-shrink-0 text-primary-foreground">
-                  L
-                </div>
                 <div className="flex-grow">
                   <input 
                     type="text" 
@@ -42,14 +51,12 @@ const HomePage = () => {
                     className="w-full bg-transparent border-none outline-none text-foreground placeholder-muted-foreground"
                   />
                 </div>
-              </div>
-              <div className="flex justify-between mt-8">
-                <button className="text-muted-foreground hover:text-foreground transition-colors">
-                  Attach
-                </button>
-                <button className="text-muted-foreground hover:text-foreground transition-colors">
-                  Public
-                </button>
+                <Button 
+                  className="ml-2"
+                  onClick={handleCreateProject}
+                >
+                  Project Blueprint
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -70,11 +77,25 @@ const HomePage = () => {
           <CardContent className="p-8">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-foreground">My Projects</h2>
-              <button className="text-muted-foreground hover:text-foreground transition-colors">
+              <Button 
+                variant="ghost" 
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                onClick={handleViewAll}
+              >
                 View All
-              </button>
+              </Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Create Project Card */}
+              <div 
+                className="rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-all cursor-pointer bg-card shadow-card-light dark:shadow-card-dark flex flex-col items-center justify-center h-[11rem]"
+                onClick={handleCreateProject}
+              >
+                <Plus className="h-12 w-12 text-muted-foreground mb-2" />
+                <h3 className="text-lg font-medium text-foreground">Create Project</h3>
+              </div>
+              
+              {/* Existing Projects */}
               {projects.map((project) => (
                 <div 
                   key={project.id}
