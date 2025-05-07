@@ -1,12 +1,32 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { TopBar } from "@/components/TopBar";
+import HomePage from "@/components/HomePage";
+import { useToast } from "@/components/ui/use-toast";
 
 const Index = () => {
+  const { toast } = useToast();
+
+  const handleSignIn = () => {
+    toast({
+      title: "Sign in successful!",
+      description: "Welcome back to Lovable!",
+    });
+  };
+
+  const handleSignUp = () => {
+    toast({
+      title: "Account created!",
+      description: "Welcome to Lovable!",
+    });
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen">
+      <TopBar 
+        onSignIn={handleSignIn}
+        onSignUp={handleSignUp}
+      />
+      <HomePage />
     </div>
   );
 };
