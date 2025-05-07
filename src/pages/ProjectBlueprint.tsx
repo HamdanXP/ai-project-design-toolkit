@@ -10,6 +10,7 @@ import { ScopingPhase } from "@/components/ScopingPhase";
 import { DevelopmentPhase } from "@/components/DevelopmentPhase";
 import { EvaluationPhase } from "@/components/EvaluationPhase";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { BackButton } from "@/components/BackButton";
 
 const ProjectBlueprint = () => {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ const ProjectBlueprint = () => {
       name: "Scoping",
       status: "not-started",
       progress: 0,
-      totalSteps: 5,
+      totalSteps: 6,
       completedSteps: 0
     },
     {
@@ -41,7 +42,7 @@ const ProjectBlueprint = () => {
       name: "Development",
       status: "not-started",
       progress: 0,
-      totalSteps: 10,
+      totalSteps: 6,
       completedSteps: 0
     },
     {
@@ -49,7 +50,7 @@ const ProjectBlueprint = () => {
       name: "Evaluation",
       status: "not-started",
       progress: 0,
-      totalSteps: 3,
+      totalSteps: 4,
       completedSteps: 0
     }
   ]);
@@ -80,10 +81,6 @@ const ProjectBlueprint = () => {
     };
   }, [isMobile, sidebarOpen]);
 
-  const handleGoBack = () => {
-    navigate("/");
-  };
-
   const updatePhaseProgress = (phaseId: string, completed: number, total: number) => {
     setPhases(prevPhases => 
       prevPhases.map(phase => {
@@ -109,6 +106,18 @@ const ProjectBlueprint = () => {
     updatePhaseProgress("reflection", completed, total);
   };
 
+  const handleScopingProgress = (completed: number, total: number) => {
+    updatePhaseProgress("scoping", completed, total);
+  };
+
+  const handleDevelopmentProgress = (completed: number, total: number) => {
+    updatePhaseProgress("development", completed, total);
+  };
+
+  const handleEvaluationProgress = (completed: number, total: number) => {
+    updatePhaseProgress("evaluation", completed, total);
+  };
+
   const toggleSidebar = () => {
     setSidebarOpen(prev => !prev);
   };
@@ -129,14 +138,7 @@ const ProjectBlueprint = () => {
         
         <div className="flex-1 p-4 md:p-6 overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
-            <Button 
-              variant="ghost" 
-              onClick={handleGoBack}
-              size="sm"
-              className="flex items-center"
-            >
-              <ChevronLeft className="mr-1 size-4" /> Back to Home
-            </Button>
+            <BackButton variant="home" />
 
             {isMobile && (
               <Button 
@@ -155,13 +157,13 @@ const ProjectBlueprint = () => {
               <ReflectionPhase onUpdateProgress={handleReflectionProgress} />
             )}
             {activePhaseId === "scoping" && (
-              <ScopingPhase />
+              <ScopingPhase onUpdateProgress={handleScopingProgress} />
             )}
             {activePhaseId === "development" && (
-              <DevelopmentPhase />
+              <DevelopmentPhase onUpdateProgress={handleDevelopmentProgress} />
             )}
             {activePhaseId === "evaluation" && (
-              <EvaluationPhase />
+              <EvaluationPhase onUpdateProgress={handleEvaluationProgress} />
             )}
           </div>
         </div>
