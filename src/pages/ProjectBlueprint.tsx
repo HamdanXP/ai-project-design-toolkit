@@ -23,6 +23,8 @@ const ProjectBlueprint = () => {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const toggleBtnRef = useRef<HTMLButtonElement>(null);
+  const [projectPrompt, setProjectPrompt] = useState<string>("");
+  const [projectFiles, setProjectFiles] = useState<string[]>([]);
   
   const [phases, setPhases] = useState<ProjectPhase[]>([
     {
@@ -58,6 +60,24 @@ const ProjectBlueprint = () => {
       completedSteps: 0
     }
   ]);
+
+  // Load project information when component mounts
+  useEffect(() => {
+    const prompt = localStorage.getItem('projectPrompt');
+    const files = localStorage.getItem('projectFiles');
+    
+    if (prompt) {
+      setProjectPrompt(prompt);
+    }
+    
+    if (files) {
+      try {
+        setProjectFiles(JSON.parse(files));
+      } catch (error) {
+        console.error("Error parsing project files:", error);
+      }
+    }
+  }, []);
 
   // Check if current phase is completed
   const currentPhaseCompleted = phases.find(phase => phase.id === activePhaseId)?.status === "completed";
@@ -110,6 +130,17 @@ const ProjectBlueprint = () => {
   };
 
   const handleCompletePhase = (phaseId: string) => {
+    // Store phase data in localStorage when a phase is completed
+    const phaseData = {
+      phaseId,
+      projectPrompt,
+      projectFiles,
+      completedAt: new Date().toISOString()
+    };
+    
+    // Store in localStorage under a key specific to this phase and project
+    localStorage.setItem(`project_phase_${phaseId}`, JSON.stringify(phaseData));
+
     // Mark the current phase as completed
     setPhases(prevPhases => 
       prevPhases.map(phase => {
@@ -177,6 +208,15 @@ const ProjectBlueprint = () => {
   };
 
   const handleCompleteProject = () => {
+    // Save all project data before completion
+    const projectData = {
+      prompt: projectPrompt,
+      files: projectFiles,
+      phases,
+      completedAt: new Date().toISOString()
+    };
+    
+    localStorage.setItem('completed_project', JSON.stringify(projectData));
     navigate('/project-completion');
   };
 
@@ -228,6 +268,25 @@ const ProjectBlueprint = () => {
             onToggle={toggleSidebar}
           />
         </div>
+        
+        {/* Display project context at the top if available */}
+        {projectPrompt && (
+          <div className="bg-accent/20 mx-4 mt-4 p-4 rounded-md mb-2">
+            <h3 className="font-medium mb-1">Project Prompt:</h3>
+            <p className="text-sm">{projectPrompt}</p>
+            
+            {projectFiles.length > 0 && (
+              <div className="mt-2">
+                <h4 className="text-sm font-medium">Attached Files:</h4>
+                <ul className="text-xs list-disc ml-5">
+                  {projectFiles.map((file, index) => (
+                    <li key={index}>{file}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
         
         <div className="flex-1 p-4 md:p-6 overflow-y-auto">
           <div className="flex items-center justify-between mb-4">

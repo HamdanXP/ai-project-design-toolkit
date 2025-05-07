@@ -2,12 +2,14 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowRight, Image, Paperclip, File, X, Layers } from "lucide-react";
+import { ArrowRight, Image, Paperclip, File, X, Layers } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Footer } from "@/components/Footer";
+import { useToast } from "@/hooks/use-toast";
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [inputValue, setInputValue] = useState("");
   const [isAttachingFile, setIsAttachingFile] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -47,10 +49,6 @@ const HomePage = () => {
     }
   ]);
 
-  const handleCreateProject = () => {
-    navigate("/project-blueprint");
-  };
-
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
     
@@ -61,6 +59,15 @@ const HomePage = () => {
 
   const handleGoToBlueprint = () => {
     if (inputValue.trim()) {
+      // Store the prompt in localStorage before navigating
+      localStorage.setItem('projectPrompt', inputValue);
+      localStorage.setItem('projectFiles', JSON.stringify(selectedFiles.map(file => file.name)));
+      
+      toast({
+        title: "Project Created",
+        description: "Your new project has been created successfully."
+      });
+      
       navigate("/project-blueprint");
     }
   };
@@ -231,15 +238,6 @@ const HomePage = () => {
               </Button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-              {/* Create Project Card */}
-              <div 
-                className="rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-all cursor-pointer bg-card shadow-card-light dark:shadow-card-dark flex flex-col items-center justify-center h-[9rem] sm:h-[11rem]"
-                onClick={handleCreateProject}
-              >
-                <Plus className="h-6 w-6 md:h-12 md:w-12 text-muted-foreground mb-2" />
-                <h3 className="text-sm md:text-lg font-medium text-foreground">Create Project</h3>
-              </div>
-              
               {/* Existing Projects */}
               {projects.map((project) => (
                 <div 

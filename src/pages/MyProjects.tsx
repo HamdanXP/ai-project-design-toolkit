@@ -1,9 +1,6 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TopBar } from "@/components/TopBar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BackButton } from "@/components/BackButton";
 import { Footer } from "@/components/Footer";
@@ -23,10 +20,6 @@ const MyProjects = () => {
     { id: 8, name: "Analytics Dashboard", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Analytics" },
   ]);
 
-  const handleCreateProject = () => {
-    navigate("/project-blueprint");
-  };
-
   const handleProjectClick = (projectId: number) => {
     // Use the correct path format to match the route in App.tsx
     navigate(`/project/${projectId}`);
@@ -42,14 +35,7 @@ const MyProjects = () => {
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {/* Create Project Card */}
-          <div 
-            className="rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-all cursor-pointer bg-card shadow-card-light dark:shadow-card-dark flex flex-col items-center justify-center h-[12rem]"
-            onClick={handleCreateProject}
-          >
-            <Plus className="h-12 w-12 text-muted-foreground mb-2" />
-            <h3 className="text-lg font-medium text-foreground">Create Project</h3>
-          </div>
+          {/* "Create Project" card removed */}
           
           {/* Existing Projects */}
           {projects.map((project) => (
