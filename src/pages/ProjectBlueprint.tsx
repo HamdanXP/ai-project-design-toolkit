@@ -269,25 +269,6 @@ const ProjectBlueprint = () => {
           />
         </div>
         
-        {/* Display project context at the top if available */}
-        {projectPrompt && (
-          <div className="bg-accent/20 mx-4 mt-4 p-4 rounded-md mb-2">
-            <h3 className="font-medium mb-1">Project Prompt:</h3>
-            <p className="text-sm">{projectPrompt}</p>
-            
-            {projectFiles.length > 0 && (
-              <div className="mt-2">
-                <h4 className="text-sm font-medium">Attached Files:</h4>
-                <ul className="text-xs list-disc ml-5">
-                  {projectFiles.map((file, index) => (
-                    <li key={index}>{file}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-        
         <div className="flex-1 p-4 md:p-6 overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <BackButton />

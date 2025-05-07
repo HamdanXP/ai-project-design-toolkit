@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { BackButton } from "@/components/BackButton";
-import { Calendar, Clock, ArrowRight } from "lucide-react";
+import { Calendar, Clock, ArrowRight, Edit } from "lucide-react";
 import { Footer } from "@/components/Footer";
 
 // This would come from an API in a real app
@@ -100,6 +100,14 @@ const ProjectDetails = () => {
   const handleContinueProject = () => {
     navigate('/project-blueprint');
   };
+  
+  const handleEditProject = () => {
+    // In a real app, this would navigate to an edit form
+    // For now, we'll just show an alert
+    alert(`Editing project: ${project.name}`);
+    // In a full implementation, you would navigate to an edit page
+    // navigate(`/edit-project/${projectId}`);
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -143,9 +151,12 @@ const ProjectDetails = () => {
                       </div>
                       <Progress value={project.progress} className="h-2" />
                     </div>
-                    <div className="mt-6">
+                    <div className="mt-6 flex gap-3">
                       <Button onClick={handleContinueProject} className="w-full md:w-auto">
                         Continue Project <ArrowRight className="h-4 w-4 ml-2" />
+                      </Button>
+                      <Button onClick={handleEditProject} variant="outline" className="w-full md:w-auto">
+                        Edit Project <Edit className="h-4 w-4 ml-2" />
                       </Button>
                     </div>
                   </div>
@@ -196,10 +207,10 @@ const ProjectDetails = () => {
                 <div className="mt-8">
                   <Button 
                     variant="outline" 
-                    onClick={handleContinueProject} 
+                    onClick={handleEditProject} 
                     className="w-full"
                   >
-                    Resume Work
+                    Edit Project Details <Edit className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
               </CardContent>
