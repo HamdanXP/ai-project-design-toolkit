@@ -1,12 +1,10 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowRight, Check } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { UseCase } from "@/types/scoping-phase";
-import { useToast } from "@/hooks/use-toast";
 import { StepHeading } from "./common/StepHeading";
+import { UseCaseGrid } from "./use-case/UseCaseGrid";
 
 type UseCaseExplorerProps = {
   useCases: UseCase[];
@@ -23,70 +21,23 @@ export const UseCaseExplorer = ({
   handleSelectUseCase,
   moveToNextStep,
 }: UseCaseExplorerProps) => {
-  const { toast } = useToast();
-
   return (
     <Card className="mb-6">
       <CardHeader>
         <StepHeading stepNumber={1} title="AI Use Case Explorer" />
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground mb-6">Explore different AI approaches that could help address your problem. Select one that best aligns with your project goals.</p>
+        <p className="text-muted-foreground mb-6">
+          Explore different AI approaches that could help address your problem. 
+          Select one that best aligns with your project goals.
+        </p>
         
-        {loadingUseCases ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <Card key={i} className="border border-border">
-                <CardContent className="p-4">
-                  <Skeleton className="h-6 w-2/3 mb-3" />
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-5/6" />
-                  <div className="flex mt-3 gap-2">
-                    <Skeleton className="h-6 w-20" />
-                    <Skeleton className="h-6 w-24" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {useCases.map(useCase => {
-              const isSelected = selectedUseCase?.id === useCase.id;
-              
-              return (
-                <Card 
-                  key={useCase.id} 
-                  className={`border cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-primary bg-primary/5' : 'border-border'}`}
-                  onClick={() => handleSelectUseCase(useCase)}
-                >
-                  <CardContent className="p-4">
-                    <h3 className="font-medium text-lg mb-2">{useCase.title}</h3>
-                    <p className="text-muted-foreground text-sm mb-3">{useCase.description}</p>
-                    <div className="flex flex-wrap gap-2">
-                      {useCase.tags.map(tag => (
-                        <div key={tag} className="bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-full text-xs">
-                          {tag}
-                        </div>
-                      ))}
-                    </div>
-                    <Button 
-                      variant={isSelected ? "default" : "outline"} 
-                      size="sm"
-                      className="mt-3"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSelectUseCase(useCase);
-                      }}
-                    >
-                      {isSelected ? <><Check className="h-4 w-4 mr-2" /> Selected</> : "Select Use Case"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+        <UseCaseGrid 
+          useCases={useCases} 
+          selectedUseCase={selectedUseCase} 
+          loadingUseCases={loadingUseCases}
+          handleSelectUseCase={handleSelectUseCase}
+        />
       </CardContent>
       <CardFooter className="flex justify-end">
         <Button onClick={moveToNextStep} disabled={!selectedUseCase}>
