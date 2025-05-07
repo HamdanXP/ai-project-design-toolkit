@@ -37,8 +37,8 @@ export function TopBar({ user, onSignIn, onSignUp }: TopBarProps) {
     <div className="topbar">
       <div className="flex items-center">
         {/* Logo - using a simple placeholder */}
-        <div className="text-sidebar-primary font-bold text-2xl flex items-center">
-          <div className="mr-1 text-white bg-sidebar-primary rounded-md w-8 h-8 flex items-center justify-center">
+        <div className="text-primary font-bold text-2xl flex items-center">
+          <div className="mr-1 text-primary-foreground bg-primary rounded-md w-8 h-8 flex items-center justify-center">
             L
           </div>
           Lovable
@@ -50,15 +50,15 @@ export function TopBar({ user, onSignIn, onSignUp }: TopBarProps) {
 
         {isLoggedIn && mockUser ? (
           <div className="flex items-center gap-3">
-            <div className="text-sm font-medium text-white">
+            <div className="text-sm font-medium text-foreground">
               {mockUser.name}
             </div>
             <Avatar 
-              className="cursor-pointer h-10 w-10 border-2 border-sidebar-primary/50 hover:border-sidebar-primary transition-all"
+              className="cursor-pointer h-10 w-10 border-2 border-primary/50 hover:border-primary transition-all"
               onClick={handleSignOut}
             >
               <AvatarImage src={mockUser.image} />
-              <AvatarFallback className="bg-sidebar-primary text-white">
+              <AvatarFallback className="bg-primary text-primary-foreground">
                 <User size={20} />
               </AvatarFallback>
             </Avatar>
@@ -67,13 +67,13 @@ export function TopBar({ user, onSignIn, onSignUp }: TopBarProps) {
           <div className="flex items-center gap-3">
             <Button 
               variant="ghost" 
-              className="topbar-button text-white"
+              className="topbar-button"
               onClick={handleSignIn}
             >
               Sign in
             </Button>
             <Button 
-              className="rounded-full bg-white text-black hover:bg-gray-100"
+              className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={() => {
                 onSignUp?.();
                 handleSignIn();

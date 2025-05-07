@@ -11,7 +11,7 @@ export function ThemeSwitcher() {
       variant="ghost"
       size="icon"
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      className="rounded-full w-10 h-10 text-white dark:text-white"
+      className="rounded-full w-10 h-10 text-foreground"
       aria-label="Toggle theme"
     >
       {theme === "light" ? (

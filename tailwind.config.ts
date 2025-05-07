@@ -62,7 +62,21 @@ export default {
           'accent-foreground': "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))"
-        }
+        },
+        // Additional semantic colors
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))"
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))"
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))"
+        },
+        link: "hsl(var(--link))"
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -90,6 +104,10 @@ export default {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+      },
+      boxShadow: {
+        'card-light': '0 2px 10px rgba(0,0,0,0.05)',
+        'card-dark': '0 2px 10px rgba(0,0,0,0.2)',
       }
     },
   },
