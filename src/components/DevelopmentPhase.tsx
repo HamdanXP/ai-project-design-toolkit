@@ -59,6 +59,7 @@ export const DevelopmentPhase = ({ onUpdateProgress, onCompletePhase }: Developm
       ...prev,
       [currentQuestion.id]: value
     }));
+    updateProgress();
   };
 
   const currentQuestion = DEVELOPMENT_QUESTIONS[currentQuestionIndex];
@@ -119,7 +120,7 @@ export const DevelopmentPhase = ({ onUpdateProgress, onCompletePhase }: Developm
         
         {isLastQuestion ? (
           <Button
-            onClick={onCompletePhase}
+            onClick={() => onCompletePhase && onCompletePhase()}
             disabled={!isPhaseComplete}
           >
             Complete Phase

@@ -57,6 +57,7 @@ export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: Evaluatio
       ...prev,
       [currentQuestion.id]: value
     }));
+    updateProgress();
   };
 
   const currentQuestion = EVALUATION_QUESTIONS[currentQuestionIndex];
@@ -117,7 +118,7 @@ export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: Evaluatio
         
         {isLastQuestion ? (
           <Button
-            onClick={onCompletePhase}
+            onClick={() => onCompletePhase && onCompletePhase()}
             disabled={!isPhaseComplete}
           >
             Complete Phase
