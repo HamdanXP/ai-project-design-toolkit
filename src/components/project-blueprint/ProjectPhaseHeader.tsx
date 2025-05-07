@@ -1,25 +1,26 @@
 
-import { BackButton } from "@/components/BackButton";
 import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 
-interface ProjectPhaseHeaderProps {
+type ProjectPhaseHeaderProps = {
   isMobile: boolean;
   toggleSidebar: () => void;
-}
+};
 
-export const ProjectPhaseHeader = ({ isMobile, toggleSidebar }: ProjectPhaseHeaderProps) => {
+export const ProjectPhaseHeader = ({
+  isMobile,
+  toggleSidebar,
+}: ProjectPhaseHeaderProps) => {
   return (
-    <div className="flex items-center justify-between mb-4">
-      <BackButton />
-
+    <div className="flex items-center mb-6">
       {isMobile && (
-        <Button 
-          variant="outline" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mr-2 p-1 h-7 w-7"
           onClick={toggleSidebar}
         >
-          <Menu className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4" />
         </Button>
       )}
     </div>

@@ -97,7 +97,7 @@ export const useProjectPhases = () => {
     // Store in localStorage under a key specific to this phase and project
     localStorage.setItem(`project_phase_${phaseId}`, JSON.stringify(phaseData));
 
-    // Mark the current phase as completed
+    // Explicitly mark the current phase as 100% completed
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
@@ -119,8 +119,6 @@ export const useProjectPhases = () => {
     if (currentIndex < phaseOrder.length - 1) {
       const nextPhaseId = phaseOrder[currentIndex + 1];
       
-      // Removed toast notification
-      
       // Update the next phase to in-progress
       setPhases(prevPhases => 
         prevPhases.map(phase => {
@@ -137,7 +135,6 @@ export const useProjectPhases = () => {
       // Move to the next phase
       setActivePhaseId(nextPhaseId);
     }
-    // Removed notification for all phases completed
   };
 
   const handleReflectionProgress = (completed: number, total: number) => {
@@ -169,9 +166,6 @@ export const useProjectPhases = () => {
     navigate('/project-completion');
   };
 
-  // Check if current phase is completed
-  const currentPhaseCompleted = phases.find(phase => phase.id === activePhaseId)?.status === "completed";
-
   // Check if all phases are completed
   const allPhasesCompleted = phases.every(phase => phase.status === "completed");
   
@@ -181,9 +175,16 @@ export const useProjectPhases = () => {
     
     const phaseOrder = ["reflection", "scoping", "development", "evaluation"];
     const targetIndex = phaseOrder.indexOf(phaseId);
-    const previousPhase = phases.find(p => p.id === phaseOrder[targetIndex - 1]);
     
-    return previousPhase?.status === "completed";
+    // Check if all previous phases are completed
+    for (let i = 0; i < targetIndex; i++) {
+      const previousPhase = phases.find(p => p.id === phaseOrder[i]);
+      if (previousPhase?.status !== "completed") {
+        return false;
+      }
+    }
+    
+    return true;
   };
 
   return {
@@ -196,7 +197,6 @@ export const useProjectPhases = () => {
     handleDevelopmentProgress,
     handleEvaluationProgress,
     handleCompleteProject,
-    currentPhaseCompleted,
     allPhasesCompleted,
     canAccessPhase
   };

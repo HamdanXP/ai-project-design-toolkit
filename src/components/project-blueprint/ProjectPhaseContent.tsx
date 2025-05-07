@@ -4,7 +4,6 @@ import { ScopingPhase } from "@/components/ScopingPhase";
 import { DevelopmentPhase } from "@/components/DevelopmentPhase";
 import { EvaluationPhase } from "@/components/EvaluationPhase";
 import { PhaseLockedMessage } from "@/components/PhaseLockedMessage";
-import { Button } from "@/components/ui/button";
 import { ProjectPhase } from "@/types/project";
 import { AIAssistant } from "@/components/AIAssistant";
 import { CompleteProjectButton } from "./CompleteProjectButton";
@@ -34,12 +33,35 @@ export const ProjectPhaseContent = ({
   allPhasesCompleted,
   phases
 }: ProjectPhaseContentProps) => {
+  
+  // This ensures that when we complete a phase, its progress is set to 100%
+  const completePhase = (phaseId: string) => {
+    // First set progress to show full completion
+    switch(phaseId) {
+      case "reflection":
+        handleReflectionProgress(7, 7); // 7 is the total from useProjectPhases
+        break;
+      case "scoping":
+        handleScopingProgress(5, 5); // 5 is the total from useProjectPhases
+        break;
+      case "development":
+        handleDevelopmentProgress(6, 6); // 6 is the total from useProjectPhases
+        break;
+      case "evaluation":
+        handleEvaluationProgress(4, 4); // 4 is the total from useProjectPhases
+        break;
+    }
+    
+    // Then complete the phase
+    handleCompletePhase(phaseId);
+  };
+
   return (
     <>
       {activePhaseId === "reflection" && (
         <ReflectionPhase 
           onUpdateProgress={handleReflectionProgress}
-          onCompletePhase={() => handleCompletePhase("reflection")} 
+          onCompletePhase={() => completePhase("reflection")} 
         />
       )}
       
@@ -47,7 +69,7 @@ export const ProjectPhaseContent = ({
         canAccessPhase("scoping") ? (
           <ScopingPhase 
             onUpdateProgress={handleScopingProgress}
-            onCompletePhase={() => handleCompletePhase("scoping")} 
+            onCompletePhase={() => completePhase("scoping")} 
           />
         ) : (
           <PhaseLockedMessage phaseName="Scoping" />
@@ -58,7 +80,7 @@ export const ProjectPhaseContent = ({
         canAccessPhase("development") ? (
           <DevelopmentPhase 
             onUpdateProgress={handleDevelopmentProgress}
-            onCompletePhase={() => handleCompletePhase("development")} 
+            onCompletePhase={() => completePhase("development")} 
           />
         ) : (
           <PhaseLockedMessage phaseName="Development" />
@@ -69,7 +91,7 @@ export const ProjectPhaseContent = ({
         canAccessPhase("evaluation") ? (
           <EvaluationPhase 
             onUpdateProgress={handleEvaluationProgress}
-            onCompletePhase={() => handleCompletePhase("evaluation")}
+            onCompletePhase={() => completePhase("evaluation")}
           />
         ) : (
           <PhaseLockedMessage phaseName="Evaluation" />

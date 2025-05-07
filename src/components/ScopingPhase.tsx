@@ -188,7 +188,7 @@ export const ScopingPhase = ({
       setLoadingDatasets(false);
     }, 1500);
 
-    // Update progress
+    // Update progress when component mounts
     onUpdateProgress(0, totalSteps);
   }, [onUpdateProgress]);
 
@@ -234,6 +234,7 @@ export const ScopingPhase = ({
 
   // Update progress when step changes
   useEffect(() => {
+    // This ensures the progress bar reflects the current step
     onUpdateProgress(activeStep - 1, totalSteps);
   }, [activeStep, onUpdateProgress]);
 
@@ -314,7 +315,7 @@ export const ScopingPhase = ({
   const moveToNextStep = () => {
     if (activeStep < totalSteps) {
       setActiveStep(prev => prev + 1);
-      onUpdateProgress(activeStep, totalSteps); // Update progress to reflect current step
+      onUpdateProgress(activeStep, totalSteps); // Update progress to reflect the current step completed
     }
   };
   
@@ -361,8 +362,11 @@ export const ScopingPhase = ({
     // Update progress to show full completion before calling onCompletePhase
     onUpdateProgress(totalSteps, totalSteps);
     
-    // Complete the phase
-    onCompletePhase();
+    // Small delay to ensure UI updates before completing
+    setTimeout(() => {
+      // Complete the phase
+      onCompletePhase();
+    }, 100);
   };
 
   return (

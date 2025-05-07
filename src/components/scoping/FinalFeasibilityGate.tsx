@@ -34,17 +34,6 @@ export const FinalFeasibilityGate = ({
   moveToPreviousStep,
   handleCompletePhase,
 }: FinalFeasibilityGateProps) => {
-  // Auto-trigger handleCompletePhase when readyToAdvance is set to true
-  useEffect(() => {
-    if (readyToAdvance === true) {
-      // Small delay to allow UI updates before phase completion
-      const timer = setTimeout(() => {
-        handleCompletePhase();
-      }, 300);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [readyToAdvance, handleCompletePhase]);
 
   return (
     <Card className="mb-6">
