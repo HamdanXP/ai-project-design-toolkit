@@ -51,36 +51,40 @@ export const UseCaseExplorer = ({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {useCases.map(useCase => (
-              <Card 
-                key={useCase.id} 
-                className={`border cursor-pointer transition-all hover:shadow-md ${useCase.selected ? 'border-primary bg-primary/5' : 'border-border'}`}
-                onClick={() => handleSelectUseCase(useCase)}
-              >
-                <CardContent className="p-4">
-                  <h3 className="font-medium text-lg mb-2">{useCase.title}</h3>
-                  <p className="text-muted-foreground text-sm mb-3">{useCase.description}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {useCase.tags.map(tag => (
-                      <div key={tag} className="bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-full text-xs">
-                        {tag}
-                      </div>
-                    ))}
-                  </div>
-                  <Button 
-                    variant={useCase.selected ? "default" : "outline"} 
-                    size="sm"
-                    className="mt-3"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelectUseCase(useCase);
-                    }}
-                  >
-                    {useCase.selected ? <><Check className="h-4 w-4 mr-2" /> Selected</> : "Select Use Case"}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+            {useCases.map(useCase => {
+              const isSelected = selectedUseCase?.id === useCase.id;
+              
+              return (
+                <Card 
+                  key={useCase.id} 
+                  className={`border cursor-pointer transition-all hover:shadow-md ${isSelected ? 'border-primary bg-primary/5' : 'border-border'}`}
+                  onClick={() => handleSelectUseCase(useCase)}
+                >
+                  <CardContent className="p-4">
+                    <h3 className="font-medium text-lg mb-2">{useCase.title}</h3>
+                    <p className="text-muted-foreground text-sm mb-3">{useCase.description}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {useCase.tags.map(tag => (
+                        <div key={tag} className="bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-full text-xs">
+                          {tag}
+                        </div>
+                      ))}
+                    </div>
+                    <Button 
+                      variant={isSelected ? "default" : "outline"} 
+                      size="sm"
+                      className="mt-3"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectUseCase(useCase);
+                      }}
+                    >
+                      {isSelected ? <><Check className="h-4 w-4 mr-2" /> Selected</> : "Select Use Case"}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </CardContent>
