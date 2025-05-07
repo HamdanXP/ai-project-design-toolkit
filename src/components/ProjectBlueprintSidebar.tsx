@@ -5,15 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useEffect, useRef } from "react";
-
-export type ProjectPhase = {
-  id: string;
-  name: string;
-  status: "not-started" | "in-progress" | "completed";
-  progress: number;
-  totalSteps: number;
-  completedSteps: number;
-};
+import { ProjectPhase } from "@/hooks/useProjectPhases";
 
 type ProjectBlueprintSidebarProps = {
   phases: ProjectPhase[];
