@@ -119,8 +119,6 @@ export const useProjectPhases = () => {
     if (currentIndex < phaseOrder.length - 1) {
       const nextPhaseId = phaseOrder[currentIndex + 1];
       
-      // Removed toast notification
-      
       // Update the next phase to in-progress
       setPhases(prevPhases => 
         prevPhases.map(phase => {
@@ -136,8 +134,10 @@ export const useProjectPhases = () => {
       
       // Move to the next phase
       setActivePhaseId(nextPhaseId);
+
+      // Log for debugging
+      console.log(`Phase ${phaseId} completed, moving to ${nextPhaseId}`);
     }
-    // Removed notification for all phases completed
   };
 
   const handleReflectionProgress = (completed: number, total: number) => {
