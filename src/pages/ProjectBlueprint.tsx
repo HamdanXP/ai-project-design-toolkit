@@ -9,10 +9,14 @@ import { ReflectionPhase } from "@/components/ReflectionPhase";
 import { ScopingPhase } from "@/components/ScopingPhase";
 import { DevelopmentPhase } from "@/components/DevelopmentPhase";
 import { EvaluationPhase } from "@/components/EvaluationPhase";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ProjectBlueprint = () => {
   const navigate = useNavigate();
   const [activePhaseId, setActivePhaseId] = useState("reflection");
+  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  
   const [phases, setPhases] = useState<ProjectPhase[]>([
     {
       id: "reflection",
@@ -48,6 +52,11 @@ const ProjectBlueprint = () => {
     }
   ]);
 
+  useEffect(() => {
+    // Close sidebar by default on mobile
+    setSidebarOpen(!isMobile);
+  }, [isMobile]);
+
   const handleGoBack = () => {
     navigate("/");
   };
@@ -77,6 +86,10 @@ const ProjectBlueprint = () => {
     updatePhaseProgress("reflection", completed, total);
   };
 
+  const toggleSidebar = () => {
+    setSidebarOpen(prev => !prev);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <TopBar />
@@ -85,16 +98,31 @@ const ProjectBlueprint = () => {
           phases={phases} 
           activePhase={activePhaseId}
           setActivePhase={setActivePhaseId}
+          isOpen={sidebarOpen}
+          onToggle={toggleSidebar}
         />
         
-        <div className="flex-1 p-6 overflow-y-auto">
-          <Button 
-            variant="ghost" 
-            onClick={handleGoBack}
-            className="mb-4"
-          >
-            <ChevronLeft className="mr-1" /> Back to Home
-          </Button>
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto">
+          <div className="flex items-center justify-between mb-4">
+            <Button 
+              variant="ghost" 
+              onClick={handleGoBack}
+              size="sm"
+              className="flex items-center"
+            >
+              <ChevronLeft className="mr-1 size-4" /> Back to Home
+            </Button>
+
+            {isMobile && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={toggleSidebar}
+              >
+                {sidebarOpen ? "Hide Phases" : "Show Phases"}
+              </Button>
+            )}
+          </div>
           
           <div className="max-w-4xl mx-auto">
             {activePhaseId === "reflection" && (

@@ -1,9 +1,9 @@
 
-import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export type ProjectPhase = {
   id: string;
@@ -18,14 +18,18 @@ type ProjectBlueprintSidebarProps = {
   phases: ProjectPhase[];
   activePhase: string;
   setActivePhase: (id: string) => void;
+  isOpen: boolean;
+  onToggle: () => void;
 };
 
 export const ProjectBlueprintSidebar = ({
   phases,
   activePhase,
   setActivePhase,
+  isOpen,
+  onToggle,
 }: ProjectBlueprintSidebarProps) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const isMobile = useIsMobile();
 
   const getStatusColor = (status: ProjectPhase["status"]) => {
     switch (status) {
@@ -38,25 +42,42 @@ export const ProjectBlueprintSidebar = ({
     }
   };
 
+  if (isMobile && !isOpen) {
+    return null;
+  }
+
   return (
     <div
       className={cn(
-        "transition-all duration-300 ease-in-out bg-card border-r border-border h-full relative",
-        isCollapsed ? "w-[60px]" : "w-[250px]"
+        "transition-all duration-300 ease-in-out bg-card border-r border-border h-full z-10",
+        isMobile ? (isOpen ? "fixed top-16 left-0 bottom-0 w-[250px]" : "hidden") : "relative",
+        !isMobile && (isOpen ? "w-[250px]" : "w-[60px]")
       )}
     >
       <div className="p-4 flex justify-between items-center border-b border-border">
-        <h2 className={cn("font-medium text-foreground", isCollapsed ? "hidden" : "block")}>Project Phases</h2>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="p-1 h-7 w-7"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-        >
-          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </Button>
+        <h2 className={cn("font-medium text-foreground", !isOpen && !isMobile ? "hidden" : "block")}>Project Phases</h2>
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-1 h-7 w-7"
+            onClick={onToggle}
+          >
+            {isOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          </Button>
+        )}
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="p-1 h-7 w-7"
+            onClick={onToggle}
+          >
+            <ChevronLeft size={16} />
+          </Button>
+        )}
       </div>
-      <div className="overflow-y-auto p-2">
+      <div className="overflow-y-auto p-2 h-[calc(100%-56px)]">
         {phases.map((phase) => (
           <div
             key={phase.id}
@@ -78,13 +99,13 @@ export const ProjectBlueprintSidebar = ({
               <span
                 className={cn(
                   "text-sm font-medium",
-                  isCollapsed ? "hidden" : "block"
+                  !isMobile && !isOpen ? "hidden" : "block"
                 )}
               >
                 {phase.name}
               </span>
             </div>
-            {!isCollapsed && (
+            {(isMobile || isOpen) && (
               <div className="pl-5">
                 <div className="flex justify-between text-xs text-muted-foreground mb-1">
                   <span>Progress</span>
