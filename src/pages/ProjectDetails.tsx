@@ -77,10 +77,7 @@ const ProjectDetails = () => {
       <div className="min-h-screen bg-background">
         <TopBar />
         <div className="container mx-auto px-4 py-12 pt-24">
-          <div className="flex items-center mb-8">
-            <BackButton />
-            <h1 className="text-3xl font-bold text-foreground ml-3">Project Not Found</h1>
-          </div>
+          <h1 className="text-3xl font-bold text-foreground mb-8">Project Not Found</h1>
           <Card>
             <CardContent className="p-6 flex flex-col items-center justify-center min-h-[300px]">
               <p className="text-lg text-muted-foreground mb-4">
@@ -104,10 +101,7 @@ const ProjectDetails = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <TopBar />
       <div className="container mx-auto px-4 py-12 pt-24 flex-grow">
-        <div className="flex items-center mb-8">
-          <BackButton />
-          <h1 className="text-3xl font-bold text-foreground ml-3">{project.name}</h1>
-        </div>
+        <h1 className="text-3xl font-bold text-foreground mb-8">{project.name}</h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Project Overview */}

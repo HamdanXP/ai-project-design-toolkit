@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { BackButton } from "@/components/BackButton";
 import { Footer } from "@/components/Footer";
 
 const MyProjects = () => {
@@ -29,14 +28,9 @@ const MyProjects = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <TopBar />
       <div className="container mx-auto px-4 py-12 pt-24 flex-grow">
-        <div className="flex items-center mb-8">
-          <BackButton />
-          <h1 className="text-3xl font-bold text-foreground ml-3">My Projects</h1>
-        </div>
+        <h1 className="text-3xl font-bold text-foreground mb-8">My Projects</h1>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {/* "Create Project" card removed */}
-          
           {/* Existing Projects */}
           {projects.map((project) => (
             <div 
