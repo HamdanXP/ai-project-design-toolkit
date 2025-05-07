@@ -5,7 +5,7 @@ import { TopBar } from "@/components/TopBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Google, Github, Facebook } from "lucide-react";
+import { Mail, Github, Globe } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -94,7 +94,7 @@ const SignUp = () => {
                     className="flex items-center gap-2"
                     onClick={() => handleSocialSignUp("Google")}
                   >
-                    <Google className="h-4 w-4" />
+                    <Mail className="h-4 w-4" />
                     <span>Sign up with Google</span>
                   </Button>
                   <Button 
@@ -110,7 +110,7 @@ const SignUp = () => {
                     className="flex items-center gap-2"
                     onClick={() => handleSocialSignUp("Facebook")}
                   >
-                    <Facebook className="h-4 w-4" />
+                    <Globe className="h-4 w-4" />
                     <span>Sign up with Facebook</span>
                   </Button>
                 </div>
