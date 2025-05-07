@@ -9,6 +9,11 @@ import NotFound from "./pages/NotFound";
 import { ThemeProvider } from "./components/ThemeProvider";
 import ProjectBlueprint from "./pages/ProjectBlueprint";
 import MyProjects from "./pages/MyProjects";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import FAQ from "./pages/FAQ";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +28,11 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/project-blueprint" element={<ProjectBlueprint />} />
             <Route path="/my-projects" element={<MyProjects />} />
+            <Route path="/sign-in" element={<SignIn />} />
+            <Route path="/sign-up" element={<SignUp />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/faq" element={<FAQ />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

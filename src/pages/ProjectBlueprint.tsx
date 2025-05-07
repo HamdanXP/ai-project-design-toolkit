@@ -1,8 +1,8 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TopBar } from "@/components/TopBar";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ProjectBlueprintSidebar, ProjectPhase } from "@/components/ProjectBlueprintSidebar";
 import { ReflectionPhase } from "@/components/ReflectionPhase";
@@ -16,6 +16,8 @@ const ProjectBlueprint = () => {
   const [activePhaseId, setActivePhaseId] = useState("reflection");
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const toggleBtnRef = useRef<HTMLButtonElement>(null);
   
   const [phases, setPhases] = useState<ProjectPhase[]>([
     {
@@ -57,6 +59,27 @@ const ProjectBlueprint = () => {
     setSidebarOpen(!isMobile);
   }, [isMobile]);
 
+  // Handle clicks outside the sidebar to close it on mobile
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isMobile && 
+        sidebarOpen && 
+        sidebarRef.current && 
+        !sidebarRef.current.contains(event.target as Node) && 
+        toggleBtnRef.current && 
+        !toggleBtnRef.current.contains(event.target as Node)
+      ) {
+        setSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMobile, sidebarOpen]);
+
   const handleGoBack = () => {
     navigate("/");
   };
@@ -94,13 +117,15 @@ const ProjectBlueprint = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <TopBar />
       <div className="flex-1 flex flex-col md:flex-row pt-16">
-        <ProjectBlueprintSidebar 
-          phases={phases} 
-          activePhase={activePhaseId}
-          setActivePhase={setActivePhaseId}
-          isOpen={sidebarOpen}
-          onToggle={toggleSidebar}
-        />
+        <div ref={sidebarRef}>
+          <ProjectBlueprintSidebar 
+            phases={phases} 
+            activePhase={activePhaseId}
+            setActivePhase={setActivePhaseId}
+            isOpen={sidebarOpen}
+            onToggle={toggleSidebar}
+          />
+        </div>
         
         <div className="flex-1 p-4 md:p-6 overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
@@ -115,11 +140,12 @@ const ProjectBlueprint = () => {
 
             {isMobile && (
               <Button 
+                ref={toggleBtnRef}
                 variant="outline" 
-                size="sm" 
+                size="icon" 
                 onClick={toggleSidebar}
               >
-                {sidebarOpen ? "Hide Phases" : "Show Phases"}
+                <Menu className="h-4 w-4" />
               </Button>
             )}
           </div>

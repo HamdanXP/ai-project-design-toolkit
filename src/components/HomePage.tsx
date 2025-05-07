@@ -69,24 +69,24 @@ const HomePage = () => {
 
   return (
     <div className="pt-16 min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 md:py-12">
-        <div className="max-w-3xl mx-auto text-center mb-12 md:mb-16 animate-fade">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 md:mb-6 text-foreground">
+      <div className="container mx-auto px-4 py-6 md:py-12">
+        <div className="max-w-3xl mx-auto text-center mb-8 md:mb-16 animate-fade">
+          <h1 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 text-foreground">
             Build something <span className="text-primary">Lovable</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-6 md:mb-8">
+          <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
             Idea to app in seconds, with your personal full stack engineer
           </p>
 
-          <Card className="mb-6 md:mb-8 shadow-card-light dark:shadow-card-dark">
-            <CardContent className="p-4 md:p-6">
+          <Card className="mb-4 md:mb-8 shadow-card-light dark:shadow-card-dark">
+            <CardContent className="p-3 md:p-6">
               <div className="relative flex items-center">
                 <Input
                   type="text"
                   value={inputValue}
                   onChange={handleInputChange}
                   placeholder="Ask Lovable to create a portfolio website for my..."
-                  className="pr-12 bg-transparent border-none outline-none text-foreground placeholder-muted-foreground"
+                  className="pr-12 bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-sm md:text-base"
                 />
                 <Button
                   className="absolute right-0 top-1/2 transform -translate-y-1/2 rounded-full aspect-square p-1.5"
@@ -105,7 +105,7 @@ const HomePage = () => {
               <button
                 key={index}
                 onClick={() => handleSuggestionClick(suggestion.prompt)}
-                className="bg-accent/50 text-foreground px-3 py-2 rounded-full border border-border hover:bg-accent cursor-pointer transition-all text-xs md:text-sm whitespace-normal text-left"
+                className="bg-accent/50 text-foreground px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-full border border-border hover:bg-accent cursor-pointer transition-all text-xs whitespace-normal text-left"
               >
                 {suggestion.title}
               </button>
@@ -114,25 +114,25 @@ const HomePage = () => {
         </div>
 
         <Card className="shadow-card-light dark:shadow-card-dark animate-fade">
-          <CardContent className="p-6 md:p-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl md:text-2xl font-bold text-foreground">My Projects</h2>
+          <CardContent className="p-4 md:p-8">
+            <div className="flex justify-between items-center mb-4 md:mb-6">
+              <h2 className="text-lg md:text-2xl font-bold text-foreground">My Projects</h2>
               <Button 
                 variant="ghost" 
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors text-sm md:text-base"
                 onClick={handleViewAll}
               >
                 View All
               </Button>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
               {/* Create Project Card */}
               <div 
-                className="rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-all cursor-pointer bg-card shadow-card-light dark:shadow-card-dark flex flex-col items-center justify-center h-[11rem]"
+                className="rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-all cursor-pointer bg-card shadow-card-light dark:shadow-card-dark flex flex-col items-center justify-center h-[9rem] sm:h-[11rem]"
                 onClick={handleCreateProject}
               >
-                <Plus className="h-8 w-8 md:h-12 md:w-12 text-muted-foreground mb-2" />
-                <h3 className="text-base md:text-lg font-medium text-foreground">Create Project</h3>
+                <Plus className="h-6 w-6 md:h-12 md:w-12 text-muted-foreground mb-2" />
+                <h3 className="text-sm md:text-lg font-medium text-foreground">Create Project</h3>
               </div>
               
               {/* Existing Projects */}
@@ -144,10 +144,10 @@ const HomePage = () => {
                   <img 
                     src={project.image} 
                     alt={project.name} 
-                    className="w-full h-32 md:h-40 object-cover"
+                    className="w-full h-24 md:h-40 object-cover"
                   />
-                  <div className="p-4">
-                    <h3 className="text-base md:text-lg font-medium text-foreground">{project.name}</h3>
+                  <div className="p-3 md:p-4">
+                    <h3 className="text-sm md:text-lg font-medium text-foreground">{project.name}</h3>
                   </div>
                 </div>
               ))}
