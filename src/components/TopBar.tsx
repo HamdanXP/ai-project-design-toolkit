@@ -9,7 +9,8 @@ import {
   HelpCircle, 
   LogOut, 
   UserCircle, 
-  Menu 
+  Menu,
+  Layers
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -98,12 +99,12 @@ export function TopBar({ onSignIn, onSignUp }: TopBarProps) {
   return (
     <div className="topbar fixed top-0 left-0 right-0 z-50 h-16 px-4 flex justify-between items-center border-b border-border bg-background/80 backdrop-blur-md">
       <div className="flex items-center">
-        {/* Logo - using a simple placeholder */}
-        <div className="text-primary font-bold text-lg sm:text-2xl flex items-center">
+        {/* Updated Logo */}
+        <div className="text-primary font-bold text-lg sm:text-2xl flex items-center" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
           <div className="mr-1 text-primary-foreground bg-primary rounded-md w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
-            L
+            <Layers size={isMobile ? 16 : 20} />
           </div>
-          <span className="hidden sm:inline">Lovable</span>
+          <span className="hidden sm:inline">APDT</span>
         </div>
       </div>
 

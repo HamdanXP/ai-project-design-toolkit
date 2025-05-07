@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface BackButtonProps {
@@ -11,7 +11,7 @@ interface BackButtonProps {
 
 export const BackButton = ({ 
   variant = "back", 
-  label,
+  label = variant === "home" ? "Back to Home" : "Back",
   className = ""
 }: BackButtonProps) => {
   const navigate = useNavigate();
@@ -29,14 +29,10 @@ export const BackButton = ({
       onClick={handleClick}
       variant="ghost" 
       size="sm"
-      className={`flex items-center gap-1 hover:bg-accent/50 transition-all rounded-full p-2 h-auto ${className}`}
+      className={`flex items-center gap-2 hover:bg-accent/50 transition-all rounded-md px-3 py-2 h-auto ${className}`}
     >
-      {variant === "home" ? (
-        <Home className="h-4 w-4 mr-1" />
-      ) : (
-        <ArrowLeft className="h-4 w-4 mr-1" />
-      )}
-      {label && <span className="text-sm">{label}</span>}
+      <ArrowLeft className="h-4 w-4" />
+      {label && <span className="text-sm font-medium">{label}</span>}
     </Button>
   );
 };

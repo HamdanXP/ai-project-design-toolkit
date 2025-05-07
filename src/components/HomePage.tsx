@@ -3,21 +3,22 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowRight, Image, Paperclip, File, X } from "lucide-react";
+import { Plus, ArrowRight, Image, Paperclip, File, X, Layers } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { Footer } from "@/components/Footer";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
   const [isAttachingFile, setIsAttachingFile] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]); // Changed to array for multiple files
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   
   // Example of projects data - would come from an API in a real app
   const [projects] = useState([
-    { id: 1, name: "Portfolio Website", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Portfolio" },
-    { id: 2, name: "Recipe Finder App", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Recipes" },
-    { id: 3, name: "Task Manager", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Tasks" },
-    { id: 4, name: "Weather Dashboard", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Weather" },
+    { id: 1, name: "Healthcare AI Project", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Healthcare" },
+    { id: 2, name: "Education AI Solution", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Education" },
+    { id: 3, name: "Financial Services AI", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Finance" },
+    { id: 4, name: "Environmental AI Project", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Environment" },
   ]);
 
   const [suggestions] = useState([
@@ -96,14 +97,20 @@ const HomePage = () => {
   };
 
   return (
-    <div className="pt-16 min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 md:py-12">
+    <div className="pt-16 min-h-screen bg-background flex flex-col">
+      <div className="container mx-auto px-4 py-6 md:py-12 flex-grow">
         <div className="max-w-3xl mx-auto text-center mb-8 md:mb-16 animate-fade">
+          <div className="flex justify-center mb-6">
+            <div className="text-primary-foreground bg-primary rounded-full w-16 h-16 flex items-center justify-center">
+              <Layers className="h-8 w-8" />
+            </div>
+          </div>
+          
           <h1 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 text-foreground">
-            Build something <span className="text-primary">Lovable</span>
+            AI Project Design <span className="text-primary">Toolkit</span>
           </h1>
           <p className="text-base md:text-xl text-muted-foreground mb-6 md:mb-8">
-            Idea to app in seconds, with your personal full stack engineer
+            An AI-powered assistant that helps professionals design AI solutions
           </p>
 
           <Card className="mb-4 md:mb-8 shadow-card-light dark:shadow-card-dark">
@@ -113,7 +120,7 @@ const HomePage = () => {
                   id="prompt-input"
                   value={inputValue}
                   onChange={handleInputChange}
-                  placeholder="Ask Lovable to create a portfolio website for my..."
+                  placeholder="Ask APDT to design an AI solution for..."
                   className="bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-sm md:text-base min-h-[40px] resize-none overflow-hidden"
                   onFocus={(e) => {
                     e.target.style.height = 'auto';
@@ -163,7 +170,7 @@ const HomePage = () => {
                             accept="image/*" 
                             className="hidden" 
                             onChange={handleFileChange}
-                            multiple // Allow multiple file selection
+                            multiple
                           />
                         </label>
                         
@@ -176,7 +183,7 @@ const HomePage = () => {
                             type="file" 
                             className="hidden" 
                             onChange={handleFileChange}
-                            multiple // Allow multiple file selection
+                            multiple
                           />
                         </label>
                       </div>
@@ -250,6 +257,7 @@ const HomePage = () => {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   );
 };

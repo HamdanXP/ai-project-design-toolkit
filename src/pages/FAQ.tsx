@@ -7,11 +7,11 @@ import { BackButton } from "@/components/BackButton";
 const FAQ = () => {
   const faqs = [
     {
-      question: "What is Lovable?",
-      answer: "Lovable is an AI-powered platform that helps you build web applications quickly and efficiently. It allows you to create beautiful, responsive web apps without extensive coding knowledge."
+      question: "What is AI Project Design Toolkit?",
+      answer: "AI Project Design Toolkit is an AI-powered platform that helps professionals design AI solutions quickly and efficiently. It allows you to create responsible AI projects without extensive technical knowledge."
     },
     {
-      question: "How do I get started with Lovable?",
+      question: "How do I get started with AI Project Design Toolkit?",
       answer: "To get started, simply sign up for an account, create a new project from the dashboard, and follow our guided setup process. You can choose from various templates or start from scratch."
     },
     {
@@ -42,7 +42,7 @@ const FAQ = () => {
       <div className="container mx-auto px-4 pt-20 md:pt-24 pb-8">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center mb-6">
-            <BackButton variant="home" label="Home" />
+            <BackButton variant="home" />
             <h1 className="text-2xl md:text-3xl font-bold ml-3">Frequently Asked Questions</h1>
           </div>
           

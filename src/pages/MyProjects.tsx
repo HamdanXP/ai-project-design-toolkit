@@ -2,8 +2,9 @@ import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronLeft } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { BackButton } from "@/components/BackButton";
 
 const MyProjects = () => {
   const navigate = useNavigate();
@@ -24,23 +25,13 @@ const MyProjects = () => {
     navigate("/project-blueprint");
   };
 
-  const handleGoBack = () => {
-    navigate("/");
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <TopBar />
       <div className="container mx-auto px-4 py-12 pt-24">
         <div className="flex items-center mb-8">
-          <Button 
-            variant="ghost" 
-            onClick={handleGoBack}
-            className="mr-2"
-          >
-            <ChevronLeft className="mr-1" /> Back
-          </Button>
-          <h1 className="text-3xl font-bold text-foreground">My Projects</h1>
+          <BackButton variant="home" />
+          <h1 className="text-3xl font-bold text-foreground ml-3">My Projects</h1>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

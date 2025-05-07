@@ -1,21 +1,19 @@
-
 import { TopBar } from "@/components/TopBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, User } from "lucide-react";
+import { User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { BackButton } from "@/components/BackButton";
 
 const Profile = () => {
   const [name, setName] = useState("John Doe");
   const [email, setEmail] = useState("john.doe@example.com");
-  const [bio, setBio] = useState("I build amazing web applications with Lovable!");
+  const [bio, setBio] = useState("I build amazing AI solutions with AI Project Design Toolkit!");
   const [isEditing, setIsEditing] = useState(false);
-  const navigate = useNavigate();
 
   const handleSaveChanges = () => {
     toast({
@@ -25,25 +23,14 @@ const Profile = () => {
     setIsEditing(false);
   };
 
-  const handleGoHome = () => {
-    navigate("/");
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <TopBar />
       <div className="container mx-auto px-4 pt-20 md:pt-24 pb-8">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center mb-6">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleGoHome}
-              className="mr-2"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-2xl md:text-3xl font-bold">My Profile</h1>
+            <BackButton variant="home" />
+            <h1 className="text-2xl md:text-3xl font-bold ml-3">My Profile</h1>
           </div>
           
           <Card className="mb-6 shadow-md border-opacity-50 overflow-hidden bg-card/50 backdrop-blur-sm">

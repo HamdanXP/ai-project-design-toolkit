@@ -1,7 +1,7 @@
 
 import { TopBar } from "@/components/TopBar";
 import HomePage from "@/components/HomePage";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const { toast } = useToast();
@@ -9,14 +9,14 @@ const Index = () => {
   const handleSignIn = () => {
     toast({
       title: "Sign in successful!",
-      description: "Welcome back to Lovable!",
+      description: "Welcome back to AI Project Design Toolkit!",
     });
   };
 
   const handleSignUp = () => {
     toast({
       title: "Account created!",
-      description: "Welcome to Lovable!",
+      description: "Welcome to AI Project Design Toolkit!",
     });
   };
 
