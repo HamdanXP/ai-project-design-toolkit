@@ -1,14 +1,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { TopBar } from "@/components/TopBar";
-import { Button } from "@/components/ui/button";
-import { Menu } from "lucide-react";
-import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/hooks/use-toast";
-import { ProjectBlueprintSidebar } from "@/components/ProjectBlueprintSidebar";
-import { ProjectPhaseContent } from "@/components/ProjectPhaseContent";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useProjectPhases } from "@/hooks/useProjectPhases";
+import { ProjectBlueprintSidebar } from "@/components/project-blueprint/ProjectBlueprintSidebar";
+import { ProjectPhaseContent } from "@/components/project-blueprint/ProjectPhaseContent";
+import { ProjectPhaseHeader } from "@/components/project-blueprint/ProjectPhaseHeader";
 
 const ProjectBlueprint = () => {
   const { toast } = useToast();
@@ -89,20 +87,10 @@ const ProjectBlueprint = () => {
         </div>
         
         <div className="flex-1 p-4 md:p-6 overflow-y-auto">
-          <div className="flex items-center justify-between mb-4">
-            <BackButton />
-
-            {isMobile && (
-              <Button 
-                ref={toggleBtnRef}
-                variant="outline" 
-                size="icon" 
-                onClick={toggleSidebar}
-              >
-                <Menu className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+          <ProjectPhaseHeader 
+            isMobile={isMobile}
+            toggleSidebar={toggleSidebar}
+          />
           
           <div className="max-w-4xl mx-auto">
             <ProjectPhaseContent
