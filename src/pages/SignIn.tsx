@@ -33,9 +33,19 @@ const SignIn = () => {
       
       // Mock successful login
       if (email && password) {
+        // Create mock user data
+        const userData = {
+          name: email.split('@')[0],
+          email,
+          isLoggedIn: true
+        };
+        
+        // Store user data in localStorage
+        localStorage.setItem("lovableUser", JSON.stringify(userData));
+        
         // Use the mocked sign in function we exposed on the window object
         if (typeof window !== 'undefined' && (window as any).mockSignIn) {
-          (window as any).mockSignIn();
+          (window as any).mockSignIn(userData);
         }
         
         toast({
@@ -55,10 +65,27 @@ const SignIn = () => {
   };
 
   const handleSocialSignIn = (provider: string) => {
+    // Mock social sign in
+    const mockUserData = {
+      name: `${provider} User`,
+      email: `user@${provider.toLowerCase()}.com`,
+      isLoggedIn: true
+    };
+    
+    // Store in localStorage
+    localStorage.setItem("lovableUser", JSON.stringify(mockUserData));
+    
+    // Use the mocked sign in function
+    if (typeof window !== 'undefined' && (window as any).mockSignIn) {
+      (window as any).mockSignIn(mockUserData);
+    }
+    
     toast({
       title: "Social Sign In",
-      description: `Sign in with ${provider} is not implemented in this demo`,
+      description: `Sign in with ${provider} successful!`,
     });
+    
+    navigate("/");
   };
 
   const handleForgotPassword = () => {

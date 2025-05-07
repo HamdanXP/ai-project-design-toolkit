@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ThemeSwitcher } from "./ThemeSwitcher";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
+import { toast } from "@/hooks/use-toast";
 
 interface TopBarProps {
   // In a real app, this would come from authentication
@@ -33,16 +34,30 @@ interface TopBarProps {
   onSignUp?: () => void;
 }
 
-export function TopBar({ user, onSignIn, onSignUp }: TopBarProps) {
-  // For demo purposes - toggling user state
+export function TopBar({ onSignIn, onSignUp }: TopBarProps) {
+  // State for authentication
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [mockUser, setMockUser] = useState<{ name: string; image?: string } | undefined>(user);
+  const [mockUser, setMockUser] = useState<{ name: string; email?: string; image?: string } | undefined>(undefined);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
+  // Check localStorage for user data on initial load
+  useEffect(() => {
+    const storedUser = localStorage.getItem("lovableUser");
+    if (storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        if (userData && userData.isLoggedIn) {
+          setIsLoggedIn(true);
+          setMockUser(userData);
+        }
+      } catch (error) {
+        console.error("Error parsing user data from localStorage", error);
+      }
+    }
+  }, []);
+
   const handleSignIn = () => {
-    // In a real app, this would redirect to sign in page or open a modal
-    // For demo, we'll redirect to the sign in page
     navigate("/sign-in");
   };
 
@@ -51,8 +66,17 @@ export function TopBar({ user, onSignIn, onSignUp }: TopBarProps) {
   };
 
   const handleSignOut = () => {
+    // Clear user data from localStorage
+    localStorage.removeItem("lovableUser");
     setIsLoggedIn(false);
     setMockUser(undefined);
+    
+    toast({
+      title: "Signed out",
+      description: "You have been successfully signed out",
+    });
+    
+    navigate("/");
   };
 
   const handleNavigate = (path: string) => {
@@ -60,9 +84,9 @@ export function TopBar({ user, onSignIn, onSignUp }: TopBarProps) {
   };
 
   // For demo purposes - if user logs in from sign-in page
-  const mockSignIn = () => {
+  const mockSignIn = (userData?: any) => {
     setIsLoggedIn(true);
-    setMockUser({ name: "John Doe" });
+    setMockUser(userData || { name: "John Doe" });
   };
 
   // Expose the mockSignIn function to window for demo purposes

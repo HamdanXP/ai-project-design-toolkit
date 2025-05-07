@@ -16,9 +16,17 @@ export const useSignUp = () => {
       
       // Mock successful registration
       if (name && email && password && agreedToTerms) {
+        // Store user info in localStorage
+        const userData = {
+          name,
+          email,
+          isLoggedIn: true
+        };
+        localStorage.setItem("lovableUser", JSON.stringify(userData));
+        
         // Use the mocked sign in function we exposed on the window object
         if (typeof window !== 'undefined' && (window as any).mockSignIn) {
-          (window as any).mockSignIn();
+          (window as any).mockSignIn(userData);
         }
         
         toast({
@@ -38,10 +46,27 @@ export const useSignUp = () => {
   };
 
   const handleSocialSignUp = (provider: string) => {
+    // Mock social sign up
+    const mockUserData = {
+      name: `${provider} User`,
+      email: `user@${provider.toLowerCase()}.com`,
+      isLoggedIn: true
+    };
+    
+    // Store in localStorage
+    localStorage.setItem("lovableUser", JSON.stringify(mockUserData));
+    
+    // Use the mocked sign in function
+    if (typeof window !== 'undefined' && (window as any).mockSignIn) {
+      (window as any).mockSignIn(mockUserData);
+    }
+    
     toast({
       title: "Social Sign Up",
-      description: `Sign up with ${provider} is not implemented in this demo`,
+      description: `Sign up with ${provider} successful!`,
     });
+    
+    navigate("/");
   };
 
   const handleSignIn = () => {
