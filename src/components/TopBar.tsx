@@ -9,8 +9,7 @@ import {
   HelpCircle, 
   LogOut, 
   UserCircle, 
-  Menu,
-  Home
+  Menu 
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -99,11 +98,8 @@ export function TopBar({ onSignIn, onSignUp }: TopBarProps) {
   return (
     <div className="topbar fixed top-0 left-0 right-0 z-50 h-16 px-4 flex justify-between items-center border-b border-border bg-background/80 backdrop-blur-md">
       <div className="flex items-center">
-        {/* Logo - clickable to navigate to home */}
-        <div 
-          className="text-primary font-bold text-lg sm:text-2xl flex items-center cursor-pointer" 
-          onClick={() => navigate("/")}
-        >
+        {/* Logo - using a simple placeholder */}
+        <div className="text-primary font-bold text-lg sm:text-2xl flex items-center">
           <div className="mr-1 text-primary-foreground bg-primary rounded-md w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
             L
           </div>
@@ -130,50 +126,26 @@ export function TopBar({ onSignIn, onSignUp }: TopBarProps) {
                   </AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-popover/95 backdrop-blur-sm border-border shadow-lg rounded-lg p-1">
-                <div className="p-2 flex items-center gap-3 border-b border-border">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={mockUser.image} />
-                    <AvatarFallback className="bg-primary text-primary-foreground">
-                      <User size={20} />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium text-sm">{mockUser.name}</p>
-                    <p className="text-xs text-muted-foreground">{mockUser.email || "user@example.com"}</p>
-                  </div>
-                </div>
-                
-                <div className="py-2">
-                  <DropdownMenuItem onClick={() => handleNavigate('/')} className="cursor-pointer flex items-center gap-2 mb-1 hover:bg-accent/80">
-                    <Home className="h-4 w-4" />
-                    <span>Home</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigate('/profile')} className="cursor-pointer flex items-center gap-2 mb-1 hover:bg-accent/80">
-                    <UserCircle className="h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigate('/settings')} className="cursor-pointer flex items-center gap-2 mb-1 hover:bg-accent/80">
-                    <Settings className="h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleNavigate('/faq')} className="cursor-pointer flex items-center gap-2 hover:bg-accent/80">
-                    <HelpCircle className="h-4 w-4" />
-                    <span>FAQ</span>
-                  </DropdownMenuItem>
-                </div>
-                
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                
-                <div className="py-1">
-                  <DropdownMenuItem 
-                    onClick={handleSignOut} 
-                    className="cursor-pointer text-destructive flex items-center gap-2 hover:bg-destructive/10"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </div>
+                <DropdownMenuItem onClick={() => handleNavigate('/profile')} className="cursor-pointer">
+                  <UserCircle className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigate('/settings')} className="cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleNavigate('/faq')} className="cursor-pointer">
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  <span>FAQ</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

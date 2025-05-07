@@ -1,39 +1,37 @@
 
 import { TopBar } from "@/components/TopBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { Home } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const FAQ = () => {
-  const navigate = useNavigate();
-  
-  const faqItems = [
+  const faqs = [
     {
       question: "What is Lovable?",
-      answer: "Lovable is an AI-powered platform that helps users build and deploy web applications quickly and easily. It combines the power of artificial intelligence with modern web development technologies."
+      answer: "Lovable is an AI-powered platform that helps you build web applications quickly and efficiently. It allows you to create beautiful, responsive web apps without extensive coding knowledge."
     },
     {
       question: "How do I get started with Lovable?",
-      answer: "To get started with Lovable, simply sign up for an account, create a new project, and follow the guided process to build your application. You can use pre-built templates or start from scratch."
+      answer: "To get started, simply sign up for an account, create a new project from the dashboard, and follow our guided setup process. You can choose from various templates or start from scratch."
     },
     {
-      question: "Do I need coding experience to use Lovable?",
-      answer: "No, you don't need coding experience to use Lovable. The platform is designed to be user-friendly for both developers and non-developers. However, having some basic understanding of web technologies can be helpful."
+      question: "What technologies does Lovable use?",
+      answer: "Lovable is built on modern web technologies including React, TypeScript, and Tailwind CSS. It leverages these technologies to create performant and maintainable web applications."
     },
     {
-      question: "Can I export my project's code?",
-      answer: "Yes, Lovable allows you to export your project's code. This gives you complete ownership and control over your application, allowing you to host it anywhere you want."
+      question: "Is Lovable suitable for beginners?",
+      answer: "Yes! Lovable is designed to be accessible for users of all skill levels. Beginners can use our intuitive interface to create projects without diving into code, while advanced users can customize everything to their needs."
     },
     {
-      question: "How does billing work?",
-      answer: "Lovable offers various subscription plans based on your needs. We have free tiers for hobbyists and paid plans for professionals and businesses. You can find more details on our pricing page."
+      question: "Can I collaborate with others on my projects?",
+      answer: "Yes, Lovable supports team collaboration. You can invite team members to your projects and work together in real-time."
+    },
+    {
+      question: "How do I deploy my Lovable project?",
+      answer: "Lovable offers one-click deployment to various platforms. Simply navigate to the 'Deployment' section in your project settings and follow the instructions."
+    },
+    {
+      question: "Is there a free plan available?",
+      answer: "Yes, Lovable offers a free tier that allows you to create and deploy projects with some limitations. Paid plans offer additional features and resources."
     }
   ];
 
@@ -41,40 +39,42 @@ const FAQ = () => {
     <div className="min-h-screen bg-background">
       <TopBar />
       <div className="container mx-auto px-4 pt-20 md:pt-24 pb-8">
-        <div className="flex items-center mb-6 gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="flex items-center gap-1" 
-            onClick={() => navigate("/")}
-          >
-            <Home size={16} />
-            <span>Home</span>
-          </Button>
-          <span className="text-muted-foreground">/</span>
-          <span className="text-foreground">FAQ</span>
-        </div>
-        
         <div className="max-w-3xl mx-auto">
           <h1 className="text-2xl md:text-3xl font-bold mb-6">Frequently Asked Questions</h1>
           
-          <Card className="mb-6 shadow-card-light dark:shadow-card-dark">
+          <Card className="shadow-card-light dark:shadow-card-dark mb-6">
             <CardHeader>
               <CardTitle>Common Questions</CardTitle>
             </CardHeader>
             <CardContent>
               <Accordion type="single" collapsible className="w-full">
-                {faqItems.map((item, index) => (
+                {faqs.map((faq, index) => (
                   <AccordionItem key={index} value={`item-${index}`}>
-                    <AccordionTrigger className="text-left font-medium">
-                      {item.question}
+                    <AccordionTrigger className="text-left">
+                      {faq.question}
                     </AccordionTrigger>
-                    <AccordionContent className="text-muted-foreground">
-                      {item.answer}
+                    <AccordionContent>
+                      <p className="text-muted-foreground">{faq.answer}</p>
                     </AccordionContent>
                   </AccordionItem>
                 ))}
               </Accordion>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-card-light dark:shadow-card-dark">
+            <CardHeader>
+              <CardTitle>Still have questions?</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="mb-4 text-muted-foreground">
+                If you couldn't find the answer to your question, please reach out to our support team.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <a href="#" className="text-primary hover:underline">Contact Support</a>
+                <a href="#" className="text-primary hover:underline">Documentation</a>
+                <a href="#" className="text-primary hover:underline">Community Forum</a>
+              </div>
             </CardContent>
           </Card>
         </div>
