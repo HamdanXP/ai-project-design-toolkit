@@ -81,15 +81,16 @@ export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: Evaluatio
   const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
   const currentAnswer = answers[currentQuestion.id] || "";
   
-  // Check if the user has reached the last question and provided an answer
-  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
-  
   // Calculate how many questions have been answered
   const answeredQuestionsCount = Object.keys(answers).filter(key => 
     answers[parseInt(key)] && answers[parseInt(key)].trim() !== ""
   ).length;
   
-  // Phase is complete if all questions are answered
+  // Check if the user has reached the last question and provided an answer
+  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
+  
+  // Phase is complete if all questions are answered - this was causing the issue
+  // We need to check the number of questions answered, not just if we're on the last question
   const isPhaseComplete = answeredQuestionsCount === totalQuestions;
 
   return (
@@ -154,6 +155,7 @@ export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: Evaluatio
           <Button
             onClick={() => setConfirmDialogOpen(true)}
             disabled={!isPhaseComplete}
+            className={!isPhaseComplete ? "opacity-50 cursor-not-allowed" : ""}
           >
             Complete Phase
           </Button>
