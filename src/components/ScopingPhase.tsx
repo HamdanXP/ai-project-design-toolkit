@@ -1,53 +1,14 @@
+
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronDown, ChevronUp, Search, Bookmark, Upload, Check, AlertTriangle, X, ArrowRight, HelpCircle } from "lucide-react";
-
-// Type for use case items
-type UseCase = {
-  id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  selected: boolean;
-};
-
-// Type for dataset items
-type Dataset = {
-  id: string;
-  title: string;
-  source: string;
-  format: string;
-  size: string;
-  license: string;
-  description: string;
-  columns?: string[];
-  sampleRows?: any[][];
-};
-
-// Feasibility constraint type
-type FeasibilityConstraint = {
-  id: string;
-  label: string;
-  value: string | boolean;
-  options?: string[];
-  type: 'toggle' | 'select' | 'input';
-};
-
-// Data suitability check type
-type DataSuitabilityCheck = {
-  id: string;
-  question: string;
-  answer: 'yes' | 'no' | 'unknown';
-  description: string;
-};
+import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
+import { FeasibilityForm } from "@/components/scoping/FeasibilityForm";
+import { DatasetDiscovery } from "@/components/scoping/DatasetDiscovery";
+import { SuitabilityChecklist } from "@/components/scoping/SuitabilityChecklist";
+import { FinalFeasibilityGate } from "@/components/scoping/FinalFeasibilityGate";
+import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
+import { AlertTriangle } from "lucide-react";
 
 export const ScopingPhase = ({
   onUpdateProgress,
@@ -419,642 +380,6 @@ export const ScopingPhase = ({
     onCompletePhase();
   };
 
-  // Render AI Use Case Explorer (Step 1)
-  const renderUseCaseExplorer = () => (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center text-xl font-semibold">
-          <span className="bg-primary text-primary-foreground rounded-full h-7 w-7 flex items-center justify-center mr-2 text-sm">1</span>
-          AI Use Case Explorer
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground mb-6">Explore different AI approaches that could help address your problem. Select one that best aligns with your project goals.</p>
-        
-        {loadingUseCases ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <Card key={i} className="border border-border">
-                <CardContent className="p-4">
-                  <Skeleton className="h-6 w-2/3 mb-3" />
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-5/6" />
-                  <div className="flex mt-3 gap-2">
-                    <Skeleton className="h-6 w-20" />
-                    <Skeleton className="h-6 w-24" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {useCases.map(useCase => (
-              <Card 
-                key={useCase.id} 
-                className={`border cursor-pointer transition-all hover:shadow-md ${useCase.selected ? 'border-primary bg-primary/5' : 'border-border'}`}
-                onClick={() => handleSelectUseCase(useCase)}
-              >
-                <CardContent className="p-4">
-                  <h3 className="font-medium text-lg mb-2">{useCase.title}</h3>
-                  <p className="text-muted-foreground text-sm mb-3">{useCase.description}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {useCase.tags.map(tag => (
-                      <div key={tag} className="bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-full text-xs">
-                        {tag}
-                      </div>
-                    ))}
-                  </div>
-                  <Button 
-                    variant={useCase.selected ? "default" : "outline"} 
-                    size="sm"
-                    className="mt-3"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSelectUseCase(useCase);
-                    }}
-                  >
-                    <Bookmark className="h-4 w-4 mr-2" />
-                    {useCase.selected ? "Selected" : "Select Use Case"}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <div className="text-sm text-muted-foreground">
-          {selectedUseCase ? `Selected: ${selectedUseCase.title}` : "No use case selected"}
-        </div>
-        <Button onClick={moveToNextStep} disabled={!selectedUseCase}>
-          Next Step <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-
-  // Render Feasibility Constraints Form (Step 2)
-  const renderFeasibilityForm = () => (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center text-xl font-semibold">
-          <span className="bg-primary text-primary-foreground rounded-full h-7 w-7 flex items-center justify-center mr-2 text-sm">2</span>
-          Feasibility Constraints
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground mb-6">Define the practical constraints for your project. These factors will help determine what's realistically achievable.</p>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {constraints.map(constraint => (
-            <div key={constraint.id} className="space-y-2">
-              <label className="text-sm font-medium">{constraint.label}</label>
-              
-              {constraint.type === 'toggle' ? (
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={constraint.id}
-                    checked={constraint.value as boolean} 
-                    onCheckedChange={(checked) => handleConstraintUpdate(constraint.id, !!checked)}
-                  />
-                  <label 
-                    htmlFor={constraint.id}
-                    className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Available
-                  </label>
-                </div>
-              ) : constraint.type === 'select' && constraint.options ? (
-                <select 
-                  value={constraint.value as string}
-                  onChange={(e) => handleConstraintUpdate(constraint.id, e.target.value)}
-                  className="w-full p-2 border border-input rounded-md bg-background"
-                >
-                  {constraint.options.map(option => (
-                    <option key={option} value={option}>
-                      {option.charAt(0).toUpperCase() + option.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <Input 
-                  value={constraint.value as string}
-                  onChange={(e) => handleConstraintUpdate(constraint.id, e.target.value)}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-        
-        <Card className="border border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-medium">Feasibility Summary</h3>
-              <div className={`px-3 py-1 rounded-full text-white text-sm ${
-                feasibilityRisk === 'low' ? 'bg-green-500' : 
-                feasibilityRisk === 'medium' ? 'bg-yellow-500' : 
-                'bg-red-500'
-              }`}>
-                {feasibilityRisk === 'low' ? 'Low Risk' : 
-                 feasibilityRisk === 'medium' ? 'Medium Risk' : 
-                 'High Risk'}
-              </div>
-            </div>
-            <Progress value={feasibilityScore} className="h-2 mt-3" />
-            <p className="text-sm text-muted-foreground mt-2">
-              {feasibilityScore <= 40 && "This project may face significant challenges. Consider revising your constraints or choosing a different approach."}
-              {feasibilityScore > 40 && feasibilityScore < 75 && "This project appears moderately feasible, but may require careful planning and resource management."}
-              {feasibilityScore >= 75 && "This project appears highly feasible given your constraints."}
-            </p>
-          </CardContent>
-        </Card>
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={moveToPreviousStep}>
-          Previous
-        </Button>
-        <Button onClick={moveToNextStep}>
-          Next Step <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-
-  // Render Dataset Discovery Panel (Step 3)  
-  const renderDatasetDiscovery = () => (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center text-xl font-semibold">
-          <span className="bg-primary text-primary-foreground rounded-full h-7 w-7 flex items-center justify-center mr-2 text-sm">3</span>
-          Dataset Discovery
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground mb-6">Find or upload relevant datasets for your AI project. The quality and characteristics of your data will significantly impact your results.</p>
-        
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <div className="flex-1 flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search datasets..."
-                className="pl-9"
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
-            </div>
-            
-            <select 
-              className="px-3 py-2 border border-input rounded-md bg-background"
-              value={selectedCategory}
-              onChange={(e) => handleCategorySelect(e.target.value)}
-            >
-              <option value="">All Categories</option>
-              <option value="water">Water</option>
-              <option value="disease">Health</option>
-              <option value="agriculture">Agriculture</option>
-              <option value="refugee">Migration</option>
-              <option value="food">Food Security</option>
-            </select>
-          </div>
-          
-          <Button variant="outline" className="flex gap-2">
-            <Upload className="h-4 w-4" />
-            Upload My Dataset
-          </Button>
-        </div>
-        
-        {loadingDatasets ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <Card key={i} className="border border-border">
-                <CardContent className="p-4">
-                  <div className="flex justify-between">
-                    <Skeleton className="h-5 w-1/3 mb-2" />
-                    <Skeleton className="h-5 w-1/5" />
-                  </div>
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <div className="flex justify-between mt-3">
-                    <Skeleton className="h-4 w-1/4" />
-                    <Skeleton className="h-4 w-1/4" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4 max-h-80 overflow-y-auto pr-2">
-            {filteredDatasets.length > 0 ? (
-              filteredDatasets.map(dataset => (
-                <Card 
-                  key={dataset.id} 
-                  className={`border cursor-pointer transition-all hover:shadow-md ${
-                    selectedDataset?.id === dataset.id ? 'border-primary bg-primary/5' : 'border-border'
-                  }`}
-                  onClick={() => handleSelectDataset(dataset)}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-medium">{dataset.title}</h3>
-                      <span className="text-xs bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-full">
-                        {dataset.format}
-                      </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground my-2">{dataset.description}</p>
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>Source: {dataset.source}</span>
-                      <span>Size: {dataset.size}</span>
-                    </div>
-                    <div className="flex justify-between mt-3">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlePreviewDataset(dataset);
-                        }}
-                      >
-                        Preview Data
-                      </Button>
-                      <Button 
-                        variant={selectedDataset?.id === dataset.id ? "default" : "secondary"}
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectDataset(dataset);
-                        }}
-                      >
-                        {selectedDataset?.id === dataset.id ? "Selected" : "Select Dataset"}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                No datasets match your search criteria
-              </div>
-            )}
-          </div>
-        )}
-        
-        {previewDataset && (
-          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <Card className="w-full max-w-3xl max-h-[80vh] overflow-hidden">
-              <CardHeader className="flex flex-row justify-between items-start">
-                <div>
-                  <CardTitle>{previewDataset.title}</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">Source: {previewDataset.source}</p>
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setPreviewDataset(null)}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </CardHeader>
-              <CardContent className="p-0 overflow-auto max-h-[calc(80vh-120px)]">
-                <div className="p-4">
-                  <h3 className="font-medium mb-2">Dataset Information</h3>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Format</p>
-                      <p className="font-medium">{previewDataset.format}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Size</p>
-                      <p className="font-medium">{previewDataset.size}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">License</p>
-                      <p className="font-medium">{previewDataset.license}</p>
-                    </div>
-                  </div>
-                  
-                  {previewDataset.columns && previewDataset.sampleRows && (
-                    <>
-                      <h3 className="font-medium mb-2">Sample Data</h3>
-                      <div className="overflow-auto">
-                        <table className="min-w-full border-collapse">
-                          <thead>
-                            <tr className="bg-secondary/20">
-                              {previewDataset.columns.map((col, i) => (
-                                <th key={i} className="p-2 border border-border text-left text-sm">{col}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {previewDataset.sampleRows.map((row, i) => (
-                              <tr key={i}>
-                                {row.map((cell, j) => (
-                                  <td key={j} className="p-2 border border-border text-sm">{cell}</td>
-                                ))}
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-              <CardFooter className="flex justify-end gap-2 p-4">
-                <Button variant="outline" onClick={() => setPreviewDataset(null)}>
-                  Close
-                </Button>
-                <Button onClick={() => {
-                  setSelectedDataset(previewDataset);
-                  setPreviewDataset(null);
-                }}>
-                  Select Dataset
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        )}
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={moveToPreviousStep}>
-          Previous
-        </Button>
-        <Button onClick={moveToNextStep} disabled={!selectedDataset}>
-          Next Step <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-
-  // Render Data Suitability Checklist (Step 4)
-  const renderSuitabilityChecklist = () => (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center text-xl font-semibold">
-          <span className="bg-primary text-primary-foreground rounded-full h-7 w-7 flex items-center justify-center mr-2 text-sm">4</span>
-          Data Suitability Checklist
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground mb-6">Evaluate how suitable your chosen dataset is for your project. Identifying potential issues now can save time and resources later.</p>
-        
-        <div className="space-y-4 mb-8">
-          {suitabilityChecks.map(check => (
-            <Card key={check.id} className="border border-border">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-medium">{check.question}</h3>
-                  <div className="flex space-x-2">
-                    <Button 
-                      size="sm" 
-                      variant={check.answer === 'yes' ? 'default' : 'outline'}
-                      className={check.answer === 'yes' ? 'bg-green-600 hover:bg-green-700' : ''}
-                      onClick={() => handleSuitabilityUpdate(check.id, 'yes')}
-                    >
-                      <Check className="h-4 w-4 mr-1" /> Yes
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant={check.answer === 'no' ? 'default' : 'outline'}
-                      className={check.answer === 'no' ? 'bg-red-600 hover:bg-red-700' : ''}
-                      onClick={() => handleSuitabilityUpdate(check.id, 'no')}
-                    >
-                      <X className="h-4 w-4 mr-1" /> No
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      variant={check.answer === 'unknown' ? 'default' : 'outline'}
-                      className={check.answer === 'unknown' ? 'bg-yellow-600 hover:bg-yellow-700' : ''}
-                      onClick={() => handleSuitabilityUpdate(check.id, 'unknown')}
-                    >
-                      <AlertTriangle className="h-4 w-4 mr-1" /> Unsure
-                    </Button>
-                  </div>
-                </div>
-                {check.answer !== 'unknown' && (
-                  <div className="mt-3 flex items-start">
-                    <div className={`mt-1 rounded-full p-1 ${
-                      check.answer === 'yes' ? 'bg-green-100 text-green-600' : 
-                      check.answer === 'no' ? 'bg-red-100 text-red-600' : 
-                      'bg-yellow-100 text-yellow-600'
-                    }`}>
-                      {check.answer === 'yes' && <Check className="h-3 w-3" />}
-                      {check.answer === 'no' && <X className="h-3 w-3" />}
-                      {check.answer === 'unknown' && <AlertTriangle className="h-3 w-3" />}
-                    </div>
-                    <div className="ml-2 text-sm text-muted-foreground">
-                      {check.answer === 'yes' && "This is positive for your project."}
-                      {check.answer === 'no' && "This could be a concern. Consider addressing this before proceeding."}
-                      {check.answer === 'unknown' && "More information needed to assess this aspect."}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2">
-            <Card className="border border-border">
-              <CardHeader className="p-4 pb-2">
-                <CardTitle className="text-base">AI Assistant</CardTitle>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <p className="text-sm text-muted-foreground mb-3">
-                  Ask about potential biases or limitations in your chosen dataset.
-                </p>
-                <div className="flex gap-2">
-                  <Input 
-                    placeholder="e.g., Is this data biased or limited in any way?" 
-                    value={chatQuestion}
-                    onChange={(e) => setChatQuestion(e.target.value)}
-                    className="flex-1"
-                  />
-                  <Button onClick={handleSubmitQuestion}>
-                    Ask
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <div>
-            <Card className="border border-border h-full">
-              <CardContent className="p-4 flex flex-col h-full justify-center">
-                <h3 className="font-medium mb-2">Suitability Score</h3>
-                <Progress value={suitabilityScore} className="h-2 mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  {suitabilityScore <= 40 && "There may be significant data issues to address."}
-                  {suitabilityScore > 40 && suitabilityScore < 75 && "The data appears moderately suitable with some concerns."}
-                  {suitabilityScore >= 75 && "The data appears highly suitable for your project."}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={moveToPreviousStep}>
-          Previous
-        </Button>
-        <Button 
-          onClick={moveToNextStep} 
-          disabled={suitabilityChecks.every(check => check.answer === 'unknown')}
-        >
-          Next Step <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-
-  // Render Final Feasibility Gate (Step 5)
-  const renderFinalFeasibilityGate = () => (
-    <Card className="mb-6">
-      <CardHeader>
-        <CardTitle className="flex items-center text-xl font-semibold">
-          <span className="bg-primary text-primary-foreground rounded-full h-7 w-7 flex items-center justify-center mr-2 text-sm">5</span>
-          Final Feasibility Gate
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-muted-foreground mb-6">Review your project plan and decide whether to proceed to development or adjust your scope.</p>
-        
-        <Card className="border border-border shadow-sm mb-6">
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-medium mb-3">Selected Use Case</h3>
-                {selectedUseCase ? (
-                  <div>
-                    <p className="font-medium text-lg">{selectedUseCase.title}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{selectedUseCase.description}</p>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {selectedUseCase.tags.map(tag => (
-                        <div key={tag} className="bg-secondary/20 text-secondary-foreground px-2 py-1 rounded-full text-xs">
-                          {tag}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">No use case selected</p>
-                )}
-              </div>
-              
-              <div>
-                <h3 className="font-medium mb-3">Feasibility Summary</h3>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`px-3 py-1 rounded-full text-white text-xs ${
-                    feasibilityRisk === 'low' ? 'bg-green-500' : 
-                    feasibilityRisk === 'medium' ? 'bg-yellow-500' : 
-                    'bg-red-500'
-                  }`}>
-                    {feasibilityRisk.toUpperCase()} RISK
-                  </div>
-                  <span className="text-muted-foreground text-sm">Score: {feasibilityScore}/100</span>
-                </div>
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium mb-1">Key Constraints</h4>
-                  <ul className="text-sm text-muted-foreground list-disc pl-5">
-                    <li>Time: {constraints.find(c => c.id === "time")?.value as string}</li>
-                    <li>Technical Capacity: {constraints.find(c => c.id === "tech")?.value as string}</li>
-                    <li>Internet Access: {constraints.find(c => c.id === "internet")?.value ? "Available" : "Limited"}</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            
-            <div className="border-t border-border my-6"></div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-medium mb-3">Selected Dataset</h3>
-                {selectedDataset ? (
-                  <div>
-                    <p className="font-medium">{selectedDataset.title}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{selectedDataset.description}</p>
-                    <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Source:</span> {selectedDataset.source}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Format:</span> {selectedDataset.format}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Size:</span> {selectedDataset.size}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">License:</span> {selectedDataset.license}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">No dataset selected</p>
-                )}
-              </div>
-              
-              <div>
-                <h3 className="font-medium mb-3">Data Suitability</h3>
-                <div className="flex items-center gap-2 mb-2">
-                  <Progress value={suitabilityScore} className="h-2 flex-1" />
-                  <span className="text-muted-foreground text-sm">{suitabilityScore}/100</span>
-                </div>
-                <div className="mt-3">
-                  {suitabilityChecks.map(check => (
-                    <div key={check.id} className="flex items-center mb-2">
-                      {check.answer === 'yes' && <Check className="h-4 w-4 text-green-600 mr-2" />}
-                      {check.answer === 'no' && <X className="h-4 w-4 text-red-600 mr-2" />}
-                      {check.answer === 'unknown' && <AlertTriangle className="h-4 w-4 text-yellow-600 mr-2" />}
-                      <span className="text-sm">{check.question}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <div className="flex flex-col items-center text-center p-4">
-          <h3 className="font-medium text-lg mb-3">Is this project ready to move forward?</h3>
-          <p className="text-muted-foreground mb-6 max-w-md">
-            Based on your selected use case, dataset, and assessment, do you believe this project is ready to proceed to the Development phase?
-          </p>
-          
-          <div className="flex gap-4">
-            <Button 
-              variant={readyToAdvance === false ? "default" : "outline"} 
-              className={readyToAdvance === false ? "bg-red-600 hover:bg-red-700" : ""}
-              onClick={() => setReadyToAdvance(false)}
-            >
-              <X className="h-4 w-4 mr-2" />
-              No, Revise Approach
-            </Button>
-            
-            <Button 
-              variant={readyToAdvance === true ? "default" : "outline"}
-              className={readyToAdvance === true ? "bg-green-600 hover:bg-green-700" : ""} 
-              onClick={() => setReadyToAdvance(true)}
-            >
-              <Check className="h-4 w-4 mr-2" />
-              Yes, Ready to Proceed
-            </Button>
-          </div>
-          
-          {readyToAdvance === false && (
-            <div className="mt-4 text-sm text-muted-foreground">
-              Consider revisiting earlier steps to adjust your approach before proceeding.
-            </div>
-          )}
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={moveToPreviousStep}>
-          Previous
-        </Button>
-        <Button onClick={handleCompletePhase} disabled={readyToAdvance !== true}>
-          Complete Phase
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-
   return (
     <div className="space-y-6">
       <div className="mb-8">
@@ -1093,11 +418,74 @@ export const ScopingPhase = ({
         </div>
       </div>
       
-      {activeStep === 1 && renderUseCaseExplorer()}
-      {activeStep === 2 && renderFeasibilityForm()}
-      {activeStep === 3 && renderDatasetDiscovery()}
-      {activeStep === 4 && renderSuitabilityChecklist()}
-      {activeStep === 5 && renderFinalFeasibilityGate()}
+      {activeStep === 1 && (
+        <UseCaseExplorer
+          useCases={useCases}
+          loadingUseCases={loadingUseCases}
+          selectedUseCase={selectedUseCase}
+          handleSelectUseCase={handleSelectUseCase}
+          moveToNextStep={moveToNextStep}
+        />
+      )}
+      
+      {activeStep === 2 && (
+        <FeasibilityForm
+          constraints={constraints}
+          handleConstraintUpdate={handleConstraintUpdate}
+          feasibilityScore={feasibilityScore}
+          feasibilityRisk={feasibilityRisk}
+          moveToPreviousStep={moveToPreviousStep}
+          moveToNextStep={moveToNextStep}
+        />
+      )}
+      
+      {activeStep === 3 && (
+        <DatasetDiscovery
+          datasets={datasets}
+          filteredDatasets={filteredDatasets}
+          searchTerm={searchTerm}
+          selectedCategory={selectedCategory}
+          selectedDataset={selectedDataset}
+          previewDataset={previewDataset}
+          loadingDatasets={loadingDatasets}
+          handleSearch={handleSearch}
+          handleCategorySelect={handleCategorySelect}
+          handleSelectDataset={handleSelectDataset}
+          handlePreviewDataset={handlePreviewDataset}
+          setPreviewDataset={setPreviewDataset}
+          moveToPreviousStep={moveToPreviousStep}
+          moveToNextStep={moveToNextStep}
+        />
+      )}
+      
+      {activeStep === 4 && (
+        <SuitabilityChecklist
+          suitabilityChecks={suitabilityChecks}
+          handleSuitabilityUpdate={handleSuitabilityUpdate}
+          suitabilityScore={suitabilityScore}
+          chatQuestion={chatQuestion}
+          setChatQuestion={setChatQuestion}
+          handleSubmitQuestion={handleSubmitQuestion}
+          moveToPreviousStep={moveToPreviousStep}
+          moveToNextStep={moveToNextStep}
+        />
+      )}
+      
+      {activeStep === 5 && (
+        <FinalFeasibilityGate
+          selectedUseCase={selectedUseCase}
+          selectedDataset={selectedDataset}
+          constraints={constraints}
+          feasibilityScore={feasibilityScore}
+          feasibilityRisk={feasibilityRisk}
+          suitabilityChecks={suitabilityChecks}
+          suitabilityScore={suitabilityScore}
+          readyToAdvance={readyToAdvance}
+          setReadyToAdvance={setReadyToAdvance}
+          moveToPreviousStep={moveToPreviousStep}
+          handleCompletePhase={handleCompletePhase}
+        />
+      )}
     </div>
   );
 };
