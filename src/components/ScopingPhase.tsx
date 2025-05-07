@@ -188,7 +188,7 @@ export const ScopingPhase = ({
       setLoadingDatasets(false);
     }, 1500);
 
-    // Update progress
+    // Update progress when component mounts
     onUpdateProgress(0, totalSteps);
   }, [onUpdateProgress]);
 
@@ -246,8 +246,6 @@ export const ScopingPhase = ({
         selected: uc.id === useCase.id
       }))
     );
-    
-    // Removed toast notification
   };
 
   // Handle dataset search and filtering
@@ -283,8 +281,6 @@ export const ScopingPhase = ({
   // Handle dataset selection
   const handleSelectDataset = (dataset: Dataset) => {
     setSelectedDataset(dataset);
-    
-    // Removed toast notification
   };
 
   // Handle dataset preview
@@ -346,16 +342,7 @@ export const ScopingPhase = ({
       return;
     }
     
-    if (readyToAdvance !== true) {
-      toast({
-        title: "Final Review Required",
-        description: "Please confirm the project is ready to proceed.",
-        variant: "destructive"
-      });
-      setActiveStep(5);
-      return;
-    }
-    
+    // Call the parent's onCompletePhase function to update sidebar and move to next phase
     onCompletePhase();
   };
 
