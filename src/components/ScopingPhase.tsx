@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
 import { FeasibilityForm } from "@/components/scoping/FeasibilityForm";
-import { DatasetDiscovery } from "@/components/scoping/DatasetDiscovery";
+import { DatasetDiscovery } from "@/components/scoping/dataset-discovery/DatasetDiscovery";
 import { SuitabilityChecklist } from "@/components/scoping/SuitabilityChecklist";
 import { FinalFeasibilityGate } from "@/components/scoping/FinalFeasibilityGate";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
