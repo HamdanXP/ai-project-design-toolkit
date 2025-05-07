@@ -1,9 +1,11 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle } from "lucide-react";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
+import { StepHeading } from "./common/StepHeading";
+import { RiskIndicator } from "./common/RiskIndicator";
 
 type FinalFeasibilityGateProps = {
   selectedUseCase: UseCase | null;
@@ -35,10 +37,7 @@ export const FinalFeasibilityGate = ({
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle className="flex items-center text-xl font-semibold">
-          <span className="bg-primary text-primary-foreground rounded-full h-7 w-7 flex items-center justify-center mr-2 text-sm">5</span>
-          Final Feasibility Gate
-        </CardTitle>
+        <StepHeading stepNumber={5} title="Final Feasibility Gate" />
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground mb-6">Review your project plan and decide whether to proceed to development or adjust your scope.</p>
@@ -68,13 +67,7 @@ export const FinalFeasibilityGate = ({
               <div>
                 <h3 className="font-medium mb-3">Feasibility Summary</h3>
                 <div className="flex items-center gap-2 mb-2">
-                  <div className={`px-3 py-1 rounded-full text-white text-xs ${
-                    feasibilityRisk === 'low' ? 'bg-green-500' : 
-                    feasibilityRisk === 'medium' ? 'bg-yellow-500' : 
-                    'bg-red-500'
-                  }`}>
-                    {feasibilityRisk.toUpperCase()} RISK
-                  </div>
+                  <RiskIndicator risk={feasibilityRisk} />
                   <span className="text-muted-foreground text-sm">Score: {feasibilityScore}/100</span>
                 </div>
                 <div className="mt-4">

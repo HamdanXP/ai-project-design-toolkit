@@ -1,11 +1,12 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { ArrowRight, Check, X, AlertTriangle } from "lucide-react";
 import { DataSuitabilityCheck } from "@/types/scoping-phase";
+import { StepHeading } from "./common/StepHeading";
 
 type SuitabilityChecklistProps = {
   suitabilityChecks: DataSuitabilityCheck[];
@@ -31,10 +32,7 @@ export const SuitabilityChecklist = ({
   return (
     <Card className="mb-6">
       <CardHeader>
-        <CardTitle className="flex items-center text-xl font-semibold">
-          <span className="bg-primary text-primary-foreground rounded-full h-7 w-7 flex items-center justify-center mr-2 text-sm">4</span>
-          Data Suitability Checklist
-        </CardTitle>
+        <StepHeading stepNumber={4} title="Data Suitability Checklist" />
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground mb-6">Evaluate how suitable your chosen dataset is for your project. Identifying potential issues now can save time and resources later.</p>
@@ -99,7 +97,7 @@ export const SuitabilityChecklist = ({
           <div className="md:col-span-2">
             <Card className="border border-border">
               <CardHeader className="p-4 pb-2">
-                <CardTitle className="text-base">AI Assistant</CardTitle>
+                <h3 className="text-base font-medium">AI Assistant</h3>
               </CardHeader>
               <CardContent className="p-4 pt-0">
                 <p className="text-sm text-muted-foreground mb-3">
