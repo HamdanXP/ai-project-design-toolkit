@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { BackButton } from "@/components/BackButton";
 
 const Profile = () => {
   const [name, setName] = useState("John Doe");
@@ -27,7 +28,10 @@ const Profile = () => {
       <TopBar />
       <div className="container mx-auto px-4 pt-20 md:pt-24 pb-8">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-2xl md:text-3xl font-bold mb-6">My Profile</h1>
+          <div className="flex items-center mb-6">
+            <BackButton />
+            <h1 className="text-2xl md:text-3xl font-bold ml-3">My Profile</h1>
+          </div>
           
           <Card className="mb-6 shadow-md border-opacity-50 overflow-hidden bg-card/50 backdrop-blur-sm">
             <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/5 pb-6">

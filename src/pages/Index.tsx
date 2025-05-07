@@ -26,9 +26,7 @@ const Index = () => {
         onSignIn={handleSignIn}
         onSignUp={handleSignUp}
       />
-      <div className="pt-16"> {/* Add padding to account for fixed navbar */}
-        <HomePage />
-      </div>
+      <HomePage />
     </div>
   );
 };
