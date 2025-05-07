@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle } from "lucide-react";
@@ -34,6 +34,18 @@ export const FinalFeasibilityGate = ({
   moveToPreviousStep,
   handleCompletePhase,
 }: FinalFeasibilityGateProps) => {
+  // Auto-trigger handleCompletePhase when readyToAdvance is set to true
+  useEffect(() => {
+    if (readyToAdvance === true) {
+      // Small delay to allow UI updates before phase completion
+      const timer = setTimeout(() => {
+        handleCompletePhase();
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [readyToAdvance, handleCompletePhase]);
+
   return (
     <Card className="mb-6">
       <CardHeader>

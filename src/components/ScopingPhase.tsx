@@ -1,13 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
 import { FeasibilityForm } from "@/components/scoping/FeasibilityForm";
 import { DatasetDiscovery } from "@/components/scoping/dataset-discovery/DatasetDiscovery";
 import { SuitabilityChecklist } from "@/components/scoping/SuitabilityChecklist";
 import { FinalFeasibilityGate } from "@/components/scoping/FinalFeasibilityGate";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
+import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle } from "lucide-react";
 
 export const ScopingPhase = ({
@@ -247,11 +247,7 @@ export const ScopingPhase = ({
       }))
     );
     
-    // Show success toast
-    toast({
-      title: "Use Case Selected",
-      description: `You selected: ${useCase.title}`,
-    });
+    // Removed toast notification
   };
 
   // Handle dataset search and filtering
@@ -288,10 +284,7 @@ export const ScopingPhase = ({
   const handleSelectDataset = (dataset: Dataset) => {
     setSelectedDataset(dataset);
     
-    toast({
-      title: "Dataset Selected",
-      description: `You selected: ${dataset.title}`,
-    });
+    // Removed toast notification
   };
 
   // Handle dataset preview

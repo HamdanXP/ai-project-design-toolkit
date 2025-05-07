@@ -25,7 +25,7 @@ export const useProjectPhases = () => {
       name: "Scoping",
       status: "not-started",
       progress: 0,
-      totalSteps: 5, // Fixed from 6 to 5
+      totalSteps: 5,
       completedSteps: 0
     },
     {
@@ -118,10 +118,8 @@ export const useProjectPhases = () => {
     
     if (currentIndex < phaseOrder.length - 1) {
       const nextPhaseId = phaseOrder[currentIndex + 1];
-      toast({
-        title: `${phases.find(p => p.id === phaseId)?.name} Phase Completed!`,
-        description: `Moving to ${phases.find(p => p.id === nextPhaseId)?.name} Phase.`,
-      });
+      
+      // Removed toast notification
       
       // Update the next phase to in-progress
       setPhases(prevPhases => 
@@ -138,13 +136,8 @@ export const useProjectPhases = () => {
       
       // Move to the next phase
       setActivePhaseId(nextPhaseId);
-    } else {
-      // If all phases are completed, show a notification
-      toast({
-        title: "All Phases Completed!",
-        description: "Your project blueprint is complete. Click 'Complete Project' to continue.",
-      });
     }
+    // Removed notification for all phases completed
   };
 
   const handleReflectionProgress = (completed: number, total: number) => {
