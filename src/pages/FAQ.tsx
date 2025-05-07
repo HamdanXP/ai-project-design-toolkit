@@ -1,4 +1,3 @@
-
 import { TopBar } from "@/components/TopBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -42,7 +41,7 @@ const FAQ = () => {
       <div className="container mx-auto px-4 pt-20 md:pt-24 pb-8">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center mb-6">
-            <BackButton variant="home" />
+            <BackButton />
             <h1 className="text-2xl md:text-3xl font-bold ml-3">Frequently Asked Questions</h1>
           </div>
           

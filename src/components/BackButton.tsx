@@ -4,24 +4,18 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface BackButtonProps {
-  variant?: "home" | "back";
   label?: string;
   className?: string;
 }
 
 export const BackButton = ({ 
-  variant = "back", 
-  label = variant === "home" ? "Back to Home" : "Back",
+  label = "Back",
   className = ""
 }: BackButtonProps) => {
   const navigate = useNavigate();
   
   const handleClick = () => {
-    if (variant === "home") {
-      navigate("/");
-    } else {
-      navigate(-1);
-    }
+    navigate(-1);
   };
 
   return (

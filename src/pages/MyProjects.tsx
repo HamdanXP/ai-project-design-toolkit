@@ -30,7 +30,7 @@ const MyProjects = () => {
       <TopBar />
       <div className="container mx-auto px-4 py-12 pt-24">
         <div className="flex items-center mb-8">
-          <BackButton variant="home" />
+          <BackButton />
           <h1 className="text-3xl font-bold text-foreground ml-3">My Projects</h1>
         </div>
         

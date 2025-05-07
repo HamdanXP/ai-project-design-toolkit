@@ -1,4 +1,3 @@
-
 import { TopBar } from "@/components/TopBar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,7 @@ const Settings = () => {
       <div className="container mx-auto px-4 py-12 pt-24">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center mb-8">
-            <BackButton variant="home" />
+            <BackButton />
             <h1 className="text-3xl font-bold text-foreground ml-3">Settings</h1>
           </div>
           

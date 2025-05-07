@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { TopBar } from "@/components/TopBar";
 import { Button } from "@/components/ui/button";
@@ -138,7 +137,7 @@ const ProjectBlueprint = () => {
         
         <div className="flex-1 p-4 md:p-6 overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
-            <BackButton variant="home" />
+            <BackButton />
 
             {isMobile && (
               <Button 

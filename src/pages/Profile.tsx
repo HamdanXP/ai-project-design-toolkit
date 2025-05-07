@@ -29,7 +29,7 @@ const Profile = () => {
       <div className="container mx-auto px-4 pt-20 md:pt-24 pb-8">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center mb-6">
-            <BackButton variant="home" />
+            <BackButton />
             <h1 className="text-2xl md:text-3xl font-bold ml-3">My Profile</h1>
           </div>
           
