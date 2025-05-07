@@ -3,12 +3,14 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Plus, ArrowRight } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Plus, ArrowRight, Image, Paperclip, File, X } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 const HomePage = () => {
   const navigate = useNavigate();
   const [inputValue, setInputValue] = useState("");
+  const [isAttachingFile, setIsAttachingFile] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
   // Example of projects data - would come from an API in a real app
   const [projects] = useState([
@@ -49,8 +51,12 @@ const HomePage = () => {
     navigate("/project-blueprint");
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
+    
+    // Automatically adjust the height
+    e.target.style.height = 'auto';
+    e.target.style.height = `${e.target.scrollHeight}px`;
   };
 
   const handleGoToBlueprint = () => {
@@ -61,10 +67,30 @@ const HomePage = () => {
 
   const handleSuggestionClick = (prompt: string) => {
     setInputValue(prompt);
+    
+    // Update textarea height after setting the value
+    setTimeout(() => {
+      const textarea = document.getElementById('prompt-input') as HTMLTextAreaElement;
+      if (textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+    }, 0);
   };
 
   const handleViewAll = () => {
     navigate("/my-projects");
+  };
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+      setIsAttachingFile(false);
+    }
+  };
+  
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
   };
 
   return (
@@ -80,22 +106,83 @@ const HomePage = () => {
 
           <Card className="mb-4 md:mb-8 shadow-card-light dark:shadow-card-dark">
             <CardContent className="p-3 md:p-6">
-              <div className="relative flex items-center">
-                <Input
-                  type="text"
+              <div className="relative flex flex-col">
+                <Textarea
+                  id="prompt-input"
                   value={inputValue}
                   onChange={handleInputChange}
                   placeholder="Ask Lovable to create a portfolio website for my..."
-                  className="pr-12 bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-sm md:text-base"
+                  className="bg-transparent border-none outline-none text-foreground placeholder-muted-foreground text-sm md:text-base min-h-[40px] resize-none overflow-hidden"
+                  onFocus={(e) => {
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${e.target.scrollHeight}px`;
+                  }}
                 />
-                <Button
-                  className="absolute right-0 top-1/2 transform -translate-y-1/2 rounded-full aspect-square p-1.5"
-                  size="icon"
-                  disabled={!inputValue.trim()}
-                  onClick={handleGoToBlueprint}
-                >
-                  <ArrowRight className={`size-4 ${!inputValue.trim() ? 'text-muted-foreground' : ''}`} />
-                </Button>
+                
+                {selectedFile && (
+                  <div className="flex items-center gap-2 mt-2 mb-1 bg-accent/20 p-2 rounded-md">
+                    <File className="h-4 w-4 text-primary" />
+                    <span className="text-xs text-foreground truncate">{selectedFile.name}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 w-6 p-0 ml-auto" 
+                      onClick={handleRemoveFile}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+                
+                <div className="flex items-center justify-between mt-2">
+                  <div className="flex gap-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-8 w-8 p-0"
+                      onClick={() => setIsAttachingFile(!isAttachingFile)}
+                    >
+                      <Paperclip className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                    
+                    {isAttachingFile && (
+                      <div className="absolute bottom-12 left-0 bg-card p-3 rounded-md shadow-md border border-border flex gap-2">
+                        <label className="cursor-pointer flex flex-col items-center gap-1">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <Image className="h-5 w-5 text-primary" />
+                          </div>
+                          <span className="text-xs">Image</span>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={handleFileChange}
+                          />
+                        </label>
+                        
+                        <label className="cursor-pointer flex flex-col items-center gap-1">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <File className="h-5 w-5 text-primary" />
+                          </div>
+                          <span className="text-xs">File</span>
+                          <input 
+                            type="file" 
+                            className="hidden" 
+                            onChange={handleFileChange}
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    className="rounded-full aspect-square p-1.5"
+                    size="icon"
+                    disabled={!inputValue.trim()}
+                    onClick={handleGoToBlueprint}
+                  >
+                    <ArrowRight className={`size-4 ${!inputValue.trim() ? 'text-muted-foreground' : ''}`} />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
