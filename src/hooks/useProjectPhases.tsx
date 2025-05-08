@@ -62,10 +62,16 @@ export const useProjectPhases = () => {
     }
   }, []);
 
+  // Modified updatePhaseProgress to prevent overwriting completed phases
   const updatePhaseProgress = (phaseId: string, completed: number, total: number) => {
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
+          // Skip updating if phase is already marked as completed
+          if (phase.status === "completed") {
+            return phase;
+          }
+          
           const progress = Math.round((completed / total) * 100);
           const status = 
             progress === 0 ? "not-started" :
@@ -83,11 +89,17 @@ export const useProjectPhases = () => {
     );
   };
   
-  // Direct method to update phase status and progress
+  // Modified to prevent overriding status once a phase is marked complete
   const updatePhaseStatus = (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => {
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
+          // If we're trying to update a completed phase with an in-progress status, skip the update
+          // This prevents overwriting the completed status unintentionally
+          if (phase.status === "completed" && status !== "completed") {
+            return phase;
+          }
+          
           const completedSteps = status === "completed" ? phase.totalSteps : 
                                status === "not-started" ? 0 : 
                                Math.round((progress / 100) * phase.totalSteps);
@@ -160,6 +172,7 @@ export const useProjectPhases = () => {
     }
   };
 
+  // These handlers now use the modified updatePhaseProgress
   const handleReflectionProgress = (completed: number, total: number) => {
     updatePhaseProgress("reflection", completed, total);
   };

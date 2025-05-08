@@ -35,6 +35,9 @@ export const ProjectPhaseContent = ({
   allPhasesCompleted,
   phases
 }: ProjectPhaseContentProps) => {
+  // Get the current phase status to pass to ScopingPhase
+  const currentPhaseStatus = phases.find(p => p.id === activePhaseId)?.status || "not-started";
+
   return (
     <>
       {activePhaseId === "reflection" && (
@@ -50,6 +53,7 @@ export const ProjectPhaseContent = ({
             onUpdateProgress={handleScopingProgress}
             onCompletePhase={() => handleCompletePhase("scoping")}
             updatePhaseStatus={updatePhaseStatus}
+            currentPhaseStatus={currentPhaseStatus}
           />
         ) : (
           <PhaseLockedMessage phaseName="Scoping" />

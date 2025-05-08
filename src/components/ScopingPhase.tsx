@@ -12,11 +12,13 @@ import { AlertTriangle } from "lucide-react";
 export const ScopingPhase = ({
   onUpdateProgress,
   onCompletePhase,
-  updatePhaseStatus
+  updatePhaseStatus,
+  currentPhaseStatus = "in-progress"
 }: {
   onUpdateProgress: (completed: number, total: number) => void;
   onCompletePhase: () => void;
   updatePhaseStatus: (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => void;
+  currentPhaseStatus?: "not-started" | "in-progress" | "completed";
 }) => {
   const { toast } = useToast();
   
@@ -233,11 +235,15 @@ export const ScopingPhase = ({
     setSuitabilityScore(score);
   }, [suitabilityChecks]);
 
-  // Update progress when step changes
+  // If the phase is already marked as completed, don't update progress
   useEffect(() => {
-    // This ensures the progress bar reflects the current step
-    onUpdateProgress(activeStep - 1, totalSteps);
-  }, [activeStep, onUpdateProgress]);
+    if (currentPhaseStatus !== "completed") {
+      onUpdateProgress(activeStep - 1, totalSteps);
+    } else {
+      // If phase is completed, show full progress
+      onUpdateProgress(totalSteps, totalSteps);
+    }
+  }, [activeStep, currentPhaseStatus, onUpdateProgress, totalSteps]);
 
   // Handle use case selection
   const handleSelectUseCase = (useCase: UseCase) => {
@@ -325,14 +331,17 @@ export const ScopingPhase = ({
     }
   };
 
-  // Reset the phase function
+  // Update resetPhase function to respect completed status
   const resetPhase = () => {
-    setActiveStep(1);
-    onUpdateProgress(0, totalSteps);
-    updatePhaseStatus("scoping", "in-progress", 0);
+    // Only reset if not already completed
+    if (currentPhaseStatus !== "completed") {
+      setActiveStep(1);
+      onUpdateProgress(0, totalSteps);
+      updatePhaseStatus("scoping", "in-progress", 0);
+    }
   };
 
-  // Handle phase completion
+  // Handle phase completion without overriding completed status
   const handleCompletePhase = () => {
     // Check if the user has completed the necessary steps
     if (!selectedUseCase) {
@@ -365,11 +374,12 @@ export const ScopingPhase = ({
       return;
     }
     
-    // Update progress to show full completion
-    onUpdateProgress(totalSteps, totalSteps);
+    // Only update progress if not already completed
+    if (currentPhaseStatus !== "completed") {
+      onUpdateProgress(totalSteps, totalSteps);
+    }
     
-    // Call the phase completion handler 
-    // This will update the sidebar before navigating
+    // Call the phase completion handler
     onCompletePhase();
   };
 
@@ -384,10 +394,12 @@ export const ScopingPhase = ({
         <div className="mt-6">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <Progress value={(activeStep / totalSteps) * 100} className="h-2" />
+              <Progress value={currentPhaseStatus === "completed" ? 100 : (activeStep / totalSteps) * 100} className="h-2" />
             </div>
             <div className="text-sm text-muted-foreground whitespace-nowrap">
-              Step {activeStep} of {totalSteps}
+              {currentPhaseStatus === "completed" ? 
+                `${totalSteps}/${totalSteps}` : 
+                `Step ${activeStep} of ${totalSteps}`}
             </div>
           </div>
         </div>
