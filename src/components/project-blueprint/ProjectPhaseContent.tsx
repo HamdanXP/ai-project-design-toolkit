@@ -33,7 +33,6 @@ export const ProjectPhaseContent = ({
   allPhasesCompleted,
   phases
 }: ProjectPhaseContentProps) => {
-  
   return (
     <>
       {activePhaseId === "reflection" && (
@@ -78,12 +77,7 @@ export const ProjectPhaseContent = ({
       
       {allPhasesCompleted && (
         <div className="mt-8 flex justify-center">
-          <button 
-            className="bg-primary text-primary-foreground hover:bg-primary/90 py-6 text-lg px-8 rounded-md"
-            onClick={handleCompleteProject}
-          >
-            Complete Project
-          </button>
+          <CompleteProjectButton onClick={handleCompleteProject} />
         </div>
       )}
       

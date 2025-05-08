@@ -247,8 +247,6 @@ export const ScopingPhase = ({
         selected: uc.id === useCase.id
       }))
     );
-    
-    // Removed toast notification
   };
 
   // Handle dataset search and filtering
@@ -284,8 +282,6 @@ export const ScopingPhase = ({
   // Handle dataset selection
   const handleSelectDataset = (dataset: Dataset) => {
     setSelectedDataset(dataset);
-    
-    // Removed toast notification
   };
 
   // Handle dataset preview
@@ -314,15 +310,17 @@ export const ScopingPhase = ({
   // Handle step navigation
   const moveToNextStep = () => {
     if (activeStep < totalSteps) {
-      setActiveStep(prev => prev + 1);
-      onUpdateProgress(activeStep, totalSteps); // Update progress to reflect the current step completed
+      const nextStep = activeStep + 1;
+      setActiveStep(nextStep);
+      onUpdateProgress(nextStep - 1, totalSteps);
     }
   };
   
   const moveToPreviousStep = () => {
     if (activeStep > 1) {
-      setActiveStep(prev => prev - 1);
-      onUpdateProgress(activeStep - 2, totalSteps); // Update progress to reflect current step
+      const prevStep = activeStep - 1;
+      setActiveStep(prevStep);
+      onUpdateProgress(prevStep - 1, totalSteps); 
     }
   };
 
@@ -359,14 +357,12 @@ export const ScopingPhase = ({
       return;
     }
     
-    // Update progress to show full completion before calling onCompletePhase
+    // Update progress to show full completion
     onUpdateProgress(totalSteps, totalSteps);
     
-    // Small delay to ensure UI updates before completing
-    setTimeout(() => {
-      // Complete the phase
-      onCompletePhase();
-    }, 100);
+    // Call the phase completion handler 
+    // This will update the sidebar before navigating
+    onCompletePhase();
   };
 
   return (

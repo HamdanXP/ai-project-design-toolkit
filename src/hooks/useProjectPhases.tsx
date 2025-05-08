@@ -101,7 +101,7 @@ export const useProjectPhases = () => {
     // Store in localStorage under a key specific to this phase and project
     localStorage.setItem(`project_phase_${phaseId}`, JSON.stringify(phaseData));
     
-    // Set the phase as completed with 100% progress
+    // Set the phase as completed with 100% progress in the state
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
@@ -115,6 +115,12 @@ export const useProjectPhases = () => {
         return phase;
       })
     );
+    
+    // Show a toast notification after updating the state
+    toast({
+      title: `${currentPhase.name} Phase Completed`,
+      description: `Moving to the next phase.`,
+    });
     
     // Determine the next phase to activate
     const phaseOrder = ["reflection", "scoping", "development", "evaluation"];
@@ -136,15 +142,11 @@ export const useProjectPhases = () => {
         })
       );
       
-      // Move to the next phase
-      setActivePhaseId(nextPhaseId);
+      // Move to the next phase after a short delay to ensure UI updates
+      setTimeout(() => {
+        setActivePhaseId(nextPhaseId);
+      }, 300);
     }
-    
-    // Show a toast notification
-    toast({
-      title: `${phaseId.charAt(0).toUpperCase() + phaseId.slice(1)} Phase Completed`,
-      description: `Moving to the next phase.`,
-    });
   };
 
   const handleReflectionProgress = (completed: number, total: number) => {

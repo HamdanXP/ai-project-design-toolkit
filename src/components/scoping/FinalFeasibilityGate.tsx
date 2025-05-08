@@ -36,6 +36,7 @@ export const FinalFeasibilityGate = ({
   handleCompletePhase,
 }: FinalFeasibilityGateProps) => {
   const { toast } = useToast();
+  const [isCompleting, setIsCompleting] = useState(false);
   
   const onCompletePhase = () => {
     if (readyToAdvance !== true) {
@@ -46,6 +47,8 @@ export const FinalFeasibilityGate = ({
       });
       return;
     }
+    
+    setIsCompleting(true);
     
     // Call the completion handler
     handleCompletePhase();
@@ -192,8 +195,11 @@ export const FinalFeasibilityGate = ({
         <Button variant="outline" onClick={moveToPreviousStep}>
           Previous
         </Button>
-        <Button onClick={onCompletePhase} disabled={readyToAdvance !== true}>
-          Complete Phase
+        <Button 
+          onClick={onCompletePhase} 
+          disabled={readyToAdvance !== true || isCompleting}
+        >
+          {isCompleting ? 'Completing...' : 'Complete Phase'}
         </Button>
       </CardFooter>
     </Card>
