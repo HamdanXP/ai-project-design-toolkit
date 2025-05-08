@@ -88,7 +88,6 @@ export const ProjectPhaseContent = ({
         </div>
       )}
       
-      {/* Add the AI Assistant */}
       <AIAssistant />
     </>
   );

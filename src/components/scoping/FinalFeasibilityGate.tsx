@@ -47,17 +47,19 @@ export const FinalFeasibilityGate = ({
   
   const handleReviseApproach = () => {
     setReadyToAdvance(false);
-    // Reset phase status to in-progress
-    updatePhaseStatus("scoping", "in-progress", 0);
+    // Reset phase status to in-progress with 80% progress (4/5 steps)
+    updatePhaseStatus("scoping", "in-progress", 80);
   };
   
   const onCompletePhase = () => {
-    // Immediately call the completion handler without delay
+    // Immediately call the completion handler
     handleCompletePhase();
   };
   
   const handleRevisePhase = () => {
     // Reset the phase and go back to step 1
+    setReadyToAdvance(false);
+    updatePhaseStatus("scoping", "in-progress", 0);
     resetPhase();
   };
 

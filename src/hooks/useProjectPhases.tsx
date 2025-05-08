@@ -62,17 +62,22 @@ export const useProjectPhases = () => {
     }
   }, []);
 
-  // Modified updatePhaseProgress to prevent overwriting completed phases
+  // Modified updatePhaseProgress to respect explicit status changes
   const updatePhaseProgress = (phaseId: string, completed: number, total: number) => {
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
-          // Skip updating if phase is already marked as completed
-          if (phase.status === "completed") {
+          // Calculate the progress percentage
+          const progress = Math.round((completed / total) * 100);
+          
+          // If we're explicitly trying to update a phase that was manually set to completed or not-completed,
+          // don't change its status based on progress
+          if (phase.status === "completed" && progress < 100) {
+            // Don't change status from completed unless explicitly requested
             return phase;
           }
           
-          const progress = Math.round((completed / total) * 100);
+          // Determine status based on progress
           const status = 
             progress === 0 ? "not-started" :
             progress === 100 ? "completed" : "in-progress";
@@ -89,17 +94,12 @@ export const useProjectPhases = () => {
     );
   };
   
-  // Modified to prevent overriding status once a phase is marked complete
+  // This function explicitly sets the status and should always work
   const updatePhaseStatus = (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => {
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
-          // If we're trying to update a completed phase with an in-progress status, skip the update
-          // This prevents overwriting the completed status unintentionally
-          if (phase.status === "completed" && status !== "completed") {
-            return phase;
-          }
-          
+          // For explicit status updates, always honor the requested status
           const completedSteps = status === "completed" ? phase.totalSteps : 
                                status === "not-started" ? 0 : 
                                Math.round((progress / 100) * phase.totalSteps);
