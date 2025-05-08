@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle } from "lucide-react";
@@ -55,9 +56,10 @@ export const FinalFeasibilityGate = ({
   
   // Handle the final "Complete Phase" button click
   const onCompletePhase = () => {
-    // Complete the phase only when ready to proceed
-    // No longer checking readyToAdvance here - we'll simply call the handler
-    handleCompletePhase();
+    if (readyToAdvance) {
+      // Complete the phase only when ready to proceed
+      handleCompletePhase();
+    }
   };
   
   // Reset the entire phase to start from step 1
