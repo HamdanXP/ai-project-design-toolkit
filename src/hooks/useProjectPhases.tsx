@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -107,24 +106,8 @@ export const useProjectPhases = () => {
   };
 
   const handleCompletePhase = (phaseId: string) => {
-    // First ensure the current phase is marked as 100% completed
-    const currentPhase = phases.find(p => p.id === phaseId);
-    if (!currentPhase) return;
-    
-    // Immediately update the UI to show the phase as completed
-    setPhases(prevPhases => 
-      prevPhases.map(phase => {
-        if (phase.id === phaseId) {
-          return {
-            ...phase,
-            status: "completed",
-            progress: 100,
-            completedSteps: phase.totalSteps
-          };
-        }
-        return phase;
-      })
-    );
+    // First ensure the current phase is marked as 100% completed without flickering
+    updatePhaseStatus(phaseId, "completed", 100);
     
     // Store phase data in localStorage when a phase is completed
     const phaseData = {
@@ -139,7 +122,7 @@ export const useProjectPhases = () => {
     
     // Show a toast notification after updating the state
     toast({
-      title: `${currentPhase.name} Phase Completed`,
+      title: `${phases.find(p => p.id === phaseId)?.name} Phase Completed`,
       description: `Moving to the next phase.`,
     });
     
@@ -151,22 +134,10 @@ export const useProjectPhases = () => {
       const nextPhaseId = phaseOrder[currentIndex + 1];
       
       // Update the next phase to in-progress
-      setPhases(prevPhases => 
-        prevPhases.map(phase => {
-          if (phase.id === nextPhaseId) {
-            return {
-              ...phase,
-              status: "in-progress"
-            };
-          }
-          return phase;
-        })
-      );
+      updatePhaseStatus(nextPhaseId, "in-progress", 0);
       
-      // Move to the next phase after a short delay to ensure UI updates
-      setTimeout(() => {
-        setActivePhaseId(nextPhaseId);
-      }, 300);
+      // Move to the next phase immediately
+      setActivePhaseId(nextPhaseId);
     }
   };
 
