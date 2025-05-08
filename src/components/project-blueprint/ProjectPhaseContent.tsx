@@ -11,6 +11,7 @@ import { CompleteProjectButton } from "./CompleteProjectButton";
 type ProjectPhaseContentProps = {
   activePhaseId: string;
   handleCompletePhase: (phaseId: string) => void;
+  updatePhaseStatus: (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => void;
   canAccessPhase: (phaseId: string) => boolean;
   handleReflectionProgress: (completed: number, total: number) => void;
   handleScopingProgress: (completed: number, total: number) => void;
@@ -24,6 +25,7 @@ type ProjectPhaseContentProps = {
 export const ProjectPhaseContent = ({
   activePhaseId,
   handleCompletePhase,
+  updatePhaseStatus,
   canAccessPhase,
   handleReflectionProgress,
   handleScopingProgress,
@@ -46,7 +48,8 @@ export const ProjectPhaseContent = ({
         canAccessPhase("scoping") ? (
           <ScopingPhase 
             onUpdateProgress={handleScopingProgress}
-            onCompletePhase={() => handleCompletePhase("scoping")} 
+            onCompletePhase={() => handleCompletePhase("scoping")}
+            updatePhaseStatus={updatePhaseStatus}
           />
         ) : (
           <PhaseLockedMessage phaseName="Scoping" />

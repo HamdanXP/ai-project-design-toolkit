@@ -20,6 +20,7 @@ const ProjectBlueprint = () => {
     activePhaseId,
     setActivePhaseId,
     handleCompletePhase,
+    updatePhaseStatus,
     handleReflectionProgress,
     handleScopingProgress,
     handleDevelopmentProgress,
@@ -98,6 +99,7 @@ const ProjectBlueprint = () => {
             <ProjectPhaseContent
               activePhaseId={activePhaseId}
               handleCompletePhase={handleCompletePhase}
+              updatePhaseStatus={updatePhaseStatus}
               canAccessPhase={canAccessPhase}
               handleReflectionProgress={handleReflectionProgress}
               handleScopingProgress={handleScopingProgress}

@@ -84,6 +84,27 @@ export const useProjectPhases = () => {
       })
     );
   };
+  
+  // Direct method to update phase status and progress
+  const updatePhaseStatus = (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => {
+    setPhases(prevPhases => 
+      prevPhases.map(phase => {
+        if (phase.id === phaseId) {
+          const completedSteps = status === "completed" ? phase.totalSteps : 
+                               status === "not-started" ? 0 : 
+                               Math.round((progress / 100) * phase.totalSteps);
+          
+          return {
+            ...phase,
+            status,
+            progress,
+            completedSteps
+          };
+        }
+        return phase;
+      })
+    );
+  };
 
   const handleCompletePhase = (phaseId: string) => {
     // First ensure the current phase is marked as 100% completed
@@ -204,6 +225,7 @@ export const useProjectPhases = () => {
     activePhaseId,
     setActivePhaseId,
     handleCompletePhase,
+    updatePhaseStatus,
     handleReflectionProgress,
     handleScopingProgress,
     handleDevelopmentProgress,

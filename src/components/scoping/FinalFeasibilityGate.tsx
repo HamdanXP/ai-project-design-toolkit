@@ -20,6 +20,8 @@ type FinalFeasibilityGateProps = {
   setReadyToAdvance: (value: boolean) => void;
   moveToPreviousStep: () => void;
   handleCompletePhase: () => void;
+  updatePhaseStatus: (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => void;
+  resetPhase: () => void;
 };
 
 export const FinalFeasibilityGate = ({
@@ -34,9 +36,23 @@ export const FinalFeasibilityGate = ({
   setReadyToAdvance,
   moveToPreviousStep,
   handleCompletePhase,
+  updatePhaseStatus,
+  resetPhase,
 }: FinalFeasibilityGateProps) => {
   const { toast } = useToast();
   const [isCompleting, setIsCompleting] = useState(false);
+  
+  const handleReadyToProceed = () => {
+    setReadyToAdvance(true);
+    // Immediately update sidebar to show phase as completed
+    updatePhaseStatus("scoping", "completed", 100);
+  };
+  
+  const handleReviseApproach = () => {
+    setReadyToAdvance(false);
+    // Reset phase status to in-progress
+    updatePhaseStatus("scoping", "in-progress", 0);
+  };
   
   const onCompletePhase = () => {
     if (readyToAdvance !== true) {
@@ -52,6 +68,11 @@ export const FinalFeasibilityGate = ({
     
     // Call the completion handler
     handleCompletePhase();
+  };
+  
+  const handleRevisePhase = () => {
+    // Reset the phase and go back to step 1
+    resetPhase();
   };
 
   return (
@@ -168,7 +189,7 @@ export const FinalFeasibilityGate = ({
             <Button 
               variant={readyToAdvance === false ? "default" : "outline"} 
               className={readyToAdvance === false ? "bg-red-600 hover:bg-red-700" : ""}
-              onClick={() => setReadyToAdvance(false)}
+              onClick={handleReviseApproach}
             >
               <X className="h-4 w-4 mr-2" />
               No, Revise Approach
@@ -177,7 +198,7 @@ export const FinalFeasibilityGate = ({
             <Button 
               variant={readyToAdvance === true ? "default" : "outline"}
               className={readyToAdvance === true ? "bg-green-600 hover:bg-green-700" : ""} 
-              onClick={() => setReadyToAdvance(true)}
+              onClick={handleReadyToProceed}
             >
               <Check className="h-4 w-4 mr-2" />
               Yes, Ready to Proceed
@@ -195,12 +216,27 @@ export const FinalFeasibilityGate = ({
         <Button variant="outline" onClick={moveToPreviousStep}>
           Previous
         </Button>
-        <Button 
-          onClick={onCompletePhase} 
-          disabled={readyToAdvance !== true || isCompleting}
-        >
-          {isCompleting ? 'Completing...' : 'Complete Phase'}
-        </Button>
+        {readyToAdvance === true ? (
+          <Button 
+            onClick={onCompletePhase} 
+            disabled={isCompleting}
+          >
+            {isCompleting ? 'Completing...' : 'Complete Phase'}
+          </Button>
+        ) : readyToAdvance === false ? (
+          <Button 
+            onClick={handleRevisePhase} 
+            variant="destructive"
+          >
+            Revise Approach
+          </Button>
+        ) : (
+          <Button 
+            disabled={true}
+          >
+            Complete Phase
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

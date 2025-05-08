@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
@@ -12,10 +11,12 @@ import { AlertTriangle } from "lucide-react";
 
 export const ScopingPhase = ({
   onUpdateProgress,
-  onCompletePhase
+  onCompletePhase,
+  updatePhaseStatus
 }: {
   onUpdateProgress: (completed: number, total: number) => void;
   onCompletePhase: () => void;
+  updatePhaseStatus: (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => void;
 }) => {
   const { toast } = useToast();
   
@@ -324,6 +325,13 @@ export const ScopingPhase = ({
     }
   };
 
+  // Reset the phase function
+  const resetPhase = () => {
+    setActiveStep(1);
+    onUpdateProgress(0, totalSteps);
+    updatePhaseStatus("scoping", "in-progress", 0);
+  };
+
   // Handle phase completion
   const handleCompletePhase = () => {
     // Check if the user has completed the necessary steps
@@ -448,6 +456,8 @@ export const ScopingPhase = ({
           setReadyToAdvance={setReadyToAdvance}
           moveToPreviousStep={moveToPreviousStep}
           handleCompletePhase={handleCompletePhase}
+          updatePhaseStatus={updatePhaseStatus}
+          resetPhase={resetPhase}
         />
       )}
     </div>
