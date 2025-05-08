@@ -17,6 +17,10 @@ interface ProjectContextType {
   projectFiles: string[];
   setProjectFiles: React.Dispatch<React.SetStateAction<string[]>>;
   
+  // Reflection phase data
+  reflectionAnswers: Record<number, string>;
+  setReflectionAnswers: React.Dispatch<React.SetStateAction<Record<number, string>>>;
+  
   // Scoping phase data
   scopingActiveStep: number;
   setScopingActiveStep: React.Dispatch<React.SetStateAction<number>>;
@@ -78,6 +82,9 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [projectPrompt, setProjectPrompt] = useState<string>("");
   const [projectFiles, setProjectFiles] = useState<string[]>([]);
   
+  // Reflection phase state
+  const [reflectionAnswers, setReflectionAnswers] = useState<Record<number, string>>({});
+  
   // Scoping phase state
   const [scopingActiveStep, setScopingActiveStep] = useState<number>(1);
   const [selectedUseCase, setSelectedUseCase] = useState<UseCase | null>(null);
@@ -108,6 +115,8 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         setProjectPrompt,
         projectFiles, 
         setProjectFiles,
+        reflectionAnswers,
+        setReflectionAnswers,
         scopingActiveStep, 
         setScopingActiveStep,
         selectedUseCase, 

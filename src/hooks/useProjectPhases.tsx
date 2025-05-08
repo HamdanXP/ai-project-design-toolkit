@@ -2,9 +2,11 @@
 import { useNavigate } from "react-router-dom";
 import { useProject } from "@/contexts/ProjectContext";
 import { ProjectPhase } from "@/types/project";
+import { useToast } from "@/hooks/use-toast";
 
 export const useProjectPhases = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const { 
     phases, 
@@ -70,6 +72,8 @@ export const useProjectPhases = () => {
       }
     }
     
+    console.log(`Updating phase ${phaseId} to status: ${status}, progress: ${progress}`);
+    
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
@@ -89,7 +93,9 @@ export const useProjectPhases = () => {
   };
 
   const handleCompletePhase = (phaseId: string) => {
-    // First, make sure we mark the phase as 100% completed
+    console.log(`Completing phase: ${phaseId}`);
+    
+    // First, make sure we mark the phase as completed
     updatePhaseStatus(phaseId, "completed", 100);
     
     // Reset the scoping decision state if we're completing that phase
@@ -106,6 +112,11 @@ export const useProjectPhases = () => {
     };
     
     console.log("Phase completed with data:", phaseData);
+    
+    // Force a UI update by updating all phases
+    setTimeout(() => {
+      setPhases(prevPhases => [...prevPhases]);
+    }, 100);
     
     // Determine the next phase to activate
     const phaseOrder = ["reflection", "scoping", "development", "evaluation"];
@@ -129,6 +140,11 @@ export const useProjectPhases = () => {
       
       // Immediately move to the next phase
       setActivePhaseId(nextPhaseId);
+      
+      toast({
+        title: "Phase Completed",
+        description: `You've completed the ${phaseId.charAt(0).toUpperCase() + phaseId.slice(1)} phase!`,
+      });
     }
   };
 

@@ -1,10 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useProject } from "@/contexts/ProjectContext";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -37,10 +38,10 @@ type ReflectionPhaseProps = {
 };
 
 export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: ReflectionPhaseProps) => {
+  const { reflectionAnswers, setReflectionAnswers } = useProject();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const totalQuestions = REFLECTION_QUESTIONS.length;
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const totalQuestions = REFLECTION_QUESTIONS.length;
 
   const handleNext = () => {
     if (currentQuestionIndex < totalQuestions - 1) {
@@ -57,37 +58,43 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   };
 
   const updateProgress = () => {
-    const completedCount = Object.keys(answers).filter(key => 
-      answers[parseInt(key)] && answers[parseInt(key)].trim() !== ""
+    const completedCount = Object.keys(reflectionAnswers).filter(key => 
+      reflectionAnswers[parseInt(key)] && reflectionAnswers[parseInt(key)].trim() !== ""
     ).length;
     onUpdateProgress(completedCount, totalQuestions);
   };
 
+  useEffect(() => {
+    // Update progress on initial load and when answers change
+    updateProgress();
+  }, [reflectionAnswers]);
+
   const handleAnswerChange = (value: string) => {
     const currentQuestion = REFLECTION_QUESTIONS[currentQuestionIndex];
-    setAnswers(prev => ({
+    setReflectionAnswers(prev => ({
       ...prev,
       [currentQuestion.id]: value
     }));
-    updateProgress();
   };
 
   const handleCompletePhaseConfirm = () => {
     if (onCompletePhase) {
+      // Ensure that phase is marked as completed by setting all answers
+      updateProgress();
       onCompletePhase();
     }
   };
 
   const currentQuestion = REFLECTION_QUESTIONS[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
-  const currentAnswer = answers[currentQuestion.id] || "";
+  const currentAnswer = reflectionAnswers[currentQuestion.id] || "";
   
   // Check if the user has reached the last question and provided an answer
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
   
   // Calculate how many questions have been answered
-  const answeredQuestionsCount = Object.keys(answers).filter(key => 
-    answers[parseInt(key)] && answers[parseInt(key)].trim() !== ""
+  const answeredQuestionsCount = Object.keys(reflectionAnswers).filter(key => 
+    reflectionAnswers[parseInt(key)] && reflectionAnswers[parseInt(key)].trim() !== ""
   ).length;
   
   // Phase is complete if all questions are answered
