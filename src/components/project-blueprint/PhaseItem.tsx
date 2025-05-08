@@ -21,7 +21,7 @@ export const PhaseItem = ({
   getStatusColor 
 }: PhaseItemProps) => {
   // Create a key that updates when phase data changes to force re-render
-  const itemKey = `phase-${phase.id}-${phase.status}-${phase.progress}-${phase.completedSteps}`;
+  const itemKey = `phase-${phase.id}-${phase.status}-${phase.progress}-${phase.completedSteps}-${isActive ? 'active' : 'inactive'}`;
   
   return (
     <div

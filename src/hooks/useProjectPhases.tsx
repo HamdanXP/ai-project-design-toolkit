@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useProject } from "@/contexts/ProjectContext";
 import { ProjectPhase } from "@/types/project";
@@ -89,7 +88,9 @@ export const useProjectPhases = () => {
   };
 
   const handleCompletePhase = (phaseId: string) => {
-    // Mark the phase as 100% completed
+    console.log("Completing phase:", phaseId);
+    
+    // Mark the phase as 100% completed with "completed" status
     updatePhaseStatus(phaseId, "completed", 100);
     
     // Reset the scoping decision state if we're completing that phase
