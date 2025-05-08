@@ -1,104 +1,22 @@
 
-import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useProject } from "@/contexts/ProjectContext";
 import { ProjectPhase } from "@/types/project";
 
 export const useProjectPhases = () => {
   const navigate = useNavigate();
-  const [activePhaseId, setActivePhaseId] = useState("reflection");
-  const [projectPrompt, setProjectPrompt] = useState<string>("");
-  const [projectFiles, setProjectFiles] = useState<string[]>([]);
   
-  // Get stored phase progress from localStorage on initial load
-  const getInitialPhases = (): ProjectPhase[] => {
-    try {
-      const storedPhases = localStorage.getItem('projectPhases');
-      if (storedPhases) {
-        return JSON.parse(storedPhases);
-      }
-    } catch (error) {
-      console.error("Error loading stored phases:", error);
-    }
-    
-    // Default phases if nothing in localStorage
-    return [
-      {
-        id: "reflection",
-        name: "Reflection",
-        status: "in-progress",
-        progress: 0,
-        totalSteps: 7,
-        completedSteps: 0
-      },
-      {
-        id: "scoping",
-        name: "Scoping",
-        status: "not-started",
-        progress: 0,
-        totalSteps: 5,
-        completedSteps: 0
-      },
-      {
-        id: "development",
-        name: "Development",
-        status: "not-started",
-        progress: 0,
-        totalSteps: 6,
-        completedSteps: 0
-      },
-      {
-        id: "evaluation",
-        name: "Evaluation",
-        status: "not-started",
-        progress: 0,
-        totalSteps: 4,
-        completedSteps: 0
-      }
-    ];
-  };
+  const { 
+    phases, 
+    setPhases, 
+    activePhaseId, 
+    setActivePhaseId, 
+    projectPrompt, 
+    projectFiles, 
+    scopingFinalDecision, 
+    setScopingFinalDecision 
+  } = useProject();
   
-  const [phases, setPhases] = useState<ProjectPhase[]>(getInitialPhases());
-  
-  // Track the scoping phase final decision state
-  const [scopingFinalDecision, setScopingFinalDecision] = useState<'proceed' | 'revise' | null>(() => {
-    try {
-      const stored = localStorage.getItem('scopingFinalDecision');
-      return stored ? (stored as 'proceed' | 'revise') : null;
-    } catch (e) {
-      return null;
-    }
-  });
-
-  // Load project information when component mounts
-  useEffect(() => {
-    const prompt = localStorage.getItem('projectPrompt');
-    const files = localStorage.getItem('projectFiles');
-    
-    if (prompt) {
-      setProjectPrompt(prompt);
-    }
-    
-    if (files) {
-      try {
-        setProjectFiles(JSON.parse(files));
-      } catch (error) {
-        console.error("Error parsing project files:", error);
-      }
-    }
-  }, []);
-  
-  // Save phases to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('projectPhases', JSON.stringify(phases));
-  }, [phases]);
-  
-  // Save scoping final decision state
-  useEffect(() => {
-    if (scopingFinalDecision) {
-      localStorage.setItem('scopingFinalDecision', scopingFinalDecision);
-    }
-  }, [scopingFinalDecision]);
-
   // Function to update phase progress based on completed steps
   const updatePhaseProgress = (phaseId: string, completed: number, total: number) => {
     // Special handling for Scoping phase
@@ -179,7 +97,7 @@ export const useProjectPhases = () => {
       setScopingFinalDecision(null);
     }
     
-    // Store phase data in localStorage when a phase is completed
+    // Store phase data
     const phaseData = {
       phaseId,
       projectPrompt,
@@ -187,8 +105,7 @@ export const useProjectPhases = () => {
       completedAt: new Date().toISOString()
     };
     
-    // Store in localStorage under a key specific to this phase and project
-    localStorage.setItem(`project_phase_${phaseId}`, JSON.stringify(phaseData));
+    console.log("Phase completed with data:", phaseData);
     
     // Determine the next phase to activate
     const phaseOrder = ["reflection", "scoping", "development", "evaluation"];
@@ -241,7 +158,7 @@ export const useProjectPhases = () => {
       completedAt: new Date().toISOString()
     };
     
-    localStorage.setItem('completed_project', JSON.stringify(projectData));
+    console.log("Project completed with data:", projectData);
     navigate('/project-completion');
   };
 

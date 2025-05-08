@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
+
+import { useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
 import { FeasibilityForm } from "@/components/scoping/FeasibilityForm";
 import { DatasetDiscovery } from "@/components/scoping/dataset-discovery/DatasetDiscovery";
 import { SuitabilityChecklist } from "@/components/scoping/SuitabilityChecklist";
 import { FinalFeasibilityGate } from "@/components/scoping/FinalFeasibilityGate";
-import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
+import { UseCase, Dataset } from "@/types/scoping-phase";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle } from "lucide-react";
+import { useProject } from "@/contexts/ProjectContext";
 
 export const ScopingPhase = ({
   onUpdateProgress,
@@ -21,92 +22,41 @@ export const ScopingPhase = ({
   currentPhaseStatus?: "not-started" | "in-progress" | "completed";
 }) => {
   const { toast } = useToast();
-  
-  // State for tracking overall progress
-  const [activeStep, setActiveStep] = useState<number>(() => {
-    // Try to restore the active step from localStorage
-    try {
-      const storedStep = localStorage.getItem('scopingActiveStep');
-      return storedStep ? parseInt(storedStep, 10) : 1;
-    } catch (e) {
-      return 1;
-    }
-  });
   const totalSteps = 5;
   
-  // AI Use Case Explorer state
+  // Get state from context
+  const {
+    scopingActiveStep,
+    setScopingActiveStep,
+    selectedUseCase,
+    setSelectedUseCase,
+    constraints,
+    setConstraints,
+    selectedDataset,
+    setSelectedDataset,
+    suitabilityChecks,
+    setSuitabilityChecks,
+    scopingFinalDecision,
+    setScopingFinalDecision
+  } = useProject();
+  
+  // State for UI
   const [useCases, setUseCases] = useState<UseCase[]>([]);
-  const [selectedUseCase, setSelectedUseCase] = useState<UseCase | null>(null);
   const [loadingUseCases, setLoadingUseCases] = useState(true);
-  
-  // Feasibility Constraints state
-  const [constraints, setConstraints] = useState<FeasibilityConstraint[]>([
-    { id: "time", label: "Time Available", value: "medium-term", options: ["short-term", "medium-term", "long-term"], type: "select" },
-    { id: "tech", label: "Technical Capacity", value: "moderate", options: ["limited", "moderate", "extensive"], type: "select" },
-    { id: "compute", label: "Computing Resources", value: "cloud", options: ["local", "cloud", "hybrid"], type: "select" },
-    { id: "internet", label: "Internet Access", value: true, type: "toggle" },
-    { id: "infrastructure", label: "Local Infrastructure", value: true, type: "toggle" }
-  ]);
-  const [feasibilityScore, setFeasibilityScore] = useState<number>(0);
-  const [feasibilityRisk, setFeasibilityRisk] = useState<'low' | 'medium' | 'high'>('medium');
-  
-  // Dataset Discovery state
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [filteredDatasets, setFilteredDatasets] = useState<Dataset[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [previewDataset, setPreviewDataset] = useState<Dataset | null>(null);
   const [loadingDatasets, setLoadingDatasets] = useState(true);
   
-  // Data Suitability state
-  const [suitabilityChecks, setSuitabilityChecks] = useState<DataSuitabilityCheck[]>([
-    { id: "clean", question: "Is the data clean and usable?", answer: "unknown", description: "" },
-    { id: "representative", question: "Is it representative and fair?", answer: "unknown", description: "" },
-    { id: "privacy", question: "Are there privacy/ethical concerns?", answer: "unknown", description: "" },
-    { id: "quality", question: "Is the data quality sufficient?", answer: "unknown", description: "" }
-  ]);
+  // Derived state
+  const [feasibilityScore, setFeasibilityScore] = useState<number>(0);
+  const [feasibilityRisk, setFeasibilityRisk] = useState<'low' | 'medium' | 'high'>('medium');
   const [suitabilityScore, setSuitabilityScore] = useState<number>(0);
-  
-  // Final Feasibility state
-  const [readyToAdvance, setReadyToAdvance] = useState<boolean | null>(() => {
-    try {
-      const storedDecision = localStorage.getItem('scopingFinalDecision');
-      if (storedDecision === 'proceed') return true;
-      if (storedDecision === 'revise') return false;
-      return null;
-    } catch (e) {
-      return null;
-    }
-  });
-
-  // Save active step to localStorage when it changes
-  useEffect(() => {
-    localStorage.setItem('scopingActiveStep', activeStep.toString());
-  }, [activeStep]);
 
   // Initialize data (in a real app, this would come from an API)
   useEffect(() => {
-    // Try to load stored use case
-    const storedUseCase = localStorage.getItem('selectedUseCase');
-    if (storedUseCase) {
-      try {
-        setSelectedUseCase(JSON.parse(storedUseCase));
-      } catch (e) {
-        console.error("Error loading stored use case:", e);
-      }
-    }
-
-    // Try to load stored dataset
-    const storedDataset = localStorage.getItem('selectedDataset');
-    if (storedDataset) {
-      try {
-        setSelectedDataset(JSON.parse(storedDataset));
-      } catch (e) {
-        console.error("Error loading stored dataset:", e);
-      }
-    }
-    
     // Simulate loading use cases
     setTimeout(() => {
       setUseCases([
@@ -235,19 +185,18 @@ export const ScopingPhase = ({
 
     // DO NOT automatically update progress when component mounts for step 5
     // This is critical - we only want to update progress for steps 1-4 automatically
-    const storedDecision = localStorage.getItem('scopingFinalDecision');
-    if (storedDecision === 'proceed') {
+    if (scopingFinalDecision === 'proceed') {
       // If there's already a "proceed" decision, set to 100%
       updatePhaseStatus("scoping", "in-progress", 100);
-    } else if (storedDecision === 'revise') {
+    } else if (scopingFinalDecision === 'revise') {
       // If there's already a "revise" decision, set to 80%
       updatePhaseStatus("scoping", "in-progress", 80);
     } else {
       // Default progress calculation (steps 1-4)
-      const currentStep = Math.min(activeStep, 4); // Cap at 4 for progress calculation purposes
+      const currentStep = Math.min(scopingActiveStep, 4); // Cap at 4 for progress calculation purposes
       onUpdateProgress(currentStep - 1, totalSteps);
     }
-  }, [onUpdateProgress, updatePhaseStatus]);
+  }, [onUpdateProgress, updatePhaseStatus, scopingFinalDecision]);
 
   // Calculate feasibility score when constraints change
   useEffect(() => {
@@ -294,15 +243,15 @@ export const ScopingPhase = ({
   useEffect(() => {
     if (currentPhaseStatus !== "completed") {
       // For steps 1-4, use automatic progress tracking
-      if (activeStep < 5) {
-        onUpdateProgress(activeStep - 1, totalSteps);
+      if (scopingActiveStep < 5) {
+        onUpdateProgress(scopingActiveStep - 1, totalSteps);
       }
       // For step 5, we don't update progress here - controlled by FinalFeasibilityGate buttons
     } else {
       // If phase is completed, show full progress
       onUpdateProgress(totalSteps, totalSteps);
     }
-  }, [activeStep, currentPhaseStatus, onUpdateProgress, totalSteps]);
+  }, [scopingActiveStep, currentPhaseStatus, onUpdateProgress, totalSteps]);
 
   // Handle use case selection
   const handleSelectUseCase = (useCase: UseCase) => {
@@ -313,17 +262,11 @@ export const ScopingPhase = ({
         selected: uc.id === useCase.id
       }))
     );
-    
-    // Save selected use case to localStorage
-    localStorage.setItem('selectedUseCase', JSON.stringify(useCase));
   };
 
   // Handle dataset selection
   const handleSelectDataset = (dataset: Dataset) => {
     setSelectedDataset(dataset);
-    
-    // Save selected dataset to localStorage
-    localStorage.setItem('selectedDataset', JSON.stringify(dataset));
   };
 
   // Handle dataset search and filtering
@@ -381,9 +324,9 @@ export const ScopingPhase = ({
 
   // Handle step navigation
   const moveToNextStep = () => {
-    if (activeStep < totalSteps) {
-      const nextStep = activeStep + 1;
-      setActiveStep(nextStep);
+    if (scopingActiveStep < totalSteps) {
+      const nextStep = scopingActiveStep + 1;
+      setScopingActiveStep(nextStep);
       
       // Only update automatic progress for steps 1-4
       if (nextStep < 5) {
@@ -394,9 +337,9 @@ export const ScopingPhase = ({
   };
   
   const moveToPreviousStep = () => {
-    if (activeStep > 1) {
-      const prevStep = activeStep - 1;
-      setActiveStep(prevStep);
+    if (scopingActiveStep > 1) {
+      const prevStep = scopingActiveStep - 1;
+      setScopingActiveStep(prevStep);
       
       // Only update automatic progress for steps 1-4
       if (prevStep < 5) {
@@ -409,15 +352,11 @@ export const ScopingPhase = ({
   const resetPhase = () => {
     // Only reset if not already completed
     if (currentPhaseStatus !== "completed") {
-      setActiveStep(1);
+      setScopingActiveStep(1);
       onUpdateProgress(0, totalSteps);
-      localStorage.removeItem('scopingActiveStep');
-      localStorage.removeItem('scopingFinalDecision');
-      localStorage.removeItem('selectedUseCase');
-      localStorage.removeItem('selectedDataset');
       setSelectedUseCase(null);
       setSelectedDataset(null);
-      setReadyToAdvance(null);
+      setScopingFinalDecision(null);
     }
   };
 
@@ -430,7 +369,7 @@ export const ScopingPhase = ({
         description: "Please select an AI use case before completing.",
         variant: "destructive"
       });
-      setActiveStep(1);
+      setScopingActiveStep(1);
       return;
     }
     
@@ -440,23 +379,19 @@ export const ScopingPhase = ({
         description: "Please select a dataset before completing.",
         variant: "destructive"
       });
-      setActiveStep(3);
+      setScopingActiveStep(3);
       return;
     }
     
-    if (readyToAdvance !== true) {
+    if (scopingFinalDecision !== 'proceed') {
       toast({
         title: "Final Review Required",
         description: "Please confirm the project is ready to proceed.",
         variant: "destructive"
       });
-      setActiveStep(5);
+      setScopingActiveStep(5);
       return;
     }
-    
-    // Clean up localStorage when phase is completed
-    localStorage.removeItem('scopingActiveStep');
-    localStorage.removeItem('scopingFinalDecision');
     
     // Call the phase completion handler
     onCompletePhase();
@@ -473,18 +408,18 @@ export const ScopingPhase = ({
         <div className="mt-6">
           <div className="flex items-center gap-4">
             <div className="flex-1">
-              <Progress value={currentPhaseStatus === "completed" ? 100 : (activeStep / totalSteps) * 100} className="h-2" />
+              <Progress value={currentPhaseStatus === "completed" ? 100 : (scopingActiveStep / totalSteps) * 100} className="h-2" />
             </div>
             <div className="text-sm text-muted-foreground whitespace-nowrap">
               {currentPhaseStatus === "completed" ? 
                 `${totalSteps}/${totalSteps}` : 
-                `Step ${activeStep} of ${totalSteps}`}
+                `Step ${scopingActiveStep} of ${totalSteps}`}
             </div>
           </div>
         </div>
       </div>
       
-      {activeStep === 1 && (
+      {scopingActiveStep === 1 && (
         <UseCaseExplorer
           useCases={useCases}
           loadingUseCases={loadingUseCases}
@@ -494,7 +429,7 @@ export const ScopingPhase = ({
         />
       )}
       
-      {activeStep === 2 && (
+      {scopingActiveStep === 2 && (
         <FeasibilityForm
           constraints={constraints}
           handleConstraintUpdate={handleConstraintUpdate}
@@ -505,7 +440,7 @@ export const ScopingPhase = ({
         />
       )}
       
-      {activeStep === 3 && (
+      {scopingActiveStep === 3 && (
         <DatasetDiscovery
           datasets={datasets}
           filteredDatasets={filteredDatasets}
@@ -524,7 +459,7 @@ export const ScopingPhase = ({
         />
       )}
       
-      {activeStep === 4 && (
+      {scopingActiveStep === 4 && (
         <SuitabilityChecklist
           suitabilityChecks={suitabilityChecks}
           handleSuitabilityUpdate={handleSuitabilityUpdate}
@@ -534,7 +469,7 @@ export const ScopingPhase = ({
         />
       )}
       
-      {activeStep === 5 && (
+      {scopingActiveStep === 5 && (
         <FinalFeasibilityGate
           selectedUseCase={selectedUseCase}
           selectedDataset={selectedDataset}
@@ -543,8 +478,10 @@ export const ScopingPhase = ({
           feasibilityRisk={feasibilityRisk}
           suitabilityChecks={suitabilityChecks}
           suitabilityScore={suitabilityScore}
-          readyToAdvance={readyToAdvance}
-          setReadyToAdvance={setReadyToAdvance}
+          readyToAdvance={scopingFinalDecision === 'proceed'}
+          setReadyToAdvance={(ready) => {
+            setScopingFinalDecision(ready ? 'proceed' : 'revise');
+          }}
           moveToPreviousStep={moveToPreviousStep}
           handleCompletePhase={handleCompletePhase}
           updatePhaseStatus={updatePhaseStatus}
@@ -554,3 +491,6 @@ export const ScopingPhase = ({
     </div>
   );
 };
+
+// Import useState for UI state
+import { useState } from "react";

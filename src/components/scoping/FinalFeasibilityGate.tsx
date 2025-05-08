@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle } from "lucide-react";
@@ -14,7 +14,7 @@ type FinalFeasibilityGateProps = {
   feasibilityRisk: 'low' | 'medium' | 'high';
   suitabilityChecks: DataSuitabilityCheck[];
   suitabilityScore: number;
-  readyToAdvance: boolean | null;
+  readyToAdvance: boolean;
   setReadyToAdvance: (value: boolean) => void;
   moveToPreviousStep: () => void;
   handleCompletePhase: () => void;
@@ -38,27 +38,9 @@ export const FinalFeasibilityGate = ({
   resetPhase,
 }: FinalFeasibilityGateProps) => {
   
-  // Load initial decision state from localStorage on mount
-  useEffect(() => {
-    try {
-      // Initialize readyToAdvance from localStorage if it exists
-      const storedDecision = localStorage.getItem('scopingFinalDecision');
-      if (storedDecision === 'proceed') {
-        setReadyToAdvance(true);
-        updatePhaseStatus("scoping", "in-progress", 100);
-      } else if (storedDecision === 'revise') {
-        setReadyToAdvance(false);
-        updatePhaseStatus("scoping", "in-progress", 80);
-      }
-    } catch (e) {
-      console.error("Error loading stored decision:", e);
-    }
-  }, []);
-  
   // Handle "Yes, Ready to Proceed" button click
   const handleReadyToProceed = () => {
     setReadyToAdvance(true);
-    localStorage.setItem('scopingFinalDecision', 'proceed');
     
     // Update the progress in the sidebar to 100% (5/5 steps)
     updatePhaseStatus("scoping", "in-progress", 100);
@@ -67,7 +49,6 @@ export const FinalFeasibilityGate = ({
   // Handle "No, Revise Approach" button click
   const handleReviseApproach = () => {
     setReadyToAdvance(false);
-    localStorage.setItem('scopingFinalDecision', 'revise');
     
     // Update the progress back to 80% (4/5 steps)
     updatePhaseStatus("scoping", "in-progress", 80);
@@ -77,7 +58,6 @@ export const FinalFeasibilityGate = ({
   const onCompletePhase = () => {
     if (readyToAdvance) {
       // Complete the phase only when ready to proceed
-      localStorage.removeItem('scopingFinalDecision'); // Clear the decision when completing
       handleCompletePhase();
     }
   };
@@ -85,7 +65,6 @@ export const FinalFeasibilityGate = ({
   // Reset the entire phase to start from step 1
   const handleRevisePhase = () => {
     setReadyToAdvance(false);
-    localStorage.removeItem('scopingFinalDecision');
     updatePhaseStatus("scoping", "in-progress", 0);
     resetPhase();
   };
@@ -202,8 +181,8 @@ export const FinalFeasibilityGate = ({
           
           <div className="flex gap-4">
             <Button 
-              variant={readyToAdvance === false ? "default" : "outline"} 
-              className={readyToAdvance === false ? "bg-red-600 hover:bg-red-700" : ""}
+              variant={!readyToAdvance ? "default" : "outline"} 
+              className={!readyToAdvance ? "bg-red-600 hover:bg-red-700" : ""}
               onClick={handleReviseApproach}
             >
               <X className="h-4 w-4 mr-2" />
@@ -211,8 +190,8 @@ export const FinalFeasibilityGate = ({
             </Button>
             
             <Button 
-              variant={readyToAdvance === true ? "default" : "outline"}
-              className={readyToAdvance === true ? "bg-green-600 hover:bg-green-700" : ""} 
+              variant={readyToAdvance ? "default" : "outline"}
+              className={readyToAdvance ? "bg-green-600 hover:bg-green-700" : ""} 
               onClick={handleReadyToProceed}
             >
               <Check className="h-4 w-4 mr-2" />
@@ -220,7 +199,7 @@ export const FinalFeasibilityGate = ({
             </Button>
           </div>
           
-          {readyToAdvance === false && (
+          {!readyToAdvance && (
             <div className="mt-4 text-sm text-muted-foreground">
               Consider revisiting earlier steps to adjust your approach before proceeding.
             </div>
@@ -231,20 +210,16 @@ export const FinalFeasibilityGate = ({
         <Button variant="outline" onClick={moveToPreviousStep}>
           Previous
         </Button>
-        {readyToAdvance === true ? (
+        {readyToAdvance ? (
           <Button onClick={onCompletePhase}>
             Complete Phase
           </Button>
-        ) : readyToAdvance === false ? (
+        ) : (
           <Button 
             onClick={handleRevisePhase} 
             variant="destructive"
           >
             Revise Approach
-          </Button>
-        ) : (
-          <Button disabled={true}>
-            Complete Phase
           </Button>
         )}
       </CardFooter>

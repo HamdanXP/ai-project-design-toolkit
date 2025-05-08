@@ -20,9 +20,12 @@ export const PhaseItem = ({
   onSelect, 
   getStatusColor 
 }: PhaseItemProps) => {
+  // Create a key that updates when phase data changes to force re-render
+  const itemKey = `phase-${phase.id}-${phase.status}-${phase.progress}-${phase.completedSteps}`;
+  
   return (
     <div
-      key={`${phase.id}-${phase.status}-${phase.progress}-${phase.completedSteps}`} // Force re-render when phase data changes
+      key={itemKey}
       className={cn(
         "mb-2 p-2 rounded-md cursor-pointer transition-all",
         isActive

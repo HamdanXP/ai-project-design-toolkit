@@ -7,6 +7,7 @@ import { useProjectPhases } from "@/hooks/useProjectPhases";
 import { ProjectBlueprintSidebar } from "@/components/project-blueprint/ProjectBlueprintSidebar";
 import { ProjectPhaseContent } from "@/components/project-blueprint/ProjectPhaseContent";
 import { ProjectPhaseHeader } from "@/components/project-blueprint/ProjectPhaseHeader";
+import { useProject } from "@/contexts/ProjectContext";
 
 const ProjectBlueprint = () => {
   const { toast } = useToast();
@@ -14,10 +15,12 @@ const ProjectBlueprint = () => {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const toggleBtnRef = useRef<HTMLButtonElement>(null);
+  
+  // Get activePhaseId from context
+  const { activePhaseId } = useProject();
 
   const {
     phases,
-    activePhaseId,
     setActivePhaseId,
     handleCompletePhase,
     updatePhaseStatus,

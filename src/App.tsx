@@ -1,59 +1,48 @@
 
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import ProjectBlueprint from "./pages/ProjectBlueprint";
-import MyProjects from "./pages/MyProjects";
-import ProjectDetails from "./pages/ProjectDetails";
-import ProjectCompletion from "./pages/ProjectCompletion";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import FAQ from "./pages/FAQ";
+import Index from "@/pages/Index";
+import SignIn from "@/pages/SignIn";
+import SignUp from "@/pages/SignUp";
+import NotFound from "@/pages/NotFound";
+import Profile from "@/pages/Profile";
+import FAQ from "@/pages/FAQ";
+import Settings from "@/pages/Settings";
+import { ProjectProvider } from "@/contexts/ProjectContext";
+import ProjectBlueprint from "@/pages/ProjectBlueprint";
+import MyProjects from "@/pages/MyProjects";
+import ProjectCompletion from "@/pages/ProjectCompletion";
+import ProjectDetails from "@/pages/ProjectDetails";
 
-// Create a client for React Query
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000, // 1 minute
-      retry: 1,
-    },
-  },
-});
-
-const App = () => {
+function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark">
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/project-blueprint" element={<ProjectBlueprint />} />
-              <Route path="/project/:projectId" element={<ProjectDetails />} />
-              <Route path="/project-completion" element={<ProjectCompletion />} />
-              <Route path="/my-projects" element={<MyProjects />} />
-              <Route path="/sign-in" element={<SignIn />} />
-              <Route path="/sign-up" element={<SignUp />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/faq" element={<FAQ />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <Router>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/sign-in" element={<SignIn />} />
+          <Route path="/sign-up" element={<SignUp />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route 
+            path="/project-blueprint" 
+            element={
+              <ProjectProvider>
+                <ProjectBlueprint />
+              </ProjectProvider>
+            } 
+          />
+          <Route path="/my-projects" element={<MyProjects />} />
+          <Route path="/project-completion" element={<ProjectCompletion />} />
+          <Route path="/project/:id" element={<ProjectDetails />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+      <Toaster />
+    </ThemeProvider>
   );
-};
+}
 
 export default App;
