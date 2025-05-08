@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ProjectPhase } from "@/types/project";
 
 export const useProjectPhases = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [activePhaseId, setActivePhaseId] = useState("reflection");
   const [projectPrompt, setProjectPrompt] = useState<string>("");
   const [projectFiles, setProjectFiles] = useState<string[]>([]);
@@ -87,6 +87,27 @@ export const useProjectPhases = () => {
     }
   }, []);
   
+  // Clear localStorage data when navigating away from blueprint page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Don't clear data on page refresh
+      // This is handled by the browser's caching of localStorage
+      return;
+    };
+
+    // Add event listener for page refresh
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    // Clear localStorage data when navigating away from blueprint page
+    if (location.pathname !== "/project-blueprint") {
+      resetAllProjectData();
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [location.pathname]);
+  
   // Save phases to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('projectPhases', JSON.stringify(phases));
@@ -99,19 +120,33 @@ export const useProjectPhases = () => {
     }
   }, [scopingFinalDecision]);
 
+  // Function to clear all project data from localStorage
+  const resetAllProjectData = () => {
+    localStorage.removeItem('projectPhases');
+    localStorage.removeItem('scopingActiveStep');
+    localStorage.removeItem('scopingFinalDecision');
+    localStorage.removeItem('selectedUseCase');
+    localStorage.removeItem('selectedDataset');
+    localStorage.removeItem('projectPrompt');
+    localStorage.removeItem('projectFiles');
+    localStorage.removeItem('reflectionAnswers');
+    localStorage.removeItem('reflectionActiveStep');
+  };
+
   // Function to update phase progress based on completed steps
   const updatePhaseProgress = (phaseId: string, completed: number, total: number) => {
-    // Special handling for Scoping phase
+    // Special handling for Scoping phase step 5
     if (phaseId === "scoping") {
       const currentPhase = phases.find(p => p.id === phaseId);
       
       // Don't override progress if we're in the final step (step 5)
       // and a decision has been made (proceed or revise)
-      if (currentPhase && scopingFinalDecision) {
-        if (
-          (scopingFinalDecision === 'proceed' && currentPhase.progress === 100) || 
-          (scopingFinalDecision === 'revise' && currentPhase.progress === 80)
-        ) {
+      if (currentPhase) {
+        const finalStepActive = localStorage.getItem('scopingActiveStep') === '5';
+        const finalDecision = localStorage.getItem('scopingFinalDecision');
+        
+        if (finalStepActive && finalDecision) {
+          // Keep the current progress if we're in the final step with a decision made
           return;
         }
       }
@@ -280,6 +315,7 @@ export const useProjectPhases = () => {
     allPhasesCompleted,
     canAccessPhase,
     scopingFinalDecision,
-    setScopingFinalDecision
+    setScopingFinalDecision,
+    resetAllProjectData
   };
 };

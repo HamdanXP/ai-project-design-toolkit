@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,10 +46,14 @@ export const FinalFeasibilityGate = ({
       const storedDecision = localStorage.getItem('scopingFinalDecision');
       if (storedDecision === 'proceed') {
         setReadyToAdvance(true);
-        updatePhaseStatus("scoping", "in-progress", 100);
+        setTimeout(() => {
+          updatePhaseStatus("scoping", "in-progress", 100);
+        }, 0);
       } else if (storedDecision === 'revise') {
         setReadyToAdvance(false);
-        updatePhaseStatus("scoping", "in-progress", 80);
+        setTimeout(() => {
+          updatePhaseStatus("scoping", "in-progress", 80);
+        }, 0);
       }
     } catch (e) {
       console.error("Error loading stored decision:", e);
@@ -60,7 +65,7 @@ export const FinalFeasibilityGate = ({
     setReadyToAdvance(true);
     localStorage.setItem('scopingFinalDecision', 'proceed');
     
-    // Update the progress in the sidebar to 100% (5/5 steps)
+    // Immediately update the progress in the sidebar to 100% (5/5 steps)
     updatePhaseStatus("scoping", "in-progress", 100);
   };
   
@@ -69,7 +74,7 @@ export const FinalFeasibilityGate = ({
     setReadyToAdvance(false);
     localStorage.setItem('scopingFinalDecision', 'revise');
     
-    // Update the progress back to 80% (4/5 steps)
+    // Immediately update the progress back to 80% (4/5 steps)
     updatePhaseStatus("scoping", "in-progress", 80);
   };
   
