@@ -44,13 +44,13 @@ export const FinalFeasibilityGate = ({
   
   const handleReadyToProceed = () => {
     setReadyToAdvance(true);
-    // Update sidebar immediately to show phase as completed with all steps
+    // Immediately update sidebar to show phase as completed
     updatePhaseStatus("scoping", "completed", 100);
   };
   
   const handleReviseApproach = () => {
     setReadyToAdvance(false);
-    // Reset phase status to in-progress with no progress
+    // Reset phase status to in-progress
     updatePhaseStatus("scoping", "in-progress", 0);
   };
   
@@ -66,13 +66,8 @@ export const FinalFeasibilityGate = ({
     
     setIsCompleting(true);
     
-    // Ensure the phase is marked as completed in the sidebar
-    updatePhaseStatus("scoping", "completed", 100);
-    
-    // Call the completion handler with a slight delay to ensure UI updates first
-    setTimeout(() => {
-      handleCompletePhase();
-    }, 50);
+    // Call the completion handler
+    handleCompletePhase();
   };
   
   const handleRevisePhase = () => {
