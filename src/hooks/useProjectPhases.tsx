@@ -9,8 +9,18 @@ export const useProjectPhases = () => {
   const [projectPrompt, setProjectPrompt] = useState<string>("");
   const [projectFiles, setProjectFiles] = useState<string[]>([]);
   
-  // Initialize phases without localStorage dependency
+  // Get stored phase progress from localStorage on initial load
   const getInitialPhases = (): ProjectPhase[] => {
+    try {
+      const storedPhases = localStorage.getItem('projectPhases');
+      if (storedPhases) {
+        return JSON.parse(storedPhases);
+      }
+    } catch (error) {
+      console.error("Error loading stored phases:", error);
+    }
+    
+    // Default phases if nothing in localStorage
     return [
       {
         id: "reflection",
@@ -49,8 +59,45 @@ export const useProjectPhases = () => {
   
   const [phases, setPhases] = useState<ProjectPhase[]>(getInitialPhases());
   
-  // Track the scoping phase final decision state (without localStorage)
-  const [scopingFinalDecision, setScopingFinalDecision] = useState<'proceed' | 'revise' | null>(null);
+  // Track the scoping phase final decision state
+  const [scopingFinalDecision, setScopingFinalDecision] = useState<'proceed' | 'revise' | null>(() => {
+    try {
+      const stored = localStorage.getItem('scopingFinalDecision');
+      return stored ? (stored as 'proceed' | 'revise') : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  // Load project information when component mounts
+  useEffect(() => {
+    const prompt = localStorage.getItem('projectPrompt');
+    const files = localStorage.getItem('projectFiles');
+    
+    if (prompt) {
+      setProjectPrompt(prompt);
+    }
+    
+    if (files) {
+      try {
+        setProjectFiles(JSON.parse(files));
+      } catch (error) {
+        console.error("Error parsing project files:", error);
+      }
+    }
+  }, []);
+  
+  // Save phases to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('projectPhases', JSON.stringify(phases));
+  }, [phases]);
+  
+  // Save scoping final decision state
+  useEffect(() => {
+    if (scopingFinalDecision) {
+      localStorage.setItem('scopingFinalDecision', scopingFinalDecision);
+    }
+  }, [scopingFinalDecision]);
 
   // Function to update phase progress based on completed steps
   const updatePhaseProgress = (phaseId: string, completed: number, total: number) => {
@@ -132,6 +179,17 @@ export const useProjectPhases = () => {
       setScopingFinalDecision(null);
     }
     
+    // Store phase data in localStorage when a phase is completed
+    const phaseData = {
+      phaseId,
+      projectPrompt,
+      projectFiles,
+      completedAt: new Date().toISOString()
+    };
+    
+    // Store in localStorage under a key specific to this phase and project
+    localStorage.setItem(`project_phase_${phaseId}`, JSON.stringify(phaseData));
+    
     // Determine the next phase to activate
     const phaseOrder = ["reflection", "scoping", "development", "evaluation"];
     const currentIndex = phaseOrder.indexOf(phaseId);
@@ -175,6 +233,15 @@ export const useProjectPhases = () => {
   };
 
   const handleCompleteProject = () => {
+    // Save all project data before completion
+    const projectData = {
+      prompt: projectPrompt,
+      files: projectFiles,
+      phases,
+      completedAt: new Date().toISOString()
+    };
+    
+    localStorage.setItem('completed_project', JSON.stringify(projectData));
     navigate('/project-completion');
   };
 

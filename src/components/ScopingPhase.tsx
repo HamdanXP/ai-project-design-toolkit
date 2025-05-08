@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
@@ -24,7 +23,15 @@ export const ScopingPhase = ({
   const { toast } = useToast();
   
   // State for tracking overall progress
-  const [activeStep, setActiveStep] = useState<number>(1);
+  const [activeStep, setActiveStep] = useState<number>(() => {
+    // Try to restore the active step from localStorage
+    try {
+      const storedStep = localStorage.getItem('scopingActiveStep');
+      return storedStep ? parseInt(storedStep, 10) : 1;
+    } catch (e) {
+      return 1;
+    }
+  });
   const totalSteps = 5;
   
   // AI Use Case Explorer state
@@ -62,10 +69,44 @@ export const ScopingPhase = ({
   const [suitabilityScore, setSuitabilityScore] = useState<number>(0);
   
   // Final Feasibility state
-  const [readyToAdvance, setReadyToAdvance] = useState<boolean | null>(null);
+  const [readyToAdvance, setReadyToAdvance] = useState<boolean | null>(() => {
+    try {
+      const storedDecision = localStorage.getItem('scopingFinalDecision');
+      if (storedDecision === 'proceed') return true;
+      if (storedDecision === 'revise') return false;
+      return null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  // Save active step to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('scopingActiveStep', activeStep.toString());
+  }, [activeStep]);
 
   // Initialize data (in a real app, this would come from an API)
   useEffect(() => {
+    // Try to load stored use case
+    const storedUseCase = localStorage.getItem('selectedUseCase');
+    if (storedUseCase) {
+      try {
+        setSelectedUseCase(JSON.parse(storedUseCase));
+      } catch (e) {
+        console.error("Error loading stored use case:", e);
+      }
+    }
+
+    // Try to load stored dataset
+    const storedDataset = localStorage.getItem('selectedDataset');
+    if (storedDataset) {
+      try {
+        setSelectedDataset(JSON.parse(storedDataset));
+      } catch (e) {
+        console.error("Error loading stored dataset:", e);
+      }
+    }
+    
     // Simulate loading use cases
     setTimeout(() => {
       setUseCases([
@@ -192,9 +233,21 @@ export const ScopingPhase = ({
       setLoadingDatasets(false);
     }, 1500);
 
-    // Default progress calculation (step 1)
-    onUpdateProgress(0, totalSteps);
-  }, [onUpdateProgress]);
+    // DO NOT automatically update progress when component mounts for step 5
+    // This is critical - we only want to update progress for steps 1-4 automatically
+    const storedDecision = localStorage.getItem('scopingFinalDecision');
+    if (storedDecision === 'proceed') {
+      // If there's already a "proceed" decision, set to 100%
+      updatePhaseStatus("scoping", "in-progress", 100);
+    } else if (storedDecision === 'revise') {
+      // If there's already a "revise" decision, set to 80%
+      updatePhaseStatus("scoping", "in-progress", 80);
+    } else {
+      // Default progress calculation (steps 1-4)
+      const currentStep = Math.min(activeStep, 4); // Cap at 4 for progress calculation purposes
+      onUpdateProgress(currentStep - 1, totalSteps);
+    }
+  }, [onUpdateProgress, updatePhaseStatus]);
 
   // Calculate feasibility score when constraints change
   useEffect(() => {
@@ -236,6 +289,21 @@ export const ScopingPhase = ({
     setSuitabilityScore(score);
   }, [suitabilityChecks]);
 
+  // CRITICAL: Only update automatic progress for steps 1-4
+  // Step 5 progress is controlled by user decisions in Final Feasibility Gate
+  useEffect(() => {
+    if (currentPhaseStatus !== "completed") {
+      // For steps 1-4, use automatic progress tracking
+      if (activeStep < 5) {
+        onUpdateProgress(activeStep - 1, totalSteps);
+      }
+      // For step 5, we don't update progress here - controlled by FinalFeasibilityGate buttons
+    } else {
+      // If phase is completed, show full progress
+      onUpdateProgress(totalSteps, totalSteps);
+    }
+  }, [activeStep, currentPhaseStatus, onUpdateProgress, totalSteps]);
+
   // Handle use case selection
   const handleSelectUseCase = (useCase: UseCase) => {
     setSelectedUseCase(useCase);
@@ -245,11 +313,17 @@ export const ScopingPhase = ({
         selected: uc.id === useCase.id
       }))
     );
+    
+    // Save selected use case to localStorage
+    localStorage.setItem('selectedUseCase', JSON.stringify(useCase));
   };
 
   // Handle dataset selection
   const handleSelectDataset = (dataset: Dataset) => {
     setSelectedDataset(dataset);
+    
+    // Save selected dataset to localStorage
+    localStorage.setItem('selectedDataset', JSON.stringify(dataset));
   };
 
   // Handle dataset search and filtering
@@ -311,13 +385,11 @@ export const ScopingPhase = ({
       const nextStep = activeStep + 1;
       setActiveStep(nextStep);
       
-      // Important fix: Update progress properly for each step
-      if (nextStep === 5) {
-        // When moving to step 5, show 4/5 complete (80%)
-        onUpdateProgress(4, totalSteps);
-      } else {
+      // Only update automatic progress for steps 1-4
+      if (nextStep < 5) {
         onUpdateProgress(nextStep - 1, totalSteps);
       }
+      // Step 5 progress is controlled by FinalFeasibilityGate buttons
     }
   };
   
@@ -325,7 +397,11 @@ export const ScopingPhase = ({
     if (activeStep > 1) {
       const prevStep = activeStep - 1;
       setActiveStep(prevStep);
-      onUpdateProgress(prevStep - 1, totalSteps); 
+      
+      // Only update automatic progress for steps 1-4
+      if (prevStep < 5) {
+        onUpdateProgress(prevStep - 1, totalSteps); 
+      }
     }
   };
 
@@ -335,6 +411,10 @@ export const ScopingPhase = ({
     if (currentPhaseStatus !== "completed") {
       setActiveStep(1);
       onUpdateProgress(0, totalSteps);
+      localStorage.removeItem('scopingActiveStep');
+      localStorage.removeItem('scopingFinalDecision');
+      localStorage.removeItem('selectedUseCase');
+      localStorage.removeItem('selectedDataset');
       setSelectedUseCase(null);
       setSelectedDataset(null);
       setReadyToAdvance(null);
@@ -373,6 +453,10 @@ export const ScopingPhase = ({
       setActiveStep(5);
       return;
     }
+    
+    // Clean up localStorage when phase is completed
+    localStorage.removeItem('scopingActiveStep');
+    localStorage.removeItem('scopingFinalDecision');
     
     // Call the phase completion handler
     onCompletePhase();
