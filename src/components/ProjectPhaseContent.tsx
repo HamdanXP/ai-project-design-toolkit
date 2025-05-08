@@ -20,6 +20,7 @@ type ProjectPhaseContentProps = {
   handleCompleteProject: () => void;
   allPhasesCompleted: boolean;
   phases: ProjectPhase[];
+  updatePhaseStatus?: (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => void;
 };
 
 export const ProjectPhaseContent = ({
@@ -32,7 +33,8 @@ export const ProjectPhaseContent = ({
   handleEvaluationProgress,
   handleCompleteProject,
   allPhasesCompleted,
-  phases
+  phases,
+  updatePhaseStatus
 }: ProjectPhaseContentProps) => {
   return (
     <>
@@ -48,6 +50,7 @@ export const ProjectPhaseContent = ({
           <ScopingPhase 
             onUpdateProgress={handleScopingProgress}
             onCompletePhase={() => handleCompletePhase("scoping")} 
+            updatePhaseStatus={updatePhaseStatus || ((phaseId, status, progress) => {})}
           />
         ) : (
           <PhaseLockedMessage phaseName="Scoping" />
