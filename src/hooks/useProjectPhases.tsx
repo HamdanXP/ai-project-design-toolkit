@@ -89,7 +89,7 @@ export const useProjectPhases = () => {
   };
 
   const handleCompletePhase = (phaseId: string) => {
-    // Mark the phase as 100% completed
+    // First, make sure we mark the phase as 100% completed
     updatePhaseStatus(phaseId, "completed", 100);
     
     // Reset the scoping decision state if we're completing that phase

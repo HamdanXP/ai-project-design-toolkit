@@ -35,7 +35,7 @@ export const ProjectPhaseContent = ({
   allPhasesCompleted,
   phases
 }: ProjectPhaseContentProps) => {
-  // Get the current phase status to pass to ScopingPhase
+  // Get the current phase status to pass to components
   const currentPhaseStatus = phases.find(p => p.id === activePhaseId)?.status || "not-started";
 
   return (

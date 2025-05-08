@@ -137,7 +137,10 @@ export const useScopingPhaseNavigation = ({
       return;
     }
     
-    // Call the phase completion handler
+    // First, update the status to "completed" with 100% progress
+    updatePhaseStatus("scoping", "completed", 100);
+    
+    // Then call the phase completion handler
     onCompletePhase();
   };
 
