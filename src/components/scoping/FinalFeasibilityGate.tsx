@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle } from "lucide-react";
@@ -38,27 +39,9 @@ export const FinalFeasibilityGate = ({
   resetPhase,
 }: FinalFeasibilityGateProps) => {
   
-  // Load initial decision state from localStorage on mount
-  useEffect(() => {
-    try {
-      // Initialize readyToAdvance from localStorage if it exists
-      const storedDecision = localStorage.getItem('scopingFinalDecision');
-      if (storedDecision === 'proceed') {
-        setReadyToAdvance(true);
-        updatePhaseStatus("scoping", "in-progress", 100);
-      } else if (storedDecision === 'revise') {
-        setReadyToAdvance(false);
-        updatePhaseStatus("scoping", "in-progress", 80);
-      }
-    } catch (e) {
-      console.error("Error loading stored decision:", e);
-    }
-  }, []);
-  
   // Handle "Yes, Ready to Proceed" button click
   const handleReadyToProceed = () => {
     setReadyToAdvance(true);
-    localStorage.setItem('scopingFinalDecision', 'proceed');
     
     // Update the progress in the sidebar to 100% (5/5 steps)
     updatePhaseStatus("scoping", "in-progress", 100);
@@ -67,7 +50,6 @@ export const FinalFeasibilityGate = ({
   // Handle "No, Revise Approach" button click
   const handleReviseApproach = () => {
     setReadyToAdvance(false);
-    localStorage.setItem('scopingFinalDecision', 'revise');
     
     // Update the progress back to 80% (4/5 steps)
     updatePhaseStatus("scoping", "in-progress", 80);
@@ -77,7 +59,6 @@ export const FinalFeasibilityGate = ({
   const onCompletePhase = () => {
     if (readyToAdvance) {
       // Complete the phase only when ready to proceed
-      localStorage.removeItem('scopingFinalDecision'); // Clear the decision when completing
       handleCompletePhase();
     }
   };
@@ -85,7 +66,6 @@ export const FinalFeasibilityGate = ({
   // Reset the entire phase to start from step 1
   const handleRevisePhase = () => {
     setReadyToAdvance(false);
-    localStorage.removeItem('scopingFinalDecision');
     updatePhaseStatus("scoping", "in-progress", 0);
     resetPhase();
   };
