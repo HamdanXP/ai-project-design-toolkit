@@ -40,24 +40,34 @@ export const FinalFeasibilityGate = ({
 }: FinalFeasibilityGateProps) => {
   
   const handleReadyToProceed = () => {
+    // Update UI state
     setReadyToAdvance(true);
-    // Update sidebar to show phase as completed
-    updatePhaseStatus("scoping", "completed", 100);
+    
+    // Update phase status to show completed in sidebar
+    // But don't actually complete the phase until the button is clicked
+    updatePhaseStatus("scoping", "in-progress", 100);
   };
   
   const handleReviseApproach = () => {
+    // Update UI state
     setReadyToAdvance(false);
-    // Reset phase status to in-progress with 80% progress (4/5 steps)
+    
+    // Update phase status to in-progress with 80% progress (4/5 steps complete)
     updatePhaseStatus("scoping", "in-progress", 80);
   };
   
+  // This is called when the user confirms they want to complete the phase
   const onCompletePhase = () => {
-    // Immediately call the completion handler
-    handleCompletePhase();
+    // Only if they're ready to proceed, mark as completed and move to next phase
+    if (readyToAdvance) {
+      // Actually complete the phase and move to the next one
+      updatePhaseStatus("scoping", "completed", 100);
+      handleCompletePhase();
+    }
   };
   
+  // Reset the entire phase and go back to step 1
   const handleRevisePhase = () => {
-    // Reset the phase and go back to step 1
     setReadyToAdvance(false);
     updatePhaseStatus("scoping", "in-progress", 0);
     resetPhase();
