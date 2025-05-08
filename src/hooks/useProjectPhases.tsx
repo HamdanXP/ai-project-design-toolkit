@@ -9,40 +9,65 @@ export const useProjectPhases = () => {
   const [projectPrompt, setProjectPrompt] = useState<string>("");
   const [projectFiles, setProjectFiles] = useState<string[]>([]);
   
-  const [phases, setPhases] = useState<ProjectPhase[]>([
-    {
-      id: "reflection",
-      name: "Reflection",
-      status: "in-progress",
-      progress: 0,
-      totalSteps: 7,
-      completedSteps: 0
-    },
-    {
-      id: "scoping",
-      name: "Scoping",
-      status: "not-started",
-      progress: 0,
-      totalSteps: 5,
-      completedSteps: 0
-    },
-    {
-      id: "development",
-      name: "Development",
-      status: "not-started",
-      progress: 0,
-      totalSteps: 6,
-      completedSteps: 0
-    },
-    {
-      id: "evaluation",
-      name: "Evaluation",
-      status: "not-started",
-      progress: 0,
-      totalSteps: 4,
-      completedSteps: 0
+  // Get stored phase progress from localStorage on initial load
+  const getInitialPhases = (): ProjectPhase[] => {
+    try {
+      const storedPhases = localStorage.getItem('projectPhases');
+      if (storedPhases) {
+        return JSON.parse(storedPhases);
+      }
+    } catch (error) {
+      console.error("Error loading stored phases:", error);
     }
-  ]);
+    
+    // Default phases if nothing in localStorage
+    return [
+      {
+        id: "reflection",
+        name: "Reflection",
+        status: "in-progress",
+        progress: 0,
+        totalSteps: 7,
+        completedSteps: 0
+      },
+      {
+        id: "scoping",
+        name: "Scoping",
+        status: "not-started",
+        progress: 0,
+        totalSteps: 5,
+        completedSteps: 0
+      },
+      {
+        id: "development",
+        name: "Development",
+        status: "not-started",
+        progress: 0,
+        totalSteps: 6,
+        completedSteps: 0
+      },
+      {
+        id: "evaluation",
+        name: "Evaluation",
+        status: "not-started",
+        progress: 0,
+        totalSteps: 4,
+        completedSteps: 0
+      }
+    ];
+  };
+  
+  const [phases, setPhases] = useState<ProjectPhase[]>(getInitialPhases());
+  
+  // Track the scoping phase final decision state
+  const [scopingFinalDecision, setScopingFinalDecision] = useState<'proceed' | 'revise' | null>(() => {
+    try {
+      const stored = localStorage.getItem('scopingFinalDecision');
+      return stored ? (stored as 'proceed' | 'revise') : null;
+    } catch (e) {
+      return null;
+    }
+  });
 
   // Load project information when component mounts
   useEffect(() => {
@@ -61,20 +86,34 @@ export const useProjectPhases = () => {
       }
     }
   }, []);
+  
+  // Save phases to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('projectPhases', JSON.stringify(phases));
+  }, [phases]);
+  
+  // Save scoping final decision state
+  useEffect(() => {
+    if (scopingFinalDecision) {
+      localStorage.setItem('scopingFinalDecision', scopingFinalDecision);
+    }
+  }, [scopingFinalDecision]);
 
   // Function to update phase progress based on completed steps
-  // This is used by the step-by-step progress in each phase
   const updatePhaseProgress = (phaseId: string, completed: number, total: number) => {
-    // Don't update progress if the phase already has a special progress value set
-    // This prevents the automatic step tracking from overriding manual progress settings
-    const currentPhase = phases.find(p => p.id === phaseId);
-    
-    // Special case: if the phase is "scoping" and readyToAdvance is true (5/5 steps),
-    // or if we're at 4/5 steps, don't override the progress
+    // Special handling for Scoping phase
     if (phaseId === "scoping") {
-      if (currentPhase?.progress === 100 || currentPhase?.progress === 80) {
-        // Don't update if we already have the special progress values
-        return;
+      const currentPhase = phases.find(p => p.id === phaseId);
+      
+      // Don't override progress if we're in the final step (step 5)
+      // and a decision has been made (proceed or revise)
+      if (currentPhase && scopingFinalDecision) {
+        if (
+          (scopingFinalDecision === 'proceed' && currentPhase.progress === 100) || 
+          (scopingFinalDecision === 'revise' && currentPhase.progress === 80)
+        ) {
+          return;
+        }
       }
     }
     
@@ -103,8 +142,16 @@ export const useProjectPhases = () => {
   };
   
   // Explicitly set the status of a phase
-  // This is used for manual control of phase status and progress
   const updatePhaseStatus = (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => {
+    // Special handling for scoping "ready to proceed" (100%) vs "revise approach" (80%)
+    if (phaseId === "scoping" && status === "in-progress") {
+      if (progress === 100) {
+        setScopingFinalDecision('proceed');
+      } else if (progress === 80) {
+        setScopingFinalDecision('revise');
+      }
+    }
+    
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
@@ -126,6 +173,11 @@ export const useProjectPhases = () => {
   const handleCompletePhase = (phaseId: string) => {
     // Mark the phase as 100% completed
     updatePhaseStatus(phaseId, "completed", 100);
+    
+    // Reset the scoping decision state if we're completing that phase
+    if (phaseId === "scoping") {
+      setScopingFinalDecision(null);
+    }
     
     // Store phase data in localStorage when a phase is completed
     const phaseData = {
@@ -164,7 +216,6 @@ export const useProjectPhases = () => {
   };
 
   // These handlers now use the updated updatePhaseProgress function
-  // that prevents overriding special progress values
   const handleReflectionProgress = (completed: number, total: number) => {
     updatePhaseProgress("reflection", completed, total);
   };
@@ -227,6 +278,8 @@ export const useProjectPhases = () => {
     handleEvaluationProgress,
     handleCompleteProject,
     allPhasesCompleted,
-    canAccessPhase
+    canAccessPhase,
+    scopingFinalDecision,
+    setScopingFinalDecision
   };
 };

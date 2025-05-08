@@ -22,7 +22,7 @@ export const PhaseItem = ({
 }: PhaseItemProps) => {
   return (
     <div
-      key={`${phase.id}-${phase.status}-${phase.progress}`} // Force re-render when status or progress changes
+      key={`${phase.id}-${phase.status}-${phase.progress}-${phase.completedSteps}`} // Force re-render when phase data changes
       className={cn(
         "mb-2 p-2 rounded-md cursor-pointer transition-all",
         isActive
