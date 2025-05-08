@@ -235,10 +235,15 @@ export const ScopingPhase = ({
     setSuitabilityScore(score);
   }, [suitabilityChecks]);
 
-  // If the phase is already marked as completed, don't update progress
+  // IMPORTANT: Modify the progress update behavior to respect user choices in step 5
   useEffect(() => {
     if (currentPhaseStatus !== "completed") {
-      onUpdateProgress(activeStep - 1, totalSteps);
+      // Only update progress through step tracking for steps 1-4
+      // Step 5 (Final Feasibility) progress is controlled manually through the buttons
+      if (activeStep < 5) {
+        onUpdateProgress(activeStep - 1, totalSteps);
+      }
+      // For step 5, we don't update progress here - it's handled by the component buttons
     } else {
       // If phase is completed, show full progress
       onUpdateProgress(totalSteps, totalSteps);
@@ -319,7 +324,11 @@ export const ScopingPhase = ({
     if (activeStep < totalSteps) {
       const nextStep = activeStep + 1;
       setActiveStep(nextStep);
-      onUpdateProgress(nextStep - 1, totalSteps);
+      
+      // Only update automatic progress for steps 1-4
+      if (nextStep < 5) {
+        onUpdateProgress(nextStep - 1, totalSteps);
+      }
     }
   };
   
@@ -327,7 +336,11 @@ export const ScopingPhase = ({
     if (activeStep > 1) {
       const prevStep = activeStep - 1;
       setActiveStep(prevStep);
-      onUpdateProgress(prevStep - 1, totalSteps); 
+      
+      // Only update automatic progress for steps 1-4
+      if (prevStep < 5) {
+        onUpdateProgress(prevStep - 1, totalSteps); 
+      }
     }
   };
 

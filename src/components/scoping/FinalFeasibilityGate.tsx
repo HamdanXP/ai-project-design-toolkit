@@ -43,7 +43,7 @@ export const FinalFeasibilityGate = ({
     setReadyToAdvance(true);
     
     // Update the progress in the sidebar to 100%
-    // But keep the status as "in-progress" until final confirmation
+    // Keep the phase in "in-progress" state until final completion
     updatePhaseStatus("scoping", "in-progress", 100);
   };
   

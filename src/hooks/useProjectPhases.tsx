@@ -62,8 +62,22 @@ export const useProjectPhases = () => {
     }
   }, []);
 
-  // Simple function to update phase progress based on completed steps
+  // Function to update phase progress based on completed steps
+  // This is used by the step-by-step progress in each phase
   const updatePhaseProgress = (phaseId: string, completed: number, total: number) => {
+    // Don't update progress if the phase already has a special progress value set
+    // This prevents the automatic step tracking from overriding manual progress settings
+    const currentPhase = phases.find(p => p.id === phaseId);
+    
+    // Special case: if the phase is "scoping" and readyToAdvance is true (5/5 steps),
+    // or if we're at 4/5 steps, don't override the progress
+    if (phaseId === "scoping") {
+      if (currentPhase?.progress === 100 || currentPhase?.progress === 80) {
+        // Don't update if we already have the special progress values
+        return;
+      }
+    }
+    
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
@@ -89,6 +103,7 @@ export const useProjectPhases = () => {
   };
   
   // Explicitly set the status of a phase
+  // This is used for manual control of phase status and progress
   const updatePhaseStatus = (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => {
     setPhases(prevPhases => 
       prevPhases.map(phase => {
@@ -148,7 +163,8 @@ export const useProjectPhases = () => {
     }
   };
 
-  // These handlers now use the updated updatePhaseProgress
+  // These handlers now use the updated updatePhaseProgress function
+  // that prevents overriding special progress values
   const handleReflectionProgress = (completed: number, total: number) => {
     updatePhaseProgress("reflection", completed, total);
   };
