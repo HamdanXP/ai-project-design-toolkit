@@ -1,12 +1,10 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 import { ProjectPhase } from "@/types/project";
 
 export const useProjectPhases = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [activePhaseId, setActivePhaseId] = useState("reflection");
   const [projectPrompt, setProjectPrompt] = useState<string>("");
   const [projectFiles, setProjectFiles] = useState<string[]>([]);
@@ -137,12 +135,6 @@ export const useProjectPhases = () => {
     // Store in localStorage under a key specific to this phase and project
     localStorage.setItem(`project_phase_${phaseId}`, JSON.stringify(phaseData));
     
-    // Show a toast notification after updating the state
-    toast({
-      title: `${currentPhase.name} Phase Completed`,
-      description: `Moving to the next phase.`,
-    });
-    
     // Determine the next phase to activate
     const phaseOrder = ["reflection", "scoping", "development", "evaluation"];
     const currentIndex = phaseOrder.indexOf(phaseId);
@@ -163,10 +155,8 @@ export const useProjectPhases = () => {
         })
       );
       
-      // Move to the next phase after a short delay to ensure UI updates
-      setTimeout(() => {
-        setActivePhaseId(nextPhaseId);
-      }, 300);
+      // Immediately move to the next phase
+      setActivePhaseId(nextPhaseId);
     }
   };
 

@@ -6,7 +6,6 @@ import { Check, X, AlertTriangle } from "lucide-react";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
 import { StepHeading } from "./common/StepHeading";
 import { RiskIndicator } from "./common/RiskIndicator";
-import { useToast } from "@/hooks/use-toast";
 
 type FinalFeasibilityGateProps = {
   selectedUseCase: UseCase | null;
@@ -39,12 +38,10 @@ export const FinalFeasibilityGate = ({
   updatePhaseStatus,
   resetPhase,
 }: FinalFeasibilityGateProps) => {
-  const { toast } = useToast();
-  const [isCompleting, setIsCompleting] = useState(false);
   
   const handleReadyToProceed = () => {
     setReadyToAdvance(true);
-    // Immediately update sidebar to show phase as completed
+    // Update sidebar to show phase as completed
     updatePhaseStatus("scoping", "completed", 100);
   };
   
@@ -55,18 +52,7 @@ export const FinalFeasibilityGate = ({
   };
   
   const onCompletePhase = () => {
-    if (readyToAdvance !== true) {
-      toast({
-        title: "Please confirm",
-        description: "Please confirm if the project is ready to proceed.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsCompleting(true);
-    
-    // Call the completion handler
+    // Immediately call the completion handler without delay
     handleCompletePhase();
   };
   
@@ -217,11 +203,8 @@ export const FinalFeasibilityGate = ({
           Previous
         </Button>
         {readyToAdvance === true ? (
-          <Button 
-            onClick={onCompletePhase} 
-            disabled={isCompleting}
-          >
-            {isCompleting ? 'Completing...' : 'Complete Phase'}
+          <Button onClick={onCompletePhase}>
+            Complete Phase
           </Button>
         ) : readyToAdvance === false ? (
           <Button 
@@ -231,9 +214,7 @@ export const FinalFeasibilityGate = ({
             Revise Approach
           </Button>
         ) : (
-          <Button 
-            disabled={true}
-          >
+          <Button disabled={true}>
             Complete Phase
           </Button>
         )}
