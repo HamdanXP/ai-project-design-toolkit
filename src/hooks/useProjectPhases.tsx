@@ -94,7 +94,7 @@ export const useProjectPhases = () => {
     
     // Reset the scoping decision state if we're completing that phase
     if (phaseId === "scoping") {
-      setScopingFinalDecision(null);
+      setScopingFinalDecision('proceed');
     }
     
     // Store phase data

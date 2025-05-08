@@ -1,5 +1,4 @@
-
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
 import { FeasibilityForm } from "@/components/scoping/FeasibilityForm";
@@ -183,8 +182,7 @@ export const ScopingPhase = ({
       setLoadingDatasets(false);
     }, 1500);
 
-    // DO NOT automatically update progress when component mounts for step 5
-    // This is critical - we only want to update progress for steps 1-4 automatically
+    // Handle special case for step 5 progress
     if (scopingFinalDecision === 'proceed') {
       // If there's already a "proceed" decision, set to 100%
       updatePhaseStatus("scoping", "in-progress", 100);
@@ -196,7 +194,7 @@ export const ScopingPhase = ({
       const currentStep = Math.min(scopingActiveStep, 4); // Cap at 4 for progress calculation purposes
       onUpdateProgress(currentStep - 1, totalSteps);
     }
-  }, [onUpdateProgress, updatePhaseStatus, scopingFinalDecision]);
+  }, [onUpdateProgress, updatePhaseStatus, scopingFinalDecision, scopingActiveStep, totalSteps]);
 
   // Calculate feasibility score when constraints change
   useEffect(() => {
@@ -328,11 +326,15 @@ export const ScopingPhase = ({
       const nextStep = scopingActiveStep + 1;
       setScopingActiveStep(nextStep);
       
-      // Only update automatic progress for steps 1-4
-      if (nextStep < 5) {
+      // Always update progress when moving from step 4 to step 5
+      // This ensures the sidebar shows 4/5 steps completed
+      if (nextStep === 5) {
+        onUpdateProgress(4, totalSteps);
+      }
+      // For steps 1-3, use automatic progress
+      else if (nextStep < 5) {
         onUpdateProgress(nextStep - 1, totalSteps);
       }
-      // Step 5 progress is controlled by FinalFeasibilityGate buttons
     }
   };
   
