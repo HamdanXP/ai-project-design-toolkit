@@ -88,7 +88,7 @@ export const ProjectBlueprintSidebar = ({
       <div className="overflow-y-auto p-2 h-[calc(100%-56px)]">
         {phases.map((phase) => (
           <PhaseItem
-            key={phase.id}
+            key={`${phase.id}-${phase.status}-${phase.progress}`}
             phase={phase}
             isActive={activePhase === phase.id}
             isOpen={isOpen}

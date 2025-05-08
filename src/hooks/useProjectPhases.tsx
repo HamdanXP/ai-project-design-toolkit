@@ -62,7 +62,7 @@ export const useProjectPhases = () => {
     }
   }, []);
 
-  // Update phase progress based on step completion
+  // Simple function to update phase progress based on completed steps
   const updatePhaseProgress = (phaseId: string, completed: number, total: number) => {
     setPhases(prevPhases => 
       prevPhases.map(phase => {
@@ -71,9 +71,10 @@ export const useProjectPhases = () => {
           const progress = Math.round((completed / total) * 100);
           
           // Determine status based on progress
-          const status = 
-            progress === 0 ? "not-started" :
-            progress === 100 ? "completed" : "in-progress";
+          let status = phase.status;
+          if (progress === 0) status = "not-started";
+          else if (progress === 100) status = "completed";
+          else status = "in-progress";
           
           return {
             ...phase,
@@ -87,21 +88,19 @@ export const useProjectPhases = () => {
     );
   };
   
-  // Explicitly set the status of a phase (overrides automatic progress-based status)
+  // Explicitly set the status of a phase
   const updatePhaseStatus = (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => {
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
           // Calculate completedSteps based on the provided progress percentage
-          const completedSteps = status === "completed" ? phase.totalSteps : 
-                                status === "not-started" ? 0 : 
-                                Math.round((progress / 100) * phase.totalSteps);
+          const completedSteps = Math.round((progress / 100) * phase.totalSteps);
           
           return {
             ...phase,
             status,
             progress,
-            completedSteps
+            completedSteps: status === "completed" ? phase.totalSteps : completedSteps
           };
         }
         return phase;
@@ -110,7 +109,7 @@ export const useProjectPhases = () => {
   };
 
   const handleCompletePhase = (phaseId: string) => {
-    // First ensure the current phase is marked as 100% completed
+    // Mark the phase as 100% completed
     updatePhaseStatus(phaseId, "completed", 100);
     
     // Store phase data in localStorage when a phase is completed
@@ -149,7 +148,7 @@ export const useProjectPhases = () => {
     }
   };
 
-  // These handlers now use the modified updatePhaseProgress
+  // These handlers now use the updated updatePhaseProgress
   const handleReflectionProgress = (completed: number, total: number) => {
     updatePhaseProgress("reflection", completed, total);
   };

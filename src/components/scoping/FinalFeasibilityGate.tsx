@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,34 +38,32 @@ export const FinalFeasibilityGate = ({
   resetPhase,
 }: FinalFeasibilityGateProps) => {
   
+  // Handle "Yes, Ready to Proceed" button click
   const handleReadyToProceed = () => {
-    // Update UI state
     setReadyToAdvance(true);
     
-    // Update phase status to show completed in sidebar
-    // But don't actually complete the phase until the button is clicked
+    // Update the progress in the sidebar to 100%
+    // But keep the status as "in-progress" until final confirmation
     updatePhaseStatus("scoping", "in-progress", 100);
   };
   
+  // Handle "No, Revise Approach" button click
   const handleReviseApproach = () => {
-    // Update UI state
     setReadyToAdvance(false);
     
-    // Update phase status to in-progress with 80% progress (4/5 steps complete)
+    // Update the progress back to 80% (4/5 steps)
     updatePhaseStatus("scoping", "in-progress", 80);
   };
   
-  // This is called when the user confirms they want to complete the phase
+  // Handle the final "Complete Phase" button click
   const onCompletePhase = () => {
-    // Only if they're ready to proceed, mark as completed and move to next phase
     if (readyToAdvance) {
-      // Actually complete the phase and move to the next one
-      updatePhaseStatus("scoping", "completed", 100);
+      // Complete the phase only when ready to proceed
       handleCompletePhase();
     }
   };
   
-  // Reset the entire phase and go back to step 1
+  // Reset the entire phase to start from step 1
   const handleRevisePhase = () => {
     setReadyToAdvance(false);
     updatePhaseStatus("scoping", "in-progress", 0);
