@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Progress } from "@/components/ui/progress";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
@@ -234,7 +233,8 @@ export const ScopingPhase = ({
       setLoadingDatasets(false);
     }, 1500);
 
-    // Check if we're in the final step with a decision already
+    // DO NOT automatically update progress when component mounts for step 5
+    // This is critical - we only want to update progress for steps 1-4 automatically
     const storedDecision = localStorage.getItem('scopingFinalDecision');
     if (storedDecision === 'proceed') {
       // If there's already a "proceed" decision, set to 100%
@@ -243,27 +243,11 @@ export const ScopingPhase = ({
       // If there's already a "revise" decision, set to 80%
       updatePhaseStatus("scoping", "in-progress", 80);
     } else {
-      // Default progress calculation based on active step
-      updateProgressBasedOnStep();
+      // Default progress calculation (steps 1-4)
+      const currentStep = Math.min(activeStep, 4); // Cap at 4 for progress calculation purposes
+      onUpdateProgress(currentStep - 1, totalSteps);
     }
   }, [onUpdateProgress, updatePhaseStatus]);
-
-  // Update progress based on the current step
-  const updateProgressBasedOnStep = () => {
-    if (currentPhaseStatus !== "completed") {
-      // For step 5, we don't update progress automatically - controlled by FinalFeasibilityGate
-      if (activeStep === 5) {
-        // Don't update progress here for step 5
-        return;
-      } else {
-        // For steps 1-4, calculate progress normally
-        onUpdateProgress(activeStep, totalSteps);
-      }
-    } else {
-      // If phase is completed, show full progress
-      onUpdateProgress(totalSteps, totalSteps);
-    }
-  };
 
   // Calculate feasibility score when constraints change
   useEffect(() => {
@@ -305,10 +289,20 @@ export const ScopingPhase = ({
     setSuitabilityScore(score);
   }, [suitabilityChecks]);
 
-  // Update progress when activeStep changes
+  // CRITICAL: Only update automatic progress for steps 1-4
+  // Step 5 progress is controlled by user decisions in Final Feasibility Gate
   useEffect(() => {
-    updateProgressBasedOnStep();
-  }, [activeStep, currentPhaseStatus]);
+    if (currentPhaseStatus !== "completed") {
+      // For steps 1-4, use automatic progress tracking
+      if (activeStep < 5) {
+        onUpdateProgress(activeStep - 1, totalSteps);
+      }
+      // For step 5, we don't update progress here - controlled by FinalFeasibilityGate buttons
+    } else {
+      // If phase is completed, show full progress
+      onUpdateProgress(totalSteps, totalSteps);
+    }
+  }, [activeStep, currentPhaseStatus, onUpdateProgress, totalSteps]);
 
   // Handle use case selection
   const handleSelectUseCase = (useCase: UseCase) => {
@@ -391,14 +385,11 @@ export const ScopingPhase = ({
       const nextStep = activeStep + 1;
       setActiveStep(nextStep);
       
-      // Special handling for moving from step 4 to step 5
-      if (nextStep === 5) {
-        // Don't update progress automatically here
-        // This will be handled by the FinalFeasibilityGate component
-      } else {
-        // For steps 1-4, update progress normally
-        onUpdateProgress(nextStep, totalSteps);
+      // Only update automatic progress for steps 1-4
+      if (nextStep < 5) {
+        onUpdateProgress(nextStep - 1, totalSteps);
       }
+      // Step 5 progress is controlled by FinalFeasibilityGate buttons
     }
   };
   
@@ -407,11 +398,10 @@ export const ScopingPhase = ({
       const prevStep = activeStep - 1;
       setActiveStep(prevStep);
       
-      // For steps 1-4, update progress normally
+      // Only update automatic progress for steps 1-4
       if (prevStep < 5) {
-        onUpdateProgress(prevStep, totalSteps); 
+        onUpdateProgress(prevStep - 1, totalSteps); 
       }
-      // For step 5, don't update progress here
     }
   };
 

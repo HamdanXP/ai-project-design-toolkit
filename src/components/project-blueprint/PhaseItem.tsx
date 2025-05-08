@@ -20,12 +20,9 @@ export const PhaseItem = ({
   onSelect, 
   getStatusColor 
 }: PhaseItemProps) => {
-  // Create a unique key that includes all relevant properties that may change
-  const itemKey = `phase-${phase.id}-${phase.status}-${phase.progress}-${phase.completedSteps}-${phase.totalSteps}`;
-  
   return (
     <div
-      key={itemKey} // Force re-render when phase data changes
+      key={`${phase.id}-${phase.status}-${phase.progress}-${phase.completedSteps}`} // Force re-render when phase data changes
       className={cn(
         "mb-2 p-2 rounded-md cursor-pointer transition-all",
         isActive
@@ -34,7 +31,6 @@ export const PhaseItem = ({
         phase.status === "completed" && "border-l-2 border-emerald-500"
       )}
       onClick={onSelect}
-      data-testid={`phase-item-${phase.id}`}
     >
       <div className="flex items-center mb-2">
         <div
@@ -56,7 +52,7 @@ export const PhaseItem = ({
         <div className="pl-5">
           <div className="flex justify-between text-xs text-muted-foreground mb-1">
             <span>Progress</span>
-            <span data-testid={`phase-progress-${phase.id}`}>{phase.completedSteps}/{phase.totalSteps}</span>
+            <span>{phase.completedSteps}/{phase.totalSteps}</span>
           </div>
           <Progress
             value={phase.progress}

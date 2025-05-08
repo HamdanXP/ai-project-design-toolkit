@@ -1,224 +1,169 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "@/components/ui/alert-dialog";
 
-type Step = {
-  title: string;
-  questions: {
-    id: string;
-    text: string;
-    answer: string;
-  }[];
+type Question = {
+  id: number;
+  text: string;
 };
 
-export const ReflectionPhase = ({ 
-  onUpdateProgress,
-  onCompletePhase 
-}: { 
+const REFLECTION_QUESTIONS: Question[] = [
+  { id: 1, text: "What problem are you trying to solve with your project?" },
+  { id: 2, text: "Who are the primary users or beneficiaries of your solution?" },
+  { id: 3, text: "What existing solutions have you researched, and how will yours be different?" },
+  { id: 4, text: "What are the key features your project must have to be successful?" },
+  { id: 5, text: "What technical challenges do you anticipate in building this project?" },
+  { id: 6, text: "What resources (time, skills, tools) do you currently have available?" },
+  { id: 7, text: "What is your timeline for completing this project?" },
+];
+
+type ReflectionPhaseProps = {
   onUpdateProgress: (completed: number, total: number) => void;
-  onCompletePhase: () => void;
-}) => {
-  // Define reflection steps
-  const [steps] = useState<Step[]>([
-    {
-      title: "Project Goals",
-      questions: [
-        { id: "goal", text: "What is the main goal of your AI-driven project?", answer: "" },
-        { id: "problem", text: "What specific problem are you trying to solve?", answer: "" }
-      ]
-    },
-    {
-      title: "Target Users",
-      questions: [
-        { id: "users", text: "Who are the primary users or beneficiaries?", answer: "" },
-        { id: "needs", text: "What are their specific needs or pain points?", answer: "" }
-      ]
-    },
-    {
-      title: "Available Resources",
-      questions: [
-        { id: "data", text: "What data sources do you have access to?", answer: "" },
-        { id: "skills", text: "What technical skills are available on your team?", answer: "" }
-      ]
-    },
-    {
-      title: "Success Criteria",
-      questions: [
-        { id: "metrics", text: "How will you measure success for this project?", answer: "" },
-        { id: "impact", text: "What specific impact do you hope to achieve?", answer: "" }
-      ]
-    },
-    {
-      title: "Constraints & Risks",
-      questions: [
-        { id: "constraints", text: "What are the key constraints for this project?", answer: "" },
-        { id: "risks", text: "What potential risks or ethical concerns exist?", answer: "" }
-      ]
-    },
-    {
-      title: "Implementation Path",
-      questions: [
-        { id: "timeline", text: "What is your expected timeline for implementation?", answer: "" },
-        { id: "resources", text: "What resources will you need to implement this solution?", answer: "" }
-      ]
-    },
-    {
-      title: "Summary & Next Steps",
-      questions: [
-        { id: "summary", text: "Summarize your project vision in 1-2 sentences.", answer: "" },
-        { id: "next_steps", text: "What are the immediate next steps for your project?", answer: "" }
-      ]
+  onCompletePhase?: () => void;
+};
+
+export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: ReflectionPhaseProps) => {
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const totalQuestions = REFLECTION_QUESTIONS.length;
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+
+  const handleNext = () => {
+    if (currentQuestionIndex < totalQuestions - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
-  ]);
-
-  const [currentStepIndex, setCurrentStepIndex] = useState(() => {
-    // Try to restore step from localStorage
-    try {
-      const storedStep = localStorage.getItem('reflectionActiveStep');
-      return storedStep ? parseInt(storedStep) : 0;
-    } catch (e) {
-      return 0;
-    }
-  });
-
-  // Store activeStep in localStorage
-  useEffect(() => {
-    localStorage.setItem('reflectionActiveStep', currentStepIndex.toString());
-  }, [currentStepIndex]);
-
-  // Load answers from localStorage on component mount
-  useEffect(() => {
-    try {
-      const storedAnswers = localStorage.getItem('reflectionAnswers');
-      if (storedAnswers) {
-        const parsedAnswers = JSON.parse(storedAnswers);
-        steps.forEach((step, stepIndex) => {
-          step.questions.forEach((question, questionIndex) => {
-            if (parsedAnswers[question.id]) {
-              steps[stepIndex].questions[questionIndex].answer = parsedAnswers[question.id];
-            }
-          });
-        });
-      }
-    } catch (error) {
-      console.error("Error loading reflection answers:", error);
-    }
-
-    // Update progress on component mount
-    onUpdateProgress(currentStepIndex, steps.length);
-  }, []);
-
-  const saveAnswers = () => {
-    const answers: Record<string, string> = {};
-    steps.forEach(step => {
-      step.questions.forEach(question => {
-        answers[question.id] = question.answer;
-      });
-    });
-    localStorage.setItem('reflectionAnswers', JSON.stringify(answers));
+    updateProgress();
   };
 
-  const handleInputChange = (stepIndex: number, questionIndex: number, value: string) => {
-    const updatedSteps = [...steps];
-    updatedSteps[stepIndex].questions[questionIndex].answer = value;
-    steps[stepIndex].questions[questionIndex].answer = value;
-    
-    // Save answers when input changes
-    saveAnswers();
+  const handlePrevious = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+    updateProgress();
   };
 
-  const moveToNextStep = () => {
-    if (currentStepIndex < steps.length - 1) {
-      const nextStep = currentStepIndex + 1;
-      setCurrentStepIndex(nextStep);
-      onUpdateProgress(nextStep, steps.length);
-      saveAnswers();
-    } else {
-      // Save all answers
-      saveAnswers();
-      
-      // Complete phase
+  const updateProgress = () => {
+    const completedCount = Object.keys(answers).filter(key => 
+      answers[parseInt(key)] && answers[parseInt(key)].trim() !== ""
+    ).length;
+    onUpdateProgress(completedCount, totalQuestions);
+  };
+
+  const handleAnswerChange = (value: string) => {
+    const currentQuestion = REFLECTION_QUESTIONS[currentQuestionIndex];
+    setAnswers(prev => ({
+      ...prev,
+      [currentQuestion.id]: value
+    }));
+    updateProgress();
+  };
+
+  const handleCompletePhaseConfirm = () => {
+    if (onCompletePhase) {
       onCompletePhase();
     }
   };
 
-  const moveToPreviousStep = () => {
-    if (currentStepIndex > 0) {
-      const prevStep = currentStepIndex - 1;
-      setCurrentStepIndex(prevStep);
-      onUpdateProgress(prevStep, steps.length);
-      saveAnswers();
-    }
-  };
-
-  const isCurrentStepValid = () => {
-    return steps[currentStepIndex].questions.every(q => q.answer.trim().length > 0);
-  };
+  const currentQuestion = REFLECTION_QUESTIONS[currentQuestionIndex];
+  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+  const currentAnswer = answers[currentQuestion.id] || "";
+  
+  // Check if the user has reached the last question and provided an answer
+  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
+  
+  // Calculate how many questions have been answered
+  const answeredQuestionsCount = Object.keys(answers).filter(key => 
+    answers[parseInt(key)] && answers[parseInt(key)].trim() !== ""
+  ).length;
+  
+  // Phase is complete if all questions are answered
+  const isPhaseComplete = answeredQuestionsCount === totalQuestions;
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col h-full">
+      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete Reflection Phase?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to complete the Reflection Phase? This will mark this phase as complete and move you to the next step.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleCompletePhaseConfirm}>
+              Complete Phase
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">Reflection Phase</h1>
-        <p className="text-muted-foreground mb-6">
-          Reflect on your project goals, target users, available resources, and success criteria to lay the foundation for your AI project.
+        <h2 className="text-2xl font-bold mb-2">Reflection Phase</h2>
+        <p className="text-muted-foreground">
+          Answer these questions to help clarify your project goals and requirements.
         </p>
-        
-        <div className="flex items-center gap-4">
-          <div className="flex-1">
-            <Progress value={(currentStepIndex / (steps.length - 1)) * 100} className="h-2" />
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Step {currentStepIndex + 1} of {steps.length}
-          </div>
+      </div>
+
+      <div className="mb-4 flex items-center">
+        <div className="flex-1 mr-4">
+          <Progress value={progress} className="h-2" />
+        </div>
+        <div className="text-sm text-muted-foreground whitespace-nowrap">
+          {currentQuestionIndex + 1} of {totalQuestions}
         </div>
       </div>
-      
-      <Card>
-        <CardHeader className="bg-muted/50">
-          <h2 className="text-xl font-medium">{steps[currentStepIndex].title}</h2>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="space-y-6">
-            {steps[currentStepIndex].questions.map((question, qIndex) => (
-              <div key={question.id} className="space-y-2">
-                <label htmlFor={question.id} className="block font-medium">
-                  {question.text}
-                </label>
-                <textarea
-                  id={question.id}
-                  value={question.answer}
-                  onChange={(e) => handleInputChange(currentStepIndex, qIndex, e.target.value)}
-                  className="w-full min-h-[120px] p-3 border rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
-                  placeholder="Enter your answer..."
-                />
-              </div>
-            ))}
-          </div>
+
+      <Card className="flex-1">
+        <CardContent className="p-6">
+          <h3 className="text-xl font-medium mb-4">
+            {currentQuestion.text}
+          </h3>
+          <Textarea
+            className="min-h-[200px] mb-4"
+            placeholder="Enter your answer here..."
+            value={currentAnswer}
+            onChange={(e) => handleAnswerChange(e.target.value)}
+          />
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={moveToPreviousStep}
-            disabled={currentStepIndex === 0}
-          >
-            Previous
-          </Button>
-          
-          <Button 
-            onClick={moveToNextStep}
-            disabled={!isCurrentStepValid()}
-          >
-            {currentStepIndex === steps.length - 1 ? "Complete Phase" : (
-              <>
-                Next <ArrowRight className="ml-2 h-4 w-4" />
-              </>
-            )}
-          </Button>
-        </CardFooter>
       </Card>
+
+      <div className="flex justify-between mt-4">
+        <Button
+          variant="outline"
+          onClick={handlePrevious}
+          disabled={currentQuestionIndex === 0}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+        </Button>
+        
+        {isLastQuestion ? (
+          <Button
+            onClick={() => setConfirmDialogOpen(true)}
+            disabled={!isPhaseComplete}
+          >
+            Complete Phase
+          </Button>
+        ) : (
+          <Button onClick={handleNext}>
+            Next <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
