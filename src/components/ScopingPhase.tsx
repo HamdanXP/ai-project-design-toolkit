@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useState } from "react";
 import { Progress } from "@/components/ui/progress";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
 import { FeasibilityForm } from "@/components/scoping/FeasibilityForm";
@@ -8,7 +9,6 @@ import { FinalFeasibilityGate } from "@/components/scoping/FinalFeasibilityGate"
 import { UseCase, Dataset } from "@/types/scoping-phase";
 import { useToast } from "@/hooks/use-toast";
 import { useProject } from "@/contexts/ProjectContext";
-import { useState } from "react";
 
 export const ScopingPhase = ({
   onUpdateProgress,
