@@ -22,11 +22,13 @@ export const PhaseItem = ({
 }: PhaseItemProps) => {
   return (
     <div
+      key={`${phase.id}-${phase.status}-${phase.progress}`} // Force re-render when status changes
       className={cn(
         "mb-2 p-2 rounded-md cursor-pointer transition-all",
         isActive
           ? "bg-primary/10 border-l-2 border-primary"
-          : "hover:bg-accent/50"
+          : "hover:bg-accent/50",
+        phase.status === "completed" && "border-l-2 border-emerald-500"
       )}
       onClick={onSelect}
     >

@@ -90,18 +90,7 @@ export const useProjectPhases = () => {
     const currentPhase = phases.find(p => p.id === phaseId);
     if (!currentPhase) return;
     
-    // Store phase data in localStorage when a phase is completed
-    const phaseData = {
-      phaseId,
-      projectPrompt,
-      projectFiles,
-      completedAt: new Date().toISOString()
-    };
-    
-    // Store in localStorage under a key specific to this phase and project
-    localStorage.setItem(`project_phase_${phaseId}`, JSON.stringify(phaseData));
-    
-    // Set the phase as completed with 100% progress in the state
+    // Immediately update the UI to show the phase as completed
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
@@ -115,6 +104,17 @@ export const useProjectPhases = () => {
         return phase;
       })
     );
+    
+    // Store phase data in localStorage when a phase is completed
+    const phaseData = {
+      phaseId,
+      projectPrompt,
+      projectFiles,
+      completedAt: new Date().toISOString()
+    };
+    
+    // Store in localStorage under a key specific to this phase and project
+    localStorage.setItem(`project_phase_${phaseId}`, JSON.stringify(phaseData));
     
     // Show a toast notification after updating the state
     toast({
