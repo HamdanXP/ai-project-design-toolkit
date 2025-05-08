@@ -90,6 +90,8 @@ const ProjectBlueprint = () => {
           <ProjectPhaseHeader 
             isMobile={isMobile}
             toggleSidebar={toggleSidebar}
+            activePhaseId={activePhaseId}
+            phases={phases}
           />
           
           <div className="max-w-4xl mx-auto">

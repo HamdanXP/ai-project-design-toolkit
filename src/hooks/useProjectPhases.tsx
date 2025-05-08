@@ -86,6 +86,10 @@ export const useProjectPhases = () => {
   };
 
   const handleCompletePhase = (phaseId: string) => {
+    // First ensure the current phase is marked as 100% completed
+    const currentPhase = phases.find(p => p.id === phaseId);
+    if (!currentPhase) return;
+    
     // Store phase data in localStorage when a phase is completed
     const phaseData = {
       phaseId,
@@ -96,8 +100,8 @@ export const useProjectPhases = () => {
     
     // Store in localStorage under a key specific to this phase and project
     localStorage.setItem(`project_phase_${phaseId}`, JSON.stringify(phaseData));
-
-    // Explicitly mark the current phase as 100% completed
+    
+    // Set the phase as completed with 100% progress
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
@@ -135,6 +139,12 @@ export const useProjectPhases = () => {
       // Move to the next phase
       setActivePhaseId(nextPhaseId);
     }
+    
+    // Show a toast notification
+    toast({
+      title: `${phaseId.charAt(0).toUpperCase() + phaseId.slice(1)} Phase Completed`,
+      description: `Moving to the next phase.`,
+    });
   };
 
   const handleReflectionProgress = (completed: number, total: number) => {

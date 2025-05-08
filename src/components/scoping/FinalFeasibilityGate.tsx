@@ -6,6 +6,7 @@ import { Check, X, AlertTriangle } from "lucide-react";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
 import { StepHeading } from "./common/StepHeading";
 import { RiskIndicator } from "./common/RiskIndicator";
+import { useToast } from "@/hooks/use-toast";
 
 type FinalFeasibilityGateProps = {
   selectedUseCase: UseCase | null;
@@ -34,6 +35,21 @@ export const FinalFeasibilityGate = ({
   moveToPreviousStep,
   handleCompletePhase,
 }: FinalFeasibilityGateProps) => {
+  const { toast } = useToast();
+  
+  const onCompletePhase = () => {
+    if (readyToAdvance !== true) {
+      toast({
+        title: "Please confirm",
+        description: "Please confirm if the project is ready to proceed.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Call the completion handler
+    handleCompletePhase();
+  };
 
   return (
     <Card className="mb-6">
@@ -176,7 +192,7 @@ export const FinalFeasibilityGate = ({
         <Button variant="outline" onClick={moveToPreviousStep}>
           Previous
         </Button>
-        <Button onClick={handleCompletePhase} disabled={readyToAdvance !== true}>
+        <Button onClick={onCompletePhase} disabled={readyToAdvance !== true}>
           Complete Phase
         </Button>
       </CardFooter>
