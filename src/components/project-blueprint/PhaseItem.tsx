@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { ProjectPhase } from "@/types/project";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface PhaseItemProps {
   phase: ProjectPhase;
@@ -21,14 +21,27 @@ export const PhaseItem = ({
   onSelect, 
   getStatusColor 
 }: PhaseItemProps) => {
-  // Create a state that tracks the rendered phase to ensure UI updates
   const [renderedPhase, setRenderedPhase] = useState(phase);
+  const initialRender = useRef(true);
   
-  // Update the rendered phase when the phase prop changes
+  // Only update the rendered phase when the phase prop changes AND it's not a completed phase transitioning to in-progress
   useEffect(() => {
-    setRenderedPhase(phase);
-    console.log(`PhaseItem updated: ${phase.id}, status: ${phase.status}, progress: ${phase.progress}`);
-  }, [phase]);
+    // Skip the first render to avoid unintended state resets
+    if (initialRender.current) {
+      initialRender.current = false;
+      return;
+    }
+    
+    // Check for invalid status transitions
+    const isInvalidTransition = renderedPhase.status === "completed" && phase.status === "in-progress";
+    
+    if (!isInvalidTransition) {
+      console.log(`PhaseItem updated: ${phase.id}, status: ${phase.status}, progress: ${phase.progress}`);
+      setRenderedPhase(phase);
+    } else {
+      console.warn(`Prevented invalid transition for ${phase.id}: completed -> in-progress`);
+    }
+  }, [phase, renderedPhase.status]);
   
   // Determine if the phase is completed
   const isCompleted = renderedPhase.status === "completed";

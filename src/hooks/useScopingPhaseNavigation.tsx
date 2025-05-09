@@ -1,21 +1,16 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { UseCase, Dataset } from "@/types/scoping-phase";
 import { useProject } from "@/contexts/ProjectContext";
 
 type UseScopingPhaseNavigationProps = {
-  onUpdateProgress: (completed: number, total: number) => void;
   onCompletePhase: () => void;
   updatePhaseStatus: (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => void;
-  currentPhaseStatus?: "not-started" | "in-progress" | "completed";
 };
 
 export const useScopingPhaseNavigation = ({
-  onUpdateProgress,
   onCompletePhase,
-  updatePhaseStatus,
-  currentPhaseStatus = "in-progress"
+  updatePhaseStatus
 }: UseScopingPhaseNavigationProps) => {
   const { toast } = useToast();
   const totalSteps = 5;
@@ -31,39 +26,18 @@ export const useScopingPhaseNavigation = ({
     setScopingFinalDecision
   } = useProject();
 
-  // Update progress only if the phase is not already completed
-  useEffect(() => {
-    // Skip all automatic progress updates if the phase is already completed
-    if (currentPhaseStatus === "completed") {
-      console.log("Phase is completed. Skipping progress updates.");
-      return;
-    }
-    
-    // For steps 1-4, use automatic progress tracking
-    if (scopingActiveStep < 5) {
-      onUpdateProgress(scopingActiveStep - 1, totalSteps);
-    } 
-    // For step 5, only update if there's a final decision
-    else if (scopingFinalDecision) {
-      const progressValue = scopingFinalDecision === 'proceed' ? 100 : 80;
-      updatePhaseStatus("scoping", "in-progress", progressValue);
-    }
-  }, [scopingActiveStep, scopingFinalDecision, currentPhaseStatus, onUpdateProgress, updatePhaseStatus, totalSteps]);
-
   // Handle step navigation
   const moveToNextStep = () => {
-    // Don't change steps if the phase is completed
-    if (currentPhaseStatus === "completed") return;
-    
     if (scopingActiveStep < totalSteps) {
       setScopingActiveStep(scopingActiveStep + 1);
+      
+      // Only update progress when moving to next step
+      const newProgress = Math.min(Math.round(((scopingActiveStep) / totalSteps) * 100), 80);
+      updatePhaseStatus("scoping", "in-progress", newProgress);
     }
   };
   
   const moveToPreviousStep = () => {
-    // Don't change steps if the phase is completed
-    if (currentPhaseStatus === "completed") return;
-    
     if (scopingActiveStep > 1) {
       setScopingActiveStep(scopingActiveStep - 1);
     }
@@ -71,14 +45,11 @@ export const useScopingPhaseNavigation = ({
 
   // Reset phase function
   const resetPhase = () => {
-    // Only reset if not already completed
-    if (currentPhaseStatus !== "completed") {
-      setScopingActiveStep(1);
-      onUpdateProgress(0, totalSteps);
-      setSelectedUseCase(null);
-      setSelectedDataset(null);
-      setScopingFinalDecision(null);
-    }
+    setScopingActiveStep(1);
+    setSelectedUseCase(null);
+    setSelectedDataset(null);
+    setScopingFinalDecision(null);
+    updatePhaseStatus("scoping", "in-progress", 0);
   };
 
   // Handle phase completion with validation
@@ -114,17 +85,14 @@ export const useScopingPhaseNavigation = ({
       return;
     }
     
-    // Update the status to "completed" with 100% progress
+    // Update the status to "completed" with 100% progress and call the completion handler
     updatePhaseStatus("scoping", "completed", 100);
-    
-    // Call the completion handler
     onCompletePhase();
   };
 
   return {
     totalSteps,
     scopingActiveStep,
-    currentPhaseStatus,
     moveToNextStep,
     moveToPreviousStep,
     resetPhase,

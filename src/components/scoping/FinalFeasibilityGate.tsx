@@ -37,41 +37,25 @@ export const FinalFeasibilityGate = ({
   resetPhase,
 }: FinalFeasibilityGateProps) => {
   
-  // Handle "Yes, Ready to Proceed" button click
+  // Handle "Yes, Ready to Proceed" button click - this now only changes the UI state
   const handleReadyToProceed = () => {
     setReadyToAdvance(true);
-    
-    // Update the progress in the sidebar to 100% (5/5 steps)
-    // But keep status as "in-progress" until they click "Complete Phase"
-    updatePhaseStatus("scoping", "in-progress", 100);
   };
   
-  // Handle "No, Revise Approach" button click
+  // Handle "No, Revise Approach" button click - this now only changes the UI state
   const handleReviseApproach = () => {
     setReadyToAdvance(false);
-    
-    // Update the progress back to 80% (4/5 steps)
-    updatePhaseStatus("scoping", "in-progress", 80);
   };
   
   // Handle the final "Complete Phase" button click
   const onCompletePhase = () => {
     console.log("FinalFeasibilityGate: Complete Phase clicked");
-    
-    // This is critical - explicitly set the phase to completed with 100% progress
-    updatePhaseStatus("scoping", "completed", 100);
-    
-    // Add a small delay to ensure the state update has been processed
-    setTimeout(() => {
-      // This will navigate to the next phase if appropriate
-      handleCompletePhase();
-    }, 50);
+    // Simply call the handleCompletePhase provided by the navigation hook
+    handleCompletePhase();
   };
   
   // Reset the entire phase to start from step 1
   const handleRevisePhase = () => {
-    setReadyToAdvance(false);
-    updatePhaseStatus("scoping", "in-progress", 0);
     resetPhase();
   };
 

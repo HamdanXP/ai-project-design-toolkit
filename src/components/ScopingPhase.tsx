@@ -1,6 +1,4 @@
 
-import { useEffect } from "react";
-import { UseCase, Dataset } from "@/types/scoping-phase";
 import { useProject } from "@/contexts/ProjectContext";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
 import { FeasibilityForm } from "@/components/scoping/FeasibilityForm";
@@ -12,12 +10,11 @@ import { useScopingPhaseData } from "@/hooks/useScopingPhaseData";
 import { useScopingPhaseNavigation } from "@/hooks/useScopingPhaseNavigation";
 
 export const ScopingPhase = ({
-  onUpdateProgress,
   onCompletePhase,
   updatePhaseStatus,
   currentPhaseStatus = "in-progress"
 }: {
-  onUpdateProgress: (completed: number, total: number) => void;
+  onUpdateProgress?: (completed: number, total: number) => void;
   onCompletePhase: () => void;
   updatePhaseStatus: (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => void;
   currentPhaseStatus?: "not-started" | "in-progress" | "completed";
@@ -62,8 +59,6 @@ export const ScopingPhase = ({
   const scopingPhase = phases.find(p => p.id === "scoping");
   const effectiveStatus = scopingPhase?.status || currentPhaseStatus;
   
-  console.log(`ScopingPhase render - effectiveStatus: ${effectiveStatus}, from scopingPhase: ${scopingPhase?.status}, from prop: ${currentPhaseStatus}`);
-
   const {
     totalSteps,
     moveToNextStep,
@@ -71,10 +66,8 @@ export const ScopingPhase = ({
     resetPhase,
     handleCompletePhase
   } = useScopingPhaseNavigation({
-    onUpdateProgress,
     onCompletePhase,
-    updatePhaseStatus,
-    currentPhaseStatus: effectiveStatus
+    updatePhaseStatus
   });
 
   // Handle suitability check update
@@ -114,14 +107,6 @@ export const ScopingPhase = ({
     if (effectiveStatus === "completed") return;
     handleSelectUseCase(useCase, setSelectedUseCase);
   };
-
-  // Ensure correct progress display when phase is completed
-  useEffect(() => {
-    if (effectiveStatus === "completed") {
-      console.log("ScopingPhase: Phase is completed, ensuring progress is 100%");
-      onUpdateProgress(totalSteps, totalSteps);
-    }
-  }, [effectiveStatus, onUpdateProgress, totalSteps]);
 
   return (
     <div className="space-y-6">
@@ -194,6 +179,13 @@ export const ScopingPhase = ({
           setReadyToAdvance={(ready) => {
             if (effectiveStatus !== "completed") {
               setScopingFinalDecision(ready ? 'proceed' : 'revise');
+              
+              // Update progress based on the decision
+              if (ready) {
+                updatePhaseStatus("scoping", "in-progress", 100);
+              } else {
+                updatePhaseStatus("scoping", "in-progress", 80);
+              }
             }
           }}
           moveToPreviousStep={moveToPreviousStep}
