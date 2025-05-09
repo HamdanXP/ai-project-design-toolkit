@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +6,7 @@ import { ArrowRight, Image, Paperclip, File, X, Layers } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import { api, Project, ProjectSuggestion } from "@/lib/api";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -13,41 +14,43 @@ const HomePage = () => {
   const [inputValue, setInputValue] = useState("");
   const [isAttachingFile, setIsAttachingFile] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  const [suggestions, setSuggestions] = useState<ProjectSuggestion[]>([]);
   
-  // Example of projects data - would come from an API in a real app
-  const [projects] = useState([
-    { id: 1, name: "Healthcare AI Project", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Healthcare" },
-    { id: 2, name: "Education AI Solution", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Education" },
-    { id: 3, name: "Financial Services AI", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Finance" },
-    { id: 4, name: "Environmental AI Project", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Environment" },
-  ]);
-
-  const [suggestions] = useState([
-    {
-      title: "🌪 Disaster Response",
-      prompt: "I want to implement AI for real-time disaster assessment and resource allocation."
-    },
-    {
-      title: "🏥 Healthcare",
-      prompt: "I want to implement AI for diagnostic assistance and predictive disease outbreak monitoring."
-    },
-    {
-      title: "🌾 Food Security",
-      prompt: "I want to implement AI for crop yield prediction and food distribution optimization."
-    },
-    {
-      title: "📢 Crisis Communication",
-      prompt: "I want to implement AI for automated misinformation detection and emergency alert dissemination."
-    },
-    {
-      title: "🛂 Refugee Support",
-      prompt: "I want to implement AI for streamlining refugee registration and personalised aid recommendations."
-    },
-    {
-      title: "🔍 Humanitarian Logistics",
-      prompt: "I want to implement AI for optimising supply chain management and delivery of aid in crisis zones."
-    }
-  ]);
+  // Fetch recent projects and suggestions on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch recent projects
+        const projects = await api.projects.getAll();
+        setRecentProjects(projects.slice(0, 4)); // Only show the 4 most recent projects
+        
+        // Fetch project suggestions
+        const fetchedSuggestions = await api.projects.getSuggestions();
+        setSuggestions(fetchedSuggestions);
+      } catch (error) {
+        // If API fails, use fallback data
+        setRecentProjects([
+          { id: "1", name: "Healthcare AI Project", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Healthcare", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 25, tags: ["Healthcare", "AI"], phases: [] },
+          { id: "2", name: "Education AI Solution", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Education", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 40, tags: ["Education", "AI"], phases: [] },
+          { id: "3", name: "Financial Services AI", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Finance", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 60, tags: ["Finance", "AI"], phases: [] },
+          { id: "4", name: "Environmental AI Project", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Environment", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 80, tags: ["Environment", "AI"], phases: [] },
+        ]);
+        
+        setSuggestions([
+          { title: "🌪 Disaster Response", prompt: "I want to implement AI for real-time disaster assessment and resource allocation." },
+          { title: "🏥 Healthcare", prompt: "I want to implement AI for diagnostic assistance and predictive disease outbreak monitoring." },
+          { title: "🌾 Food Security", prompt: "I want to implement AI for crop yield prediction and food distribution optimization." },
+          { title: "📢 Crisis Communication", prompt: "I want to implement AI for automated misinformation detection and emergency alert dissemination." },
+          { title: "🛂 Refugee Support", prompt: "I want to implement AI for streamlining refugee registration and personalised aid recommendations." },
+          { title: "🔍 Humanitarian Logistics", prompt: "I want to implement AI for optimising supply chain management and delivery of aid in crisis zones." }
+        ]);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
@@ -57,18 +60,48 @@ const HomePage = () => {
     e.target.style.height = `${e.target.scrollHeight}px`;
   };
 
-  const handleGoToBlueprint = () => {
+  const handleGoToBlueprint = async () => {
     if (inputValue.trim()) {
-      // Store the prompt in localStorage before navigating
-      localStorage.setItem('projectPrompt', inputValue);
-      localStorage.setItem('projectFiles', JSON.stringify(selectedFiles.map(file => file.name)));
+      setIsLoading(true);
       
-      toast({
-        title: "Project Created",
-        description: "Your new project has been created successfully."
-      });
-      
-      navigate("/project-blueprint");
+      try {
+        // Create a new project using the API
+        const newProject = await api.projects.create({
+          name: inputValue.split('.')[0].substring(0, 50), // Use the first sentence as the project name
+          description: inputValue,
+          prompt: inputValue,
+          files: selectedFiles.map(file => file.name),
+          progress: 0,
+          tags: [],
+          phases: [
+            { id: "reflection", name: "Reflection", status: "not-started", progress: 0, totalSteps: 5, completedSteps: 0 },
+            { id: "scoping", name: "Scoping", status: "not-started", progress: 0, totalSteps: 5, completedSteps: 0 },
+            { id: "development", name: "Development", status: "not-started", progress: 0, totalSteps: 5, completedSteps: 0 },
+            { id: "evaluation", name: "Evaluation", status: "not-started", progress: 0, totalSteps: 5, completedSteps: 0 }
+          ]
+        });
+        
+        toast({
+          title: "Project Created",
+          description: "Your new project has been created successfully."
+        });
+        
+        // Navigate to the project blueprint with the new project ID
+        navigate(`/project-blueprint?projectId=${newProject.id}`);
+      } catch (error) {
+        // Fallback to localStorage if API fails
+        localStorage.setItem('projectPrompt', inputValue);
+        localStorage.setItem('projectFiles', JSON.stringify(selectedFiles.map(file => file.name)));
+        
+        toast({
+          title: "Project Created",
+          description: "Your new project has been created successfully."
+        });
+        
+        navigate("/project-blueprint");
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -89,7 +122,7 @@ const HomePage = () => {
     navigate("/my-projects");
   };
 
-  const handleProjectClick = (projectId: number) => {
+  const handleProjectClick = (projectId: string) => {
     navigate(`/project/${projectId}`);
   };
   
@@ -239,7 +272,7 @@ const HomePage = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
               {/* Existing Projects */}
-              {projects.map((project) => (
+              {recentProjects.map((project) => (
                 <div 
                   key={project.id}
                   className="rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-all cursor-pointer bg-card shadow-card-light dark:shadow-card-dark"

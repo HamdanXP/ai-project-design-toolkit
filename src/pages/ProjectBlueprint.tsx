@@ -8,6 +8,8 @@ import { ProjectBlueprintSidebar } from "@/components/project-blueprint/ProjectB
 import { ProjectPhaseContent } from "@/components/project-blueprint/ProjectPhaseContent";
 import { ProjectPhaseHeader } from "@/components/project-blueprint/ProjectPhaseHeader";
 import { useProject } from "@/contexts/ProjectContext";
+import { api } from "@/lib/api";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const ProjectBlueprint = () => {
   const { toast } = useToast();
@@ -15,6 +17,12 @@ const ProjectBlueprint = () => {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const toggleBtnRef = useRef<HTMLButtonElement>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Get projectId from URL query params
+  const searchParams = new URLSearchParams(location.search);
+  const projectId = searchParams.get('projectId') || 'current';
   
   // Get activePhaseId from context
   const { activePhaseId } = useProject();
@@ -67,12 +75,80 @@ const ProjectBlueprint = () => {
     // Only allow setting active phase if previous phases are completed
     if (canAccessPhase(phaseId)) {
       setActivePhaseId(phaseId);
+      
+      // Update the project phase status via API
+      if (projectId !== 'current') {
+        api.projects.updatePhaseStatus(projectId, phaseId, "in-progress", 0)
+          .catch(() => {
+            // Silent fallback - handled by localStorage in the API module
+          });
+      }
     } else {
       toast({
         title: "Phase Locked",
         description: "You need to complete previous phases first.",
         variant: "destructive"
       });
+    }
+  };
+  
+  // Enhanced complete phase handler with API integration
+  const handleCompletePhaseWithApi = async (phaseId: string) => {
+    handleCompletePhase(phaseId);
+    
+    // Also update via API if we have a project ID
+    if (projectId !== 'current') {
+      try {
+        await api.projects.completePhase(projectId, phaseId);
+      } catch (error) {
+        // Silent catch - already handled by localStorage in the API module
+      }
+    }
+  };
+  
+  // Enhanced update phase status handler with API integration
+  const handleUpdatePhaseStatusWithApi = async (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => {
+    updatePhaseStatus(phaseId, status, progress);
+    
+    // Also update via API if we have a project ID
+    if (projectId !== 'current') {
+      try {
+        await api.projects.updatePhaseStatus(projectId, phaseId, status, progress);
+      } catch (error) {
+        // Silent catch - already handled by localStorage in the API module
+      }
+    }
+  };
+  
+  // Enhanced complete project handler with API integration
+  const handleCompleteProjectWithApi = async () => {
+    handleCompleteProject();
+    
+    // Also update via API if we have a project ID
+    if (projectId !== 'current') {
+      try {
+        await api.projects.completeProject(projectId);
+        navigate(`/project-completion?projectId=${projectId}`);
+      } catch (error) {
+        // Fallback to default behavior
+        navigate('/project-completion');
+      }
+    } else {
+      navigate('/project-completion');
+    }
+  };
+  
+  // Enhanced progress handlers with API integration
+  const handlePhaseProgressWithApi = async (phaseId: string, completed: number, total: number) => {
+    const progress = Math.round((completed / total) * 100);
+    
+    // Update phase progress in the API if we have a project ID
+    if (projectId !== 'current') {
+      try {
+        await api.projects.updatePhaseProgress(projectId, phaseId, progress);
+      } catch (error) {
+        // Silent catch - already handled by localStorage in the API module
+      }
     }
   };
 
@@ -102,14 +178,26 @@ const ProjectBlueprint = () => {
           <div className="max-w-4xl mx-auto">
             <ProjectPhaseContent
               activePhaseId={activePhaseId}
-              handleCompletePhase={handleCompletePhase}
-              updatePhaseStatus={updatePhaseStatus}
+              handleCompletePhase={handleCompletePhaseWithApi}
+              updatePhaseStatus={handleUpdatePhaseStatusWithApi}
               canAccessPhase={canAccessPhase}
-              handleReflectionProgress={handleReflectionProgress}
-              handleScopingProgress={handleScopingProgress}
-              handleDevelopmentProgress={handleDevelopmentProgress}
-              handleEvaluationProgress={handleEvaluationProgress}
-              handleCompleteProject={handleCompleteProject}
+              handleReflectionProgress={(completed, total) => {
+                handleReflectionProgress(completed, total);
+                handlePhaseProgressWithApi("reflection", completed, total);
+              }}
+              handleScopingProgress={(completed, total) => {
+                handleScopingProgress(completed, total);
+                handlePhaseProgressWithApi("scoping", completed, total);
+              }}
+              handleDevelopmentProgress={(completed, total) => {
+                handleDevelopmentProgress(completed, total);
+                handlePhaseProgressWithApi("development", completed, total);
+              }}
+              handleEvaluationProgress={(completed, total) => {
+                handleEvaluationProgress(completed, total);
+                handlePhaseProgressWithApi("evaluation", completed, total);
+              }}
+              handleCompleteProject={handleCompleteProjectWithApi}
               allPhasesCompleted={allPhasesCompleted}
               phases={phases}
             />

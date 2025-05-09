@@ -1,6 +1,7 @@
 
 import { env } from './env';
 import { toast } from "sonner";
+import { ProjectPhase } from "@/types/project";
 
 /**
  * API request options
@@ -148,6 +149,28 @@ function handleLocalStorageFallback<T>(endpoint: string, options: ApiRequestOpti
 }
 
 /**
+ * Type definitions for API responses
+ */
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  image?: string;
+  createdAt: string;
+  updatedAt: string;
+  progress: number;
+  tags: string[];
+  phases: ProjectPhase[];
+  prompt?: string;
+  files?: string[];
+}
+
+export interface ProjectSuggestion {
+  title: string;
+  prompt: string;
+}
+
+/**
  * API client with convenience methods for CRUD operations
  */
 export const api = {
@@ -175,24 +198,47 @@ export const api = {
    * Project-specific API methods that use localStorage fallback when necessary
    */
   projects: {
-    getAll: async () => {
-      return await api.get<any[]>('/projects');
+    getAll: async (): Promise<Project[]> => {
+      return await api.get<Project[]>('/projects');
     },
     
-    getById: async (id: string) => {
-      return await api.get<any>(`/projects/${id}`);
+    getById: async (id: string): Promise<Project> => {
+      return await api.get<Project>(`/projects/${id}`);
     },
     
-    create: async (projectData: any) => {
-      return await api.post<any>('/projects', projectData);
+    create: async (projectData: Partial<Project>): Promise<Project> => {
+      return await api.post<Project>('/projects', projectData);
     },
     
-    update: async (id: string, projectData: any) => {
-      return await api.put<any>(`/projects/${id}`, projectData);
+    update: async (id: string, projectData: Partial<Project>): Promise<Project> => {
+      return await api.put<Project>(`/projects/${id}`, projectData);
     },
     
-    delete: async (id: string) => {
-      return await api.delete<any>(`/projects/${id}`);
+    delete: async (id: string): Promise<{success: boolean}> => {
+      return await api.delete<{success: boolean}>(`/projects/${id}`);
+    },
+
+    getSuggestions: async (): Promise<ProjectSuggestion[]> => {
+      return await api.get<ProjectSuggestion[]>('/project-suggestions');
+    },
+
+    completePhase: async (projectId: string, phaseId: string): Promise<Project> => {
+      return await api.post<Project>(`/projects/${projectId}/phases/${phaseId}/complete`);
+    },
+
+    updatePhaseProgress: async (projectId: string, phaseId: string, progress: number): Promise<Project> => {
+      return await api.put<Project>(`/projects/${projectId}/phases/${phaseId}/progress`, { progress });
+    },
+
+    updatePhaseStatus: async (projectId: string, phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number): Promise<Project> => {
+      return await api.put<Project>(`/projects/${projectId}/phases/${phaseId}/status`, { 
+        status, 
+        progress 
+      });
+    },
+
+    completeProject: async (projectId: string): Promise<Project> => {
+      return await api.post<Project>(`/projects/${projectId}/complete`);
     }
   }
 };

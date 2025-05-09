@@ -11,58 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar, Clock, ArrowRight, Edit2, Check, X, Tag } from "lucide-react";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
-
-// This would come from an API in a real app
-const PROJECT_DATA = {
-  "1": {
-    id: "1",
-    name: "Portfolio Website",
-    description: "A responsive portfolio website for showcasing my work and skills",
-    image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Portfolio",
-    createdAt: "2025-02-15T12:00:00Z",
-    updatedAt: "2025-04-21T09:30:00Z",
-    progress: 68,
-    tags: ["Machine Learning", "Data Analysis", "Natural Language Processing", "Computer Vision"],
-    phases: [
-      { name: "Reflection", progress: 100 },
-      { name: "Scoping", progress: 75 },
-      { name: "Development", progress: 50 },
-      { name: "Evaluation", progress: 25 }
-    ]
-  },
-  "2": {
-    id: "2",
-    name: "Recipe Finder App",
-    description: "An AI-powered app that suggests recipes based on available ingredients",
-    image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Recipes",
-    createdAt: "2025-03-10T14:20:00Z",
-    updatedAt: "2025-05-01T16:45:00Z",
-    progress: 45,
-    tags: ["Machine Learning", "Natural Language Processing", "Computer Vision"],
-    phases: [
-      { name: "Reflection", progress: 100 },
-      { name: "Scoping", progress: 80 },
-      { name: "Development", progress: 0 },
-      { name: "Evaluation", progress: 0 }
-    ]
-  },
-  "3": {
-    id: "3",
-    name: "Task Manager",
-    description: "A smart task manager with AI prioritization and scheduling",
-    image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Tasks",
-    createdAt: "2025-01-05T09:10:00Z",
-    updatedAt: "2025-04-15T11:25:00Z",
-    progress: 92,
-    tags: ["Machine Learning", "Data Analysis", "Natural Language Processing"],
-    phases: [
-      { name: "Reflection", progress: 100 },
-      { name: "Scoping", progress: 100 },
-      { name: "Development", progress: 95 },
-      { name: "Evaluation", progress: 70 }
-    ]
-  }
-};
+import { api, Project } from "@/lib/api";
 
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
@@ -77,17 +26,58 @@ const ProjectDetails = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [project, setProject] = useState(projectId ? PROJECT_DATA[projectId as keyof typeof PROJECT_DATA] : null);
+  const [project, setProject] = useState<Project | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedProject, setEditedProject] = useState(project);
+  const [editedProject, setEditedProject] = useState<Project | null>(null);
   const [newTag, setNewTag] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Update editedProject when project changes
+  // Fetch project details when component mounts
   useEffect(() => {
-    setEditedProject(project);
-  }, [project]);
-
-  // Display loading or 404 state if no project
+    const fetchProjectDetails = async () => {
+      if (!projectId) return;
+      
+      setIsLoading(true);
+      try {
+        const projectData = await api.projects.getById(projectId);
+        setProject(projectData);
+        setEditedProject(projectData);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load project details.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProjectDetails();
+  }, [projectId, toast]);
+  
+  // Display loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <TopBar />
+        <div className="container mx-auto px-4 py-12 pt-24">
+          <div className="flex items-center mb-8">
+            <BackButton />
+            <h1 className="text-3xl font-bold text-foreground ml-3">Loading project...</h1>
+          </div>
+          <Card>
+            <CardContent className="p-6 flex flex-col items-center justify-center min-h-[300px]">
+              <div className="h-8 w-8 rounded-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin mb-4"></div>
+              <p className="text-lg text-muted-foreground">Loading project details</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+  
+  // Display 404 state if no project
   if (!project) {
     return (
       <div className="min-h-screen bg-background">
@@ -113,17 +103,33 @@ const ProjectDetails = () => {
   }
 
   const handleContinueProject = () => {
-    navigate('/project-blueprint');
+    navigate(`/project-blueprint?projectId=${projectId}`);
   };
 
-  const handleSave = () => {
-    // In a real app, this would save to an API
-    setProject(editedProject);
-    setIsEditing(false);
-    toast({
-      title: "Changes saved",
-      description: "Your project details have been updated successfully.",
-    });
+  const handleSave = async () => {
+    if (!editedProject || !projectId) return;
+    
+    try {
+      // Update project via API
+      const updatedProject = await api.projects.update(projectId, {
+        name: editedProject.name,
+        description: editedProject.description,
+        tags: editedProject.tags
+      });
+      
+      setProject(updatedProject);
+      setIsEditing(false);
+      toast({
+        title: "Changes saved",
+        description: "Your project details have been updated successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save project changes.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCancel = () => {
@@ -132,7 +138,7 @@ const ProjectDetails = () => {
   };
 
   const handleTagAdd = () => {
-    if (newTag.trim() && !editedProject?.tags.includes(newTag.trim())) {
+    if (editedProject && newTag.trim() && !editedProject.tags.includes(newTag.trim())) {
       setEditedProject({
         ...editedProject,
         tags: [...editedProject.tags, newTag.trim()]
@@ -142,15 +148,18 @@ const ProjectDetails = () => {
   };
 
   const handleTagRemove = (tagToRemove: string) => {
-    setEditedProject({
-      ...editedProject,
-      tags: editedProject.tags.filter(tag => tag !== tagToRemove)
-    });
+    if (editedProject) {
+      setEditedProject({
+        ...editedProject,
+        tags: editedProject.tags.filter(tag => tag !== tagToRemove)
+      });
+    }
   };
 
   const handleRevisePhase = (phaseName: string) => {
-    // For demo purposes, simply navigate to the project blueprint
-    navigate('/project-blueprint');
+    // Navigate to the project blueprint with the appropriate phase
+    const phaseId = phaseName.toLowerCase();
+    navigate(`/project-blueprint?projectId=${projectId}&phaseId=${phaseId}`);
     toast({
       title: "Phase selected",
       description: `You are now revising the ${phaseName} phase.`,
