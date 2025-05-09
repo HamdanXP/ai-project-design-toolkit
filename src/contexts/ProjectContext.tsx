@@ -2,6 +2,14 @@
 import React, { createContext, useState, useContext, ReactNode } from "react";
 import { ProjectPhase } from "@/types/project";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
+import { 
+  PipelineTemplate, 
+  EthicalGuardrail, 
+  PrototypeMilestone, 
+  TestResult, 
+  EvaluationCriteria,
+  DevelopmentDecision
+} from "@/types/development-phase";
 
 // Define the shape of our project context
 interface ProjectContextType {
@@ -34,6 +42,20 @@ interface ProjectContextType {
   setSuitabilityChecks: React.Dispatch<React.SetStateAction<DataSuitabilityCheck[]>>;
   scopingFinalDecision: 'proceed' | 'revise' | null;
   setScopingFinalDecision: React.Dispatch<React.SetStateAction<'proceed' | 'revise' | null>>;
+  
+  // Development phase data
+  developmentSelectedPipeline: string;
+  setDevelopmentSelectedPipeline: React.Dispatch<React.SetStateAction<string>>;
+  developmentGuardrails: EthicalGuardrail[];
+  setDevelopmentGuardrails: React.Dispatch<React.SetStateAction<EthicalGuardrail[]>>;
+  developmentMilestones: PrototypeMilestone[];
+  setDevelopmentMilestones: React.Dispatch<React.SetStateAction<PrototypeMilestone[]>>;
+  developmentTestResults: TestResult[];
+  setDevelopmentTestResults: React.Dispatch<React.SetStateAction<TestResult[]>>;
+  developmentEvaluationCriteria: EvaluationCriteria[];
+  setDevelopmentEvaluationCriteria: React.Dispatch<React.SetStateAction<EvaluationCriteria[]>>;
+  developmentDecision: DevelopmentDecision;
+  setDevelopmentDecision: React.Dispatch<React.SetStateAction<DevelopmentDecision>>;
 }
 
 // Create the context with a default undefined value
@@ -104,6 +126,14 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   ]);
   const [scopingFinalDecision, setScopingFinalDecision] = useState<'proceed' | 'revise' | null>(null);
 
+  // Development phase state
+  const [developmentSelectedPipeline, setDevelopmentSelectedPipeline] = useState<string>("");
+  const [developmentGuardrails, setDevelopmentGuardrails] = useState<EthicalGuardrail[]>([]);
+  const [developmentMilestones, setDevelopmentMilestones] = useState<PrototypeMilestone[]>([]);
+  const [developmentTestResults, setDevelopmentTestResults] = useState<TestResult[]>([]);
+  const [developmentEvaluationCriteria, setDevelopmentEvaluationCriteria] = useState<EvaluationCriteria[]>([]);
+  const [developmentDecision, setDevelopmentDecision] = useState<DevelopmentDecision>(null);
+
   return (
     <ProjectContext.Provider
       value={{
@@ -129,6 +159,18 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         setSuitabilityChecks,
         scopingFinalDecision, 
         setScopingFinalDecision,
+        developmentSelectedPipeline,
+        setDevelopmentSelectedPipeline,
+        developmentGuardrails,
+        setDevelopmentGuardrails,
+        developmentMilestones,
+        setDevelopmentMilestones,
+        developmentTestResults,
+        setDevelopmentTestResults,
+        developmentEvaluationCriteria,
+        setDevelopmentEvaluationCriteria,
+        developmentDecision,
+        setDevelopmentDecision,
       }}
     >
       {children}
