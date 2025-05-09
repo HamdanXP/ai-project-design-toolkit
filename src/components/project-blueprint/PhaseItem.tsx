@@ -66,7 +66,7 @@ export const PhaseItem = ({
         <div className="pl-5">
           <div className="flex justify-between text-xs text-muted-foreground mb-1">
             <span>Progress</span>
-            <span>{renderedPhase.completedSteps}/{renderedPhase.totalSteps}</span>
+            <span>{isCompleted ? renderedPhase.totalSteps : renderedPhase.completedSteps}/{renderedPhase.totalSteps}</span>
           </div>
           <Progress
             value={renderedPhase.progress}

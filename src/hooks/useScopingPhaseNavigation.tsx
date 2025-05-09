@@ -31,74 +31,41 @@ export const useScopingPhaseNavigation = ({
     setScopingFinalDecision
   } = useProject();
 
-  // Initialize progress based on phase status and decisions
+  // Update progress only if the phase is not already completed
   useEffect(() => {
-    // If the phase is already completed, keep it at 100%
+    // Skip all automatic progress updates if the phase is already completed
     if (currentPhaseStatus === "completed") {
-      onUpdateProgress(totalSteps, totalSteps);
+      console.log("Phase is completed. Skipping progress updates.");
       return;
     }
     
-    // Handle special case for step 5 progress
-    if (scopingFinalDecision === 'proceed') {
-      // If there's already a "proceed" decision, set to 100%
-      // But don't change status to completed here - that's done in handleCompletePhase
-      updatePhaseStatus("scoping", "in-progress", 100);
-    } else if (scopingFinalDecision === 'revise') {
-      // If there's already a "revise" decision, set to 80%
-      updatePhaseStatus("scoping", "in-progress", 80);
-    } else {
-      // Default progress calculation (steps 1-4)
-      const currentStep = Math.min(scopingActiveStep, 4); // Cap at 4 for progress calculation purposes
-      onUpdateProgress(currentStep - 1, totalSteps);
+    // For steps 1-4, use automatic progress tracking
+    if (scopingActiveStep < 5) {
+      onUpdateProgress(scopingActiveStep - 1, totalSteps);
+    } 
+    // For step 5, only update if there's a final decision
+    else if (scopingFinalDecision) {
+      const progressValue = scopingFinalDecision === 'proceed' ? 100 : 80;
+      updatePhaseStatus("scoping", "in-progress", progressValue);
     }
-  }, [onUpdateProgress, updatePhaseStatus, scopingFinalDecision, scopingActiveStep, totalSteps, currentPhaseStatus]);
-
-  // Only update automatic progress for steps 1-4
-  // Step 5 progress is controlled by user decisions in Final Feasibility Gate
-  useEffect(() => {
-    if (currentPhaseStatus === "completed") {
-      // If phase is completed, keep full progress
-      onUpdateProgress(totalSteps, totalSteps);
-    } else {
-      // For steps 1-4, use automatic progress tracking
-      if (scopingActiveStep < 5) {
-        onUpdateProgress(scopingActiveStep - 1, totalSteps);
-      }
-      // For step 5, progress is controlled by FinalFeasibilityGate buttons
-    }
-  }, [scopingActiveStep, currentPhaseStatus, onUpdateProgress, totalSteps]);
+  }, [scopingActiveStep, scopingFinalDecision, currentPhaseStatus, onUpdateProgress, updatePhaseStatus, totalSteps]);
 
   // Handle step navigation
   const moveToNextStep = () => {
+    // Don't change steps if the phase is completed
+    if (currentPhaseStatus === "completed") return;
+    
     if (scopingActiveStep < totalSteps) {
-      const nextStep = scopingActiveStep + 1;
-      setScopingActiveStep(nextStep);
-      
-      // Always update progress when moving from step 4 to step 5
-      // This ensures the sidebar shows 4/5 steps completed
-      if (nextStep === 5) {
-        onUpdateProgress(4, totalSteps);
-      }
-      // For steps 1-3, use automatic progress
-      else if (nextStep < 5) {
-        onUpdateProgress(nextStep - 1, totalSteps);
-      }
+      setScopingActiveStep(scopingActiveStep + 1);
     }
   };
   
   const moveToPreviousStep = () => {
+    // Don't change steps if the phase is completed
+    if (currentPhaseStatus === "completed") return;
+    
     if (scopingActiveStep > 1) {
-      const prevStep = scopingActiveStep - 1;
-      setScopingActiveStep(prevStep);
-      
-      // If the phase is completed, don't change the progress
-      if (currentPhaseStatus !== "completed") {
-        // Only update automatic progress for steps 1-4
-        if (prevStep < 5) {
-          onUpdateProgress(prevStep - 1, totalSteps); 
-        }
-      }
+      setScopingActiveStep(scopingActiveStep - 1);
     }
   };
 
@@ -114,7 +81,7 @@ export const useScopingPhaseNavigation = ({
     }
   };
 
-  // Handle phase completion
+  // Handle phase completion with validation
   const handleCompletePhase = () => {
     // Check if the user has completed the necessary steps
     if (!selectedUseCase) {
@@ -147,10 +114,10 @@ export const useScopingPhaseNavigation = ({
       return;
     }
     
-    // First, update the status to "completed" with 100% progress
+    // Update the status to "completed" with 100% progress
     updatePhaseStatus("scoping", "completed", 100);
     
-    // Then call the phase completion handler
+    // Call the completion handler
     onCompletePhase();
   };
 

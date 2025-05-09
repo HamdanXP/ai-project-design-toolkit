@@ -56,12 +56,16 @@ export const FinalFeasibilityGate = ({
   
   // Handle the final "Complete Phase" button click
   const onCompletePhase = () => {
-    // This is critical - we MUST set the phase to completed first
-    // This ensures the phase stays completed when navigating back
+    console.log("FinalFeasibilityGate: Complete Phase clicked");
+    
+    // This is critical - explicitly set the phase to completed with 100% progress
     updatePhaseStatus("scoping", "completed", 100);
     
-    // Then complete the phase - moves to next phase
-    handleCompletePhase();
+    // Add a small delay to ensure the state update has been processed
+    setTimeout(() => {
+      // This will navigate to the next phase if appropriate
+      handleCompletePhase();
+    }, 50);
   };
   
   // Reset the entire phase to start from step 1

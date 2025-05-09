@@ -61,6 +61,8 @@ export const ScopingPhase = ({
   // Check if the scoping phase is already completed from the phases array
   const scopingPhase = phases.find(p => p.id === "scoping");
   const effectiveStatus = scopingPhase?.status || currentPhaseStatus;
+  
+  console.log(`ScopingPhase render - effectiveStatus: ${effectiveStatus}, from scopingPhase: ${scopingPhase?.status}, from prop: ${currentPhaseStatus}`);
 
   const {
     totalSteps,
@@ -116,6 +118,7 @@ export const ScopingPhase = ({
   // Ensure correct progress display when phase is completed
   useEffect(() => {
     if (effectiveStatus === "completed") {
+      console.log("ScopingPhase: Phase is completed, ensuring progress is 100%");
       onUpdateProgress(totalSteps, totalSteps);
     }
   }, [effectiveStatus, onUpdateProgress, totalSteps]);

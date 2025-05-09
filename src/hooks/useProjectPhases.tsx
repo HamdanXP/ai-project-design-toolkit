@@ -21,32 +21,12 @@ export const useProjectPhases = () => {
   
   // Function to update phase progress based on completed steps
   const updatePhaseProgress = (phaseId: string, completed: number, total: number) => {
-    // Special handling for Scoping phase
-    if (phaseId === "scoping") {
-      const currentPhase = phases.find(p => p.id === phaseId);
-      
-      // Don't change if the phase is already completed
-      if (currentPhase?.status === "completed") {
-        return;
-      }
-      
-      // Don't override progress if we're in the final step (step 5)
-      // and a decision has been made (proceed or revise)
-      if (currentPhase && scopingFinalDecision) {
-        if (
-          (scopingFinalDecision === 'proceed' && currentPhase.progress === 100) || 
-          (scopingFinalDecision === 'revise' && currentPhase.progress === 80)
-        ) {
-          return;
-        }
-      }
-    }
-    
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
           // Don't update if the phase is already completed
           if (phase.status === "completed") {
+            console.log(`Phase ${phaseId} is already completed. Not updating progress.`);
             return phase;
           }
           
@@ -54,10 +34,9 @@ export const useProjectPhases = () => {
           const progress = Math.round((completed / total) * 100);
           
           // Determine status based on progress
-          let status: "not-started" | "in-progress" | "completed" = phase.status;
+          let status = phase.status;
           if (progress === 0) status = "not-started";
-          else if (progress === 100) status = "completed";
-          else status = "in-progress";
+          else if (progress < 100) status = "in-progress";
           
           return {
             ...phase,
@@ -74,11 +53,18 @@ export const useProjectPhases = () => {
   // Explicitly set the status of a phase
   const updatePhaseStatus = (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => {
     // Special handling for scoping "ready to proceed" (100%) vs "revise approach" (80%)
-    if (phaseId === "scoping" && status === "in-progress") {
-      if (progress === 100) {
+    if (phaseId === "scoping") {
+      if (status === "in-progress") {
+        if (progress === 100) {
+          setScopingFinalDecision('proceed');
+        } else if (progress === 80) {
+          setScopingFinalDecision('revise');
+        }
+      }
+      
+      // If status is completed, ensure scopingFinalDecision is 'proceed'
+      if (status === "completed") {
         setScopingFinalDecision('proceed');
-      } else if (progress === 80) {
-        setScopingFinalDecision('revise');
       }
     }
     
@@ -88,13 +74,13 @@ export const useProjectPhases = () => {
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
           // Calculate completedSteps based on the provided progress percentage
-          const completedSteps = Math.round((progress / 100) * phase.totalSteps);
+          const completedSteps = status === "completed" ? phase.totalSteps : Math.round((progress / 100) * phase.totalSteps);
           
           const updatedPhase = {
             ...phase,
             status,
-            progress,
-            completedSteps: status === "completed" ? phase.totalSteps : completedSteps
+            progress: status === "completed" ? 100 : progress, // Ensure completed phases show 100%
+            completedSteps
           };
           
           console.log(`Updated phase ${phaseId}:`, updatedPhase);
@@ -108,13 +94,8 @@ export const useProjectPhases = () => {
   const handleCompletePhase = (phaseId: string) => {
     console.log(`Completing phase: ${phaseId}`);
     
-    // First, make sure we mark the phase as completed - CRITICAL FIX
+    // Mark the phase as completed first - CRITICAL
     updatePhaseStatus(phaseId, "completed", 100);
-    
-    // Reset the scoping decision state if we're completing that phase
-    if (phaseId === "scoping") {
-      setScopingFinalDecision('proceed');
-    }
     
     // Store phase data
     const phaseData = {
@@ -126,9 +107,6 @@ export const useProjectPhases = () => {
     
     console.log("Phase completed with data:", phaseData);
     
-    // Force a UI update by updating all phases - CRITICAL FIX: Remove this as it causes infinite loops
-    // Instead, rely on the updatePhaseStatus to properly update the phase
-    
     // Determine the next phase to activate
     const phaseOrder = ["reflection", "scoping", "development", "evaluation"];
     const currentIndex = phaseOrder.indexOf(phaseId);
@@ -136,26 +114,37 @@ export const useProjectPhases = () => {
     if (currentIndex < phaseOrder.length - 1) {
       const nextPhaseId = phaseOrder[currentIndex + 1];
       
-      // Update the next phase to in-progress
-      setPhases(prevPhases => 
-        prevPhases.map(phase => {
-          if (phase.id === nextPhaseId) {
-            return {
-              ...phase,
-              status: "in-progress"
-            };
-          }
-          return phase;
-        })
-      );
-      
-      // Immediately move to the next phase
-      setActivePhaseId(nextPhaseId);
-      
-      toast({
-        title: "Phase Completed",
-        description: `You've completed the ${phaseId.charAt(0).toUpperCase() + phaseId.slice(1)} phase!`,
-      });
+      // Update the next phase to in-progress after a short delay
+      // This prevents race conditions by ensuring the completed status is saved first
+      setTimeout(() => {
+        setPhases(prevPhases => 
+          prevPhases.map(phase => {
+            // Verify the current phase is still marked as completed
+            if (phase.id === phaseId && phase.status !== "completed") {
+              console.warn(`Warning: Phase ${phaseId} should be completed but is ${phase.status}`);
+              return { ...phase, status: "completed", progress: 100, completedSteps: phase.totalSteps };
+            }
+            
+            // Set the next phase to in-progress
+            if (phase.id === nextPhaseId) {
+              return {
+                ...phase,
+                status: "in-progress",
+                progress: phase.progress === 0 ? 5 : phase.progress // Start with at least 5% progress
+              };
+            }
+            return phase;
+          })
+        );
+        
+        // Move to the next phase
+        setActivePhaseId(nextPhaseId);
+        
+        toast({
+          title: "Phase Completed",
+          description: `You've completed the ${phaseId.charAt(0).toUpperCase() + phaseId.slice(1)} phase!`,
+        });
+      }, 100);
     }
   };
 
@@ -165,6 +154,11 @@ export const useProjectPhases = () => {
   };
 
   const handleScopingProgress = (completed: number, total: number) => {
+    const scopingPhase = phases.find(p => p.id === "scoping");
+    if (scopingPhase?.status === "completed") {
+      console.log("Scoping phase already completed. Not updating progress.");
+      return;
+    }
     updatePhaseProgress("scoping", completed, total);
   };
 
