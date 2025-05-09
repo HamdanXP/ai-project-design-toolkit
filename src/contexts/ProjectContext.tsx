@@ -2,7 +2,6 @@
 import React, { createContext, useState, useContext, ReactNode } from "react";
 import { ProjectPhase } from "@/types/project";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
-import { PipelineType, Milestone, WorkspaceType, EthicalCheck, ModelOutput } from "@/types/development-phase";
 
 // Define the shape of our project context
 interface ProjectContextType {
@@ -35,22 +34,6 @@ interface ProjectContextType {
   setSuitabilityChecks: React.Dispatch<React.SetStateAction<DataSuitabilityCheck[]>>;
   scopingFinalDecision: 'proceed' | 'revise' | null;
   setScopingFinalDecision: React.Dispatch<React.SetStateAction<'proceed' | 'revise' | null>>;
-  
-  // Development phase data
-  developmentActiveStep: number;
-  setDevelopmentActiveStep: React.Dispatch<React.SetStateAction<number>>;
-  selectedPipeline: PipelineType | null;
-  setSelectedPipeline: React.Dispatch<React.SetStateAction<PipelineType | null>>;
-  developmentMilestones: Milestone[];
-  setDevelopmentMilestones: React.Dispatch<React.SetStateAction<Milestone[]>>;
-  selectedWorkspace: WorkspaceType | null;
-  setSelectedWorkspace: React.Dispatch<React.SetStateAction<WorkspaceType | null>>;
-  ethicalChecks: EthicalCheck[];
-  setEthicalChecks: React.Dispatch<React.SetStateAction<EthicalCheck[]>>;
-  modelOutput: ModelOutput;
-  setModelOutput: React.Dispatch<React.SetStateAction<ModelOutput>>;
-  developmentReadiness: number;
-  setDevelopmentReadiness: React.Dispatch<React.SetStateAction<number>>;
 }
 
 // Create the context with a default undefined value
@@ -120,75 +103,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     { id: "quality", question: "Is the data quality sufficient?", answer: "unknown", description: "" }
   ]);
   const [scopingFinalDecision, setScopingFinalDecision] = useState<'proceed' | 'revise' | null>(null);
-  
-  // Development phase state
-  const [developmentActiveStep, setDevelopmentActiveStep] = useState<number>(1);
-  const [selectedPipeline, setSelectedPipeline] = useState<PipelineType | null>(null);
-  const [developmentMilestones, setDevelopmentMilestones] = useState<Milestone[]>([
-    {
-      id: "data-prep",
-      title: "Data Preparation",
-      description: "Clean, process, and prepare data for model training",
-      isCompleted: false,
-      notes: ""
-    },
-    {
-      id: "model-training",
-      title: "Model Training",
-      description: "Select, train, and tune your AI model",
-      isCompleted: false,
-      notes: ""
-    },
-    {
-      id: "evaluation",
-      title: "Evaluation Metrics",
-      description: "Define and measure performance metrics",
-      isCompleted: false,
-      notes: ""
-    },
-    {
-      id: "risk-check",
-      title: "Risk Assessment",
-      description: "Identify and mitigate potential risks",
-      isCompleted: false,
-      notes: ""
-    }
-  ]);
-  const [selectedWorkspace, setSelectedWorkspace] = useState<WorkspaceType | null>(null);
-  const [ethicalChecks, setEthicalChecks] = useState<EthicalCheck[]>([
-    {
-      id: "data-bias",
-      question: "Have you checked for bias in your training data?",
-      answer: "unknown",
-      notes: ""
-    },
-    {
-      id: "exclusion",
-      question: "What data or cases are you excluding?",
-      answer: "unknown",
-      notes: ""
-    },
-    {
-      id: "consent",
-      question: "Have you verified data consent and appropriate usage rights?",
-      answer: "unknown",
-      notes: ""
-    },
-    {
-      id: "misuse",
-      question: "Could this model be misused or have unintended consequences?",
-      answer: "unknown",
-      notes: ""
-    }
-  ]);
-  const [modelOutput, setModelOutput] = useState<ModelOutput>({
-    performance: null,
-    samplePredictions: null,
-    issues: null,
-    hasScreenshot: false,
-    meetsImpactGoal: false
-  });
-  const [developmentReadiness, setDevelopmentReadiness] = useState<number>(0);
 
   return (
     <ProjectContext.Provider
@@ -215,20 +129,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         setSuitabilityChecks,
         scopingFinalDecision, 
         setScopingFinalDecision,
-        developmentActiveStep,
-        setDevelopmentActiveStep,
-        selectedPipeline,
-        setSelectedPipeline,
-        developmentMilestones,
-        setDevelopmentMilestones,
-        selectedWorkspace,
-        setSelectedWorkspace,
-        ethicalChecks,
-        setEthicalChecks,
-        modelOutput,
-        setModelOutput,
-        developmentReadiness,
-        setDevelopmentReadiness
       }}
     >
       {children}

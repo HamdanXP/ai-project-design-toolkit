@@ -64,9 +64,7 @@ export const ProjectPhaseContent = ({
         canAccessPhase("development") ? (
           <DevelopmentPhase 
             onUpdateProgress={handleDevelopmentProgress}
-            onCompletePhase={() => handleCompletePhase("development")}
-            updatePhaseStatus={updatePhaseStatus}
-            currentPhaseStatus={currentPhaseStatus}
+            onCompletePhase={() => handleCompletePhase("development")} 
           />
         ) : (
           <PhaseLockedMessage phaseName="Development" />
