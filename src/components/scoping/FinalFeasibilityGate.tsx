@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle } from "lucide-react";
@@ -55,8 +56,10 @@ export const FinalFeasibilityGate = ({
   
   // Handle the final "Complete Phase" button click
   const onCompletePhase = () => {
-    // Complete the phase only when ready to proceed
-    // We don't need to check readyToAdvance since the button is only enabled when true
+    // First, explicitly set the phase to completed
+    updatePhaseStatus("scoping", "completed", 100);
+    
+    // Then complete the phase
     handleCompletePhase();
   };
   

@@ -27,6 +27,7 @@ export const PhaseItem = ({
   // Update the rendered phase when the phase prop changes
   useEffect(() => {
     setRenderedPhase(phase);
+    console.log(`PhaseItem updated: ${phase.id}, status: ${phase.status}, progress: ${phase.progress}`);
   }, [phase]);
   
   return (
@@ -36,7 +37,7 @@ export const PhaseItem = ({
         isActive
           ? "bg-primary/10 border-l-2 border-primary"
           : "hover:bg-accent/50",
-        renderedPhase.status === "completed" && "border-l-2 border-emerald-500"
+        renderedPhase.status === "completed" ? "border-l-2 border-emerald-500" : ""
       )}
       onClick={onSelect}
     >

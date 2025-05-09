@@ -80,12 +80,15 @@ export const useProjectPhases = () => {
           // Calculate completedSteps based on the provided progress percentage
           const completedSteps = Math.round((progress / 100) * phase.totalSteps);
           
-          return {
+          const updatedPhase = {
             ...phase,
             status,
             progress,
             completedSteps: status === "completed" ? phase.totalSteps : completedSteps
           };
+          
+          console.log(`Updated phase ${phaseId}:`, updatedPhase);
+          return updatedPhase;
         }
         return phase;
       })
