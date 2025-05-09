@@ -103,19 +103,12 @@ export const useProjectPhases = () => {
         return phase;
       })
     );
-    
-    // Force a UI update by updating all phases after a short delay
-    if (status === "completed") {
-      setTimeout(() => {
-        setPhases(prevPhases => [...prevPhases]);
-      }, 100);
-    }
   };
 
   const handleCompletePhase = (phaseId: string) => {
     console.log(`Completing phase: ${phaseId}`);
     
-    // First, make sure we mark the phase as completed
+    // First, make sure we mark the phase as completed - CRITICAL FIX
     updatePhaseStatus(phaseId, "completed", 100);
     
     // Reset the scoping decision state if we're completing that phase
@@ -133,10 +126,8 @@ export const useProjectPhases = () => {
     
     console.log("Phase completed with data:", phaseData);
     
-    // Force a UI update by updating all phases
-    setTimeout(() => {
-      setPhases(prevPhases => [...prevPhases]);
-    }, 100);
+    // Force a UI update by updating all phases - CRITICAL FIX: Remove this as it causes infinite loops
+    // Instead, rely on the updatePhaseStatus to properly update the phase
     
     // Determine the next phase to activate
     const phaseOrder = ["reflection", "scoping", "development", "evaluation"];

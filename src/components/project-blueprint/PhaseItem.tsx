@@ -74,6 +74,7 @@ export const PhaseItem = ({
               "h-1.5",
               isCompleted ? "bg-emerald-100" : ""
             )}
+            indicatorClassName={isCompleted ? "bg-emerald-500" : undefined}
           />
         </div>
       )}

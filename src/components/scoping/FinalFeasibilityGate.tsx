@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle } from "lucide-react";
@@ -43,6 +42,7 @@ export const FinalFeasibilityGate = ({
     setReadyToAdvance(true);
     
     // Update the progress in the sidebar to 100% (5/5 steps)
+    // But keep status as "in-progress" until they click "Complete Phase"
     updatePhaseStatus("scoping", "in-progress", 100);
   };
   
@@ -56,10 +56,11 @@ export const FinalFeasibilityGate = ({
   
   // Handle the final "Complete Phase" button click
   const onCompletePhase = () => {
-    // First, explicitly set the phase to completed
+    // This is critical - we MUST set the phase to completed first
+    // This ensures the phase stays completed when navigating back
     updatePhaseStatus("scoping", "completed", 100);
     
-    // Then complete the phase
+    // Then complete the phase - moves to next phase
     handleCompletePhase();
   };
   

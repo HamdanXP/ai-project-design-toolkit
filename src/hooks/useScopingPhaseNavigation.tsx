@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { UseCase, Dataset } from "@/types/scoping-phase";
@@ -41,6 +42,7 @@ export const useScopingPhaseNavigation = ({
     // Handle special case for step 5 progress
     if (scopingFinalDecision === 'proceed') {
       // If there's already a "proceed" decision, set to 100%
+      // But don't change status to completed here - that's done in handleCompletePhase
       updatePhaseStatus("scoping", "in-progress", 100);
     } else if (scopingFinalDecision === 'revise') {
       // If there's already a "revise" decision, set to 80%
@@ -52,7 +54,7 @@ export const useScopingPhaseNavigation = ({
     }
   }, [onUpdateProgress, updatePhaseStatus, scopingFinalDecision, scopingActiveStep, totalSteps, currentPhaseStatus]);
 
-  // CRITICAL: Only update automatic progress for steps 1-4
+  // Only update automatic progress for steps 1-4
   // Step 5 progress is controlled by user decisions in Final Feasibility Gate
   useEffect(() => {
     if (currentPhaseStatus === "completed") {
