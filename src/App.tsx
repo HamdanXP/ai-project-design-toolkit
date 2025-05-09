@@ -36,7 +36,7 @@ function App() {
           />
           <Route path="/my-projects" element={<MyProjects />} />
           <Route path="/project-completion" element={<ProjectCompletion />} />
-          <Route path="/project/:id" element={<ProjectDetails />} />
+          <Route path="/project/:projectId" element={<ProjectDetails />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>

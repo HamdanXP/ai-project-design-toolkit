@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { TopBar } from "@/components/TopBar";
-import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { BackButton } from "@/components/BackButton";
 import { Footer } from "@/components/Footer";
@@ -21,7 +20,6 @@ const MyProjects = () => {
   ]);
 
   const handleProjectClick = (projectId: number) => {
-    // Use the correct path format to match the route in App.tsx
     navigate(`/project/${projectId}`);
   };
 
@@ -35,8 +33,6 @@ const MyProjects = () => {
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {/* "Create Project" card removed */}
-          
           {/* Existing Projects */}
           {projects.map((project) => (
             <div 
