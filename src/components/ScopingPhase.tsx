@@ -8,6 +8,7 @@ import { FinalFeasibilityGate } from "@/components/scoping/FinalFeasibilityGate"
 import { ScopingPhaseHeader } from "@/components/scoping/ScopingPhaseHeader";
 import { useScopingPhaseData } from "@/hooks/useScopingPhaseData";
 import { useScopingPhaseNavigation } from "@/hooks/useScopingPhaseNavigation";
+import { UseCase, Dataset } from "@/types/scoping-phase";
 
 export const ScopingPhase = ({
   onCompletePhase,
@@ -197,3 +198,4 @@ export const ScopingPhase = ({
     </div>
   );
 };
+
