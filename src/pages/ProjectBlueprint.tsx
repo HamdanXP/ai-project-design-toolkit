@@ -96,7 +96,6 @@ const ProjectBlueprint = () => {
             toggleSidebar={toggleSidebar}
             activePhaseId={activePhaseId}
             phases={phases}
-            sidebarOpen={sidebarOpen}
           />
           
           <div className="max-w-4xl mx-auto">
