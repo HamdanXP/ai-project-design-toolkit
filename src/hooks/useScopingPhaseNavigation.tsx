@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { UseCase, Dataset } from "@/types/scoping-phase";
@@ -33,6 +32,12 @@ export const useScopingPhaseNavigation = ({
 
   // Initialize progress based on phase status and decisions
   useEffect(() => {
+    // If the phase is already completed, keep it at 100%
+    if (currentPhaseStatus === "completed") {
+      onUpdateProgress(totalSteps, totalSteps);
+      return;
+    }
+    
     // Handle special case for step 5 progress
     if (scopingFinalDecision === 'proceed') {
       // If there's already a "proceed" decision, set to 100%
@@ -45,20 +50,20 @@ export const useScopingPhaseNavigation = ({
       const currentStep = Math.min(scopingActiveStep, 4); // Cap at 4 for progress calculation purposes
       onUpdateProgress(currentStep - 1, totalSteps);
     }
-  }, [onUpdateProgress, updatePhaseStatus, scopingFinalDecision, scopingActiveStep, totalSteps]);
+  }, [onUpdateProgress, updatePhaseStatus, scopingFinalDecision, scopingActiveStep, totalSteps, currentPhaseStatus]);
 
   // CRITICAL: Only update automatic progress for steps 1-4
   // Step 5 progress is controlled by user decisions in Final Feasibility Gate
   useEffect(() => {
-    if (currentPhaseStatus !== "completed") {
+    if (currentPhaseStatus === "completed") {
+      // If phase is completed, keep full progress
+      onUpdateProgress(totalSteps, totalSteps);
+    } else {
       // For steps 1-4, use automatic progress tracking
       if (scopingActiveStep < 5) {
         onUpdateProgress(scopingActiveStep - 1, totalSteps);
       }
-      // For step 5, we don't update progress here - controlled by FinalFeasibilityGate buttons
-    } else {
-      // If phase is completed, show full progress
-      onUpdateProgress(totalSteps, totalSteps);
+      // For step 5, progress is controlled by FinalFeasibilityGate buttons
     }
   }, [scopingActiveStep, currentPhaseStatus, onUpdateProgress, totalSteps]);
 
@@ -85,9 +90,12 @@ export const useScopingPhaseNavigation = ({
       const prevStep = scopingActiveStep - 1;
       setScopingActiveStep(prevStep);
       
-      // Only update automatic progress for steps 1-4
-      if (prevStep < 5) {
-        onUpdateProgress(prevStep - 1, totalSteps); 
+      // If the phase is completed, don't change the progress
+      if (currentPhaseStatus !== "completed") {
+        // Only update automatic progress for steps 1-4
+        if (prevStep < 5) {
+          onUpdateProgress(prevStep - 1, totalSteps); 
+        }
       }
     }
   };

@@ -30,6 +30,9 @@ export const PhaseItem = ({
     console.log(`PhaseItem updated: ${phase.id}, status: ${phase.status}, progress: ${phase.progress}`);
   }, [phase]);
   
+  // Determine if the phase is completed
+  const isCompleted = renderedPhase.status === "completed";
+  
   return (
     <div
       className={cn(
@@ -37,7 +40,7 @@ export const PhaseItem = ({
         isActive
           ? "bg-primary/10 border-l-2 border-primary"
           : "hover:bg-accent/50",
-        renderedPhase.status === "completed" ? "border-l-2 border-emerald-500" : ""
+        isCompleted ? "border-l-2 border-emerald-500" : ""
       )}
       onClick={onSelect}
     >
@@ -51,10 +54,12 @@ export const PhaseItem = ({
         <span
           className={cn(
             "text-sm font-medium",
-            !isMobile && !isOpen ? "hidden" : "block"
+            !isMobile && !isOpen ? "hidden" : "block",
+            isCompleted ? "text-emerald-600" : ""
           )}
         >
           {renderedPhase.name}
+          {isCompleted && " ✓"}
         </span>
       </div>
       {(isMobile || isOpen) && (
@@ -65,7 +70,10 @@ export const PhaseItem = ({
           </div>
           <Progress
             value={renderedPhase.progress}
-            className="h-1.5"
+            className={cn(
+              "h-1.5",
+              isCompleted ? "bg-emerald-100" : ""
+            )}
           />
         </div>
       )}

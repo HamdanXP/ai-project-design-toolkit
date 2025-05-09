@@ -25,6 +25,11 @@ export const useProjectPhases = () => {
     if (phaseId === "scoping") {
       const currentPhase = phases.find(p => p.id === phaseId);
       
+      // Don't change if the phase is already completed
+      if (currentPhase?.status === "completed") {
+        return;
+      }
+      
       // Don't override progress if we're in the final step (step 5)
       // and a decision has been made (proceed or revise)
       if (currentPhase && scopingFinalDecision) {
@@ -40,6 +45,11 @@ export const useProjectPhases = () => {
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
+          // Don't update if the phase is already completed
+          if (phase.status === "completed") {
+            return phase;
+          }
+          
           // Calculate the progress percentage
           const progress = Math.round((completed / total) * 100);
           
@@ -93,6 +103,13 @@ export const useProjectPhases = () => {
         return phase;
       })
     );
+    
+    // Force a UI update by updating all phases after a short delay
+    if (status === "completed") {
+      setTimeout(() => {
+        setPhases(prevPhases => [...prevPhases]);
+      }, 100);
+    }
   };
 
   const handleCompletePhase = (phaseId: string) => {
