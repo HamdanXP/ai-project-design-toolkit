@@ -40,3 +40,30 @@ export type EvaluationCriteria = {
 };
 
 export type DevelopmentDecision = 'proceed' | 'iterate' | 'revisit' | null;
+
+// New types for Evaluation Phase
+export type RiskLevel = 'low' | 'medium' | 'high' | 'unknown';
+
+export type RiskAssessment = {
+  id: string;
+  category: string;
+  level: RiskLevel;
+  notes: string;
+};
+
+export type StakeholderFeedback = {
+  id: string;
+  name: string;
+  role: string;
+  notes: string;
+  rating: number; // 1-5 rating
+};
+
+export type ImpactGoalCheck = {
+  id: string;
+  question: string;
+  isAligned: boolean;
+  notes: string;
+};
+
+export type EvaluationDecision = 'finalise' | 'iterate' | 'reframe' | null;

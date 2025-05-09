@@ -8,7 +8,11 @@ import {
   PrototypeMilestone, 
   TestResult, 
   EvaluationCriteria,
-  DevelopmentDecision
+  DevelopmentDecision,
+  RiskAssessment,
+  StakeholderFeedback,
+  ImpactGoalCheck,
+  EvaluationDecision
 } from "@/types/development-phase";
 
 // Define the shape of our project context
@@ -56,6 +60,20 @@ interface ProjectContextType {
   setDevelopmentEvaluationCriteria: React.Dispatch<React.SetStateAction<EvaluationCriteria[]>>;
   developmentDecision: DevelopmentDecision;
   setDevelopmentDecision: React.Dispatch<React.SetStateAction<DevelopmentDecision>>;
+  
+  // Evaluation phase data
+  evaluationTestResults: string;
+  setEvaluationTestResults: React.Dispatch<React.SetStateAction<string>>;
+  evaluationImpactGoalChecks: ImpactGoalCheck[];
+  setEvaluationImpactGoalChecks: React.Dispatch<React.SetStateAction<ImpactGoalCheck[]>>;
+  evaluationRiskAssessments: RiskAssessment[];
+  setEvaluationRiskAssessments: React.Dispatch<React.SetStateAction<RiskAssessment[]>>;
+  evaluationStakeholderFeedback: StakeholderFeedback[];
+  setEvaluationStakeholderFeedback: React.Dispatch<React.SetStateAction<StakeholderFeedback[]>>;
+  evaluationDecision: EvaluationDecision;
+  setEvaluationDecision: React.Dispatch<React.SetStateAction<EvaluationDecision>>;
+  evaluationJustification: string;
+  setEvaluationJustification: React.Dispatch<React.SetStateAction<string>>;
 }
 
 // Create the context with a default undefined value
@@ -94,7 +112,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       name: "Evaluation",
       status: "not-started",
       progress: 0,
-      totalSteps: 4,
+      totalSteps: 5,
       completedSteps: 0
     }
   ]);
@@ -134,6 +152,22 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [developmentEvaluationCriteria, setDevelopmentEvaluationCriteria] = useState<EvaluationCriteria[]>([]);
   const [developmentDecision, setDevelopmentDecision] = useState<DevelopmentDecision>(null);
 
+  // Evaluation phase state
+  const [evaluationTestResults, setEvaluationTestResults] = useState<string>("");
+  const [evaluationImpactGoalChecks, setEvaluationImpactGoalChecks] = useState<ImpactGoalCheck[]>([
+    { id: "goal1", question: "Does the model deliver the benefit I defined earlier?", isAligned: false, notes: "" },
+    { id: "goal2", question: "Does my model support the people it's meant to help?", isAligned: false, notes: "" },
+    { id: "goal3", question: "Is the solution addressing the original problem effectively?", isAligned: false, notes: "" }
+  ]);
+  const [evaluationRiskAssessments, setEvaluationRiskAssessments] = useState<RiskAssessment[]>([
+    { id: "risk1", category: "Bias", level: "unknown", notes: "" },
+    { id: "risk2", category: "Misuse potential", level: "unknown", notes: "" },
+    { id: "risk3", category: "Safety concerns", level: "unknown", notes: "" }
+  ]);
+  const [evaluationStakeholderFeedback, setEvaluationStakeholderFeedback] = useState<StakeholderFeedback[]>([]);
+  const [evaluationDecision, setEvaluationDecision] = useState<EvaluationDecision>(null);
+  const [evaluationJustification, setEvaluationJustification] = useState<string>("");
+
   return (
     <ProjectContext.Provider
       value={{
@@ -171,6 +205,18 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         setDevelopmentEvaluationCriteria,
         developmentDecision,
         setDevelopmentDecision,
+        evaluationTestResults,
+        setEvaluationTestResults,
+        evaluationImpactGoalChecks,
+        setEvaluationImpactGoalChecks,
+        evaluationRiskAssessments,
+        setEvaluationRiskAssessments,
+        evaluationStakeholderFeedback,
+        setEvaluationStakeholderFeedback,
+        evaluationDecision,
+        setEvaluationDecision,
+        evaluationJustification,
+        setEvaluationJustification
       }}
     >
       {children}
