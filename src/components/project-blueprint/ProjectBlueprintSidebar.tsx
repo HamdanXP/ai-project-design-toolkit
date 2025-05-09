@@ -68,6 +68,7 @@ export const ProjectBlueprintSidebar = ({
     };
   }, [isMobile, isOpen, onToggle]);
 
+  // On mobile, don't render anything if sidebar is closed (the toggle button is in the header)
   if (isMobile && !isOpen) {
     return null;
   }
@@ -83,7 +84,10 @@ export const ProjectBlueprintSidebar = ({
     >
       <div className="p-4 flex justify-between items-center border-b border-border">
         <h2 className={cn("font-medium text-foreground", !isOpen && !isMobile ? "hidden" : "block")}>Project Phases</h2>
-        <SidebarToggleButton isOpen={isOpen} onToggle={onToggle} />
+        {/* Only show the sidebar toggle on desktop */}
+        {!isMobile && (
+          <SidebarToggleButton isOpen={isOpen} onToggle={onToggle} />
+        )}
       </div>
       <div className="overflow-y-auto p-2 h-[calc(100%-56px)]">
         {phases.map((phase) => (
