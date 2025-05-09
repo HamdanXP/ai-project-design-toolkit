@@ -54,7 +54,7 @@ export const useProjectPhases = () => {
           const progress = Math.round((completed / total) * 100);
           
           // Determine status based on progress
-          let status = phase.status;
+          let status: "not-started" | "in-progress" | "completed" = phase.status;
           if (progress === 0) status = "not-started";
           else if (progress === 100) status = "completed";
           else status = "in-progress";
