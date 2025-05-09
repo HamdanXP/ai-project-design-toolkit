@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,10 +33,10 @@ const HomePage = () => {
       } catch (error) {
         // If API fails, use fallback data
         setRecentProjects([
-          { id: "1", name: "Healthcare AI Project", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Healthcare", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 25, tags: ["Healthcare", "AI"], phases: [] },
-          { id: "2", name: "Education AI Solution", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Education", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 40, tags: ["Education", "AI"], phases: [] },
-          { id: "3", name: "Financial Services AI", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Finance", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 60, tags: ["Finance", "AI"], phases: [] },
-          { id: "4", name: "Environmental AI Project", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Environment", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 80, tags: ["Environment", "AI"], phases: [] },
+          { id: "1", name: "Healthcare AI Project", description: "AI solution for healthcare applications", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Healthcare", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 25, tags: ["Healthcare", "AI"], phases: [] },
+          { id: "2", name: "Education AI Solution", description: "AI-powered educational tools", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Education", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 40, tags: ["Education", "AI"], phases: [] },
+          { id: "3", name: "Financial Services AI", description: "AI for financial analysis and prediction", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Finance", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 60, tags: ["Finance", "AI"], phases: [] },
+          { id: "4", name: "Environmental AI Project", description: "AI solutions for environmental monitoring", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Environment", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 80, tags: ["Environment", "AI"], phases: [] },
         ]);
         
         setSuggestions([
