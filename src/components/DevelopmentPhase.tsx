@@ -1,170 +1,187 @@
 
-import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from "@/components/ui/alert-dialog";
-
-type Question = {
-  id: number;
-  text: string;
-};
-
-const DEVELOPMENT_QUESTIONS: Question[] = [
-  { id: 1, text: "Draft: Rapid first-round prototyping (create a simple blueprint of a demo or mockup)" },
-  { id: 2, text: "Evaluate possible AI use cases - which features would benefit from machine learning or AI?" },
-  { id: 3, text: "Define feasibility requirements (time and cost estimations, and data you realistically have available for the project)" },
-  { id: 4, text: "Plan or select relevant technologies, frameworks, libraries, databases or related services" },
-  { id: 5, text: "Build proofs with basic placeholders - clean, functional, with minimal required sets" },
-  { id: 6, text: "Implement iteration cycles to assess how well it takes feedback and can improve" },
-];
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useProject } from "@/contexts/ProjectContext";
+import { AIPipelineSelector } from "@/components/development/AIPipelineSelector";
+import { MilestonesTimeline } from "@/components/development/MilestonesTimeline";
+import { WorkspaceLauncher } from "@/components/development/WorkspaceLauncher";
+import { EthicalCheckpoints } from "@/components/development/EthicalCheckpoints";
+import { ModelOutputReview } from "@/components/development/ModelOutputReview";
+import { ReadinessCheck } from "@/components/development/ReadinessCheck";
+import { DevelopmentPhaseHeader } from "@/components/development/DevelopmentPhaseHeader";
 
 type DevelopmentPhaseProps = {
   onUpdateProgress?: (completed: number, total: number) => void;
   onCompletePhase?: () => void;
+  updatePhaseStatus?: (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => void;
+  currentPhaseStatus?: "not-started" | "in-progress" | "completed";
 };
 
-export const DevelopmentPhase = ({ onUpdateProgress, onCompletePhase }: DevelopmentPhaseProps) => {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, string>>({});
-  const totalQuestions = DEVELOPMENT_QUESTIONS.length;
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+export const DevelopmentPhase = ({ 
+  onUpdateProgress, 
+  onCompletePhase, 
+  updatePhaseStatus,
+  currentPhaseStatus = "in-progress"
+}: DevelopmentPhaseProps) => {
+  // Get state from context
+  const {
+    developmentActiveStep,
+    setDevelopmentActiveStep,
+    selectedPipeline,
+    setSelectedPipeline,
+    developmentMilestones,
+    setDevelopmentMilestones,
+    selectedWorkspace,
+    setSelectedWorkspace,
+    ethicalChecks,
+    setEthicalChecks,
+    modelOutput,
+    setModelOutput,
+    developmentReadiness,
+    setDevelopmentReadiness,
+    phases
+  } = useProject();
 
-  const handleNext = () => {
-    if (currentQuestionIndex < totalQuestions - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    }
-    updateProgress();
-  };
+  // Check if the development phase is already completed from the phases array
+  const developmentPhase = phases.find(p => p.id === "development");
+  const effectiveStatus = developmentPhase?.status || currentPhaseStatus;
+  const isCompleted = effectiveStatus === "completed";
+  
+  // Define the total number of steps in the development phase
+  const totalSteps = 6;
 
-  const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-    }
-    updateProgress();
-  };
-
-  const updateProgress = () => {
-    if (!onUpdateProgress) return;
+  // Calculate progress based on completed steps
+  const calculateProgress = () => {
+    let completedSteps = 0;
     
-    const completedCount = Object.keys(answers).filter(key => 
-      answers[parseInt(key)] && answers[parseInt(key)].trim() !== ""
-    ).length;
-    onUpdateProgress(completedCount, totalQuestions);
+    // Check each step's completion status
+    if (selectedPipeline) completedSteps++;
+    if (developmentMilestones.some(m => m.isCompleted)) completedSteps++;
+    if (selectedWorkspace) completedSteps++;
+    if (ethicalChecks.some(c => c.answer !== "unknown")) completedSteps++;
+    if (modelOutput.performance || modelOutput.samplePredictions) completedSteps++;
+    if (developmentReadiness > 0) completedSteps++;
+    
+    return completedSteps;
   };
 
-  const handleAnswerChange = (value: string) => {
-    const currentQuestion = DEVELOPMENT_QUESTIONS[currentQuestionIndex];
-    setAnswers(prev => ({
-      ...prev,
-      [currentQuestion.id]: value
-    }));
-    updateProgress();
+  // Update progress when steps change
+  useEffect(() => {
+    // Skip updating if phase is completed
+    if (isCompleted) return;
+
+    const completedSteps = calculateProgress();
+    
+    if (onUpdateProgress) {
+      onUpdateProgress(completedSteps, totalSteps);
+    }
+    
+    if (updatePhaseStatus) {
+      const progressPercentage = Math.round((completedSteps / totalSteps) * 100);
+      updatePhaseStatus("development", "in-progress", progressPercentage);
+    }
+  }, [selectedPipeline, developmentMilestones, selectedWorkspace, 
+      ethicalChecks, modelOutput, developmentReadiness]);
+
+  // Handle step navigation
+  const moveToNextStep = () => {
+    if (developmentActiveStep < totalSteps) {
+      setDevelopmentActiveStep(developmentActiveStep + 1);
+    }
+  };
+  
+  const moveToPreviousStep = () => {
+    if (developmentActiveStep > 1) {
+      setDevelopmentActiveStep(developmentActiveStep - 1);
+    }
   };
 
-  const handleCompletePhaseConfirm = () => {
+  // Handle phase completion
+  const handleCompletePhase = () => {
     if (onCompletePhase) {
       onCompletePhase();
     }
   };
 
-  const currentQuestion = DEVELOPMENT_QUESTIONS[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
-  const currentAnswer = answers[currentQuestion.id] || "";
-  
-  // Check if the user has reached the last question and provided an answer
-  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
-  
-  // Calculate how many questions have been answered
-  const answeredQuestionsCount = Object.keys(answers).filter(key => 
-    answers[parseInt(key)] && answers[parseInt(key)].trim() !== ""
-  ).length;
-  
-  // Phase is complete if all questions are answered
-  const isPhaseComplete = answeredQuestionsCount === totalQuestions;
+  // Calculate if ready to complete
+  const isReadyToComplete = developmentReadiness >= 70; // 70% readiness threshold
+
+  // Progress percentage for display
+  const progressPercentage = Math.round((calculateProgress() / totalSteps) * 100);
 
   return (
-    <div className="flex flex-col h-full">
-      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Complete Development Phase?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to complete the Development Phase? This will mark this phase as complete and move you to the next step.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCompletePhaseConfirm}>
-              Complete Phase
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-2">Development Phase</h2>
-        <p className="text-muted-foreground">
-          Start building your project with guided steps.
-        </p>
-      </div>
-
+    <div className="space-y-6">
+      <DevelopmentPhaseHeader
+        currentStep={developmentActiveStep}
+        totalSteps={totalSteps}
+        isCompleted={isCompleted}
+      />
+      
       <div className="mb-4 flex items-center">
         <div className="flex-1 mr-4">
-          <Progress value={progress} className="h-2" />
+          <Progress value={progressPercentage} className="h-2" />
         </div>
         <div className="text-sm text-muted-foreground whitespace-nowrap">
-          {currentQuestionIndex + 1} of {totalQuestions}
+          {calculateProgress()} of {totalSteps} steps
         </div>
       </div>
 
-      <Card className="flex-1">
-        <CardContent className="p-6">
-          <h3 className="text-xl font-medium mb-4">
-            {currentQuestion.text}
-          </h3>
-          <Textarea
-            className="min-h-[200px] mb-4"
-            placeholder="Enter your answer here..."
-            value={currentAnswer}
-            onChange={(e) => handleAnswerChange(e.target.value)}
-          />
-        </CardContent>
-      </Card>
-
-      <div className="flex justify-between mt-4">
-        <Button
-          variant="outline"
-          onClick={handlePrevious}
-          disabled={currentQuestionIndex === 0}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-        </Button>
-        
-        {isLastQuestion ? (
-          <Button
-            onClick={() => setConfirmDialogOpen(true)}
-            disabled={!isPhaseComplete}
-          >
-            Complete Phase
-          </Button>
-        ) : (
-          <Button onClick={handleNext}>
-            Next <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        )}
-      </div>
+      {developmentActiveStep === 1 && (
+        <AIPipelineSelector
+          selectedPipeline={selectedPipeline}
+          setSelectedPipeline={(!isCompleted ? setSelectedPipeline : undefined)}
+          moveToNextStep={moveToNextStep}
+        />
+      )}
+      
+      {developmentActiveStep === 2 && (
+        <MilestonesTimeline
+          milestones={developmentMilestones}
+          setMilestones={(!isCompleted ? setDevelopmentMilestones : undefined)}
+          moveToPreviousStep={moveToPreviousStep}
+          moveToNextStep={moveToNextStep}
+        />
+      )}
+      
+      {developmentActiveStep === 3 && (
+        <WorkspaceLauncher
+          selectedWorkspace={selectedWorkspace}
+          setSelectedWorkspace={(!isCompleted ? setSelectedWorkspace : undefined)}
+          moveToPreviousStep={moveToPreviousStep}
+          moveToNextStep={moveToNextStep}
+        />
+      )}
+      
+      {developmentActiveStep === 4 && (
+        <EthicalCheckpoints
+          ethicalChecks={ethicalChecks}
+          setEthicalChecks={(!isCompleted ? setEthicalChecks : undefined)}
+          moveToPreviousStep={moveToPreviousStep}
+          moveToNextStep={moveToNextStep}
+        />
+      )}
+      
+      {developmentActiveStep === 5 && (
+        <ModelOutputReview
+          modelOutput={modelOutput}
+          setModelOutput={(!isCompleted ? setModelOutput : undefined)}
+          moveToPreviousStep={moveToPreviousStep}
+          moveToNextStep={moveToNextStep}
+        />
+      )}
+      
+      {developmentActiveStep === 6 && (
+        <ReadinessCheck
+          readiness={developmentReadiness}
+          setReadiness={(!isCompleted ? setDevelopmentReadiness : undefined)}
+          isReadyToComplete={isReadyToComplete}
+          moveToPreviousStep={moveToPreviousStep}
+          onCompletePhase={handleCompletePhase}
+        />
+      )}
     </div>
   );
 };
