@@ -30,7 +30,6 @@ export const UseCaseExplorer = ({
         <p className="text-muted-foreground mb-6">
           Explore different AI approaches that could help address your problem. 
           Select one that best aligns with your project goals.
-          Click on the dropdown icon to view more details about each approach.
         </p>
         
         <UseCaseGrid 

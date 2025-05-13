@@ -7,6 +7,7 @@ import { BackButton } from "@/components/BackButton";
 type ProjectPhaseHeaderProps = {
   isMobile: boolean;
   toggleSidebar: () => void;
+  toggleBtnRef?: React.RefObject<HTMLButtonElement>;
   activePhaseId: string;
   phases: ProjectPhase[];
   sidebarOpen: boolean;
@@ -15,6 +16,7 @@ type ProjectPhaseHeaderProps = {
 export const ProjectPhaseHeader = ({
   isMobile,
   toggleSidebar,
+  toggleBtnRef,
   activePhaseId,
   phases,
   sidebarOpen
@@ -36,6 +38,7 @@ export const ProjectPhaseHeader = ({
       {/* Always show mobile sidebar toggle on mobile */}
       {isMobile && (
         <Button
+          ref={toggleBtnRef}
           variant="ghost"
           size="sm"
           className="ml-2 p-1 h-8 w-8"

@@ -83,6 +83,11 @@ const ProjectBlueprint = () => {
             // Silent fallback - handled by localStorage in the API module
           });
       }
+      
+      // Close sidebar on mobile after selecting a phase
+      if (isMobile) {
+        setSidebarOpen(false);
+      }
     } else {
       toast({
         title: "Phase Locked",
@@ -170,6 +175,7 @@ const ProjectBlueprint = () => {
           <ProjectPhaseHeader 
             isMobile={isMobile}
             toggleSidebar={toggleSidebar}
+            toggleBtnRef={toggleBtnRef}
             activePhaseId={activePhaseId}
             phases={phases}
             sidebarOpen={sidebarOpen}
