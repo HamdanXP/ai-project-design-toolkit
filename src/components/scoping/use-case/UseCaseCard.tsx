@@ -116,17 +116,25 @@ export const UseCaseCard = ({
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="font-medium text-lg">{useCase.title}</h3>
-          <CollapsibleTrigger 
-            onClick={handleToggle} 
-            className="p-1 rounded-full hover:bg-secondary/20 transition-colors"
-            aria-label={open ? "Collapse details" : "Expand details"}
-          >
-            {open ? (
-              <ChevronUp className="h-5 w-5 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-muted-foreground" />
-            )}
-          </CollapsibleTrigger>
+          {/* Properly wrap the toggle with a Collapsible component */}
+          <Collapsible open={open} onOpenChange={setOpen}>
+            <CollapsibleTrigger 
+              onClick={handleToggle} 
+              className="p-1 rounded-full hover:bg-secondary/20 transition-colors"
+              aria-label={open ? "Collapse details" : "Expand details"}
+            >
+              {open ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              )}
+            </CollapsibleTrigger>
+          
+            <div className="hidden">
+              {/* This is a hidden div just to satisfy the Collapsible's requirement for CollapsibleContent */}
+              <CollapsibleContent />
+            </div>
+          </Collapsible>
         </div>
         
         <p className="text-muted-foreground text-sm mb-3">{useCase.description}</p>
