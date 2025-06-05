@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 import { FeasibilityConstraint, FeasibilityCategory, RiskMitigation } from "@/types/scoping-phase";
 import { FeasibilityWizard } from "./enhanced/FeasibilityWizard";
 
@@ -20,6 +20,15 @@ export const FeasibilityForm = ({
   moveToNextStep,
 }: FeasibilityFormProps) => {
   
+  // Initialize state with constraint values
+  const [constraintValues, setConstraintValues] = useState<Record<string, string | boolean>>(() => {
+    const initialValues: Record<string, string | boolean> = {};
+    constraints.forEach(constraint => {
+      initialValues[constraint.id] = constraint.value;
+    });
+    return initialValues;
+  });
+
   // Enhanced constraint categories with comprehensive assessment
   const feasibilityCategories: FeasibilityCategory[] = [
     {
@@ -31,7 +40,7 @@ export const FeasibilityForm = ({
         {
           id: "budget",
           label: "Project Budget",
-          value: "limited",
+          value: constraintValues["budget"] || "limited",
           options: ["limited", "moderate", "substantial", "unlimited"],
           type: "select",
           importance: "critical",
@@ -42,7 +51,7 @@ export const FeasibilityForm = ({
         {
           id: "time",
           label: "Project Timeline",
-          value: "medium-term",
+          value: constraintValues["time"] || "medium-term",
           options: ["short-term", "medium-term", "long-term", "ongoing"],
           type: "select",
           importance: "critical",
@@ -53,7 +62,7 @@ export const FeasibilityForm = ({
         {
           id: "team-size",
           label: "Team Size",
-          value: "small",
+          value: constraintValues["team-size"] || "small",
           options: ["individual", "small", "medium", "large"],
           type: "select",
           importance: "important",
@@ -72,7 +81,7 @@ export const FeasibilityForm = ({
         {
           id: "compute",
           label: "Computing Resources",
-          value: "cloud",
+          value: constraintValues["compute"] || "cloud",
           options: ["local", "cloud", "hybrid", "enterprise"],
           type: "select",
           importance: "critical",
@@ -83,7 +92,7 @@ export const FeasibilityForm = ({
         {
           id: "internet",
           label: "Reliable Internet Connection",
-          value: true,
+          value: constraintValues["internet"] ?? true,
           type: "toggle",
           importance: "important",
           helpText: "Consistent, high-speed internet is essential for AI development",
@@ -93,7 +102,7 @@ export const FeasibilityForm = ({
         {
           id: "infrastructure",
           label: "Local Technology Setup",
-          value: true,
+          value: constraintValues["infrastructure"] ?? true,
           type: "toggle",
           importance: "important",
           helpText: "Access to necessary hardware, software, and workspace",
@@ -111,7 +120,7 @@ export const FeasibilityForm = ({
         {
           id: "ai-experience",
           label: "AI/ML Experience",
-          value: "beginner",
+          value: constraintValues["ai-experience"] || "beginner",
           options: ["none", "beginner", "intermediate", "advanced"],
           type: "select",
           importance: "critical",
@@ -122,7 +131,7 @@ export const FeasibilityForm = ({
         {
           id: "technical-skills",
           label: "Technical Skills",
-          value: "moderate",
+          value: constraintValues["technical-skills"] || "moderate",
           options: ["limited", "moderate", "good", "excellent"],
           type: "select",
           importance: "important",
@@ -133,7 +142,7 @@ export const FeasibilityForm = ({
         {
           id: "learning-capacity",
           label: "Learning & Training Capacity",
-          value: true,
+          value: constraintValues["learning-capacity"] ?? true,
           type: "toggle",
           importance: "important",
           helpText: "Team's ability and willingness to learn new skills during the project",
@@ -151,7 +160,7 @@ export const FeasibilityForm = ({
         {
           id: "stakeholder-support",
           label: "Stakeholder Buy-in",
-          value: "moderate",
+          value: constraintValues["stakeholder-support"] || "moderate",
           options: ["low", "moderate", "high", "champion"],
           type: "select",
           importance: "critical",
@@ -162,7 +171,7 @@ export const FeasibilityForm = ({
         {
           id: "change-management",
           label: "Change Management Readiness",
-          value: false,
+          value: constraintValues["change-management"] ?? false,
           type: "toggle",
           importance: "important",
           helpText: "Organization's ability to adapt to new AI-powered processes",
@@ -172,7 +181,7 @@ export const FeasibilityForm = ({
         {
           id: "data-governance",
           label: "Data Governance",
-          value: "developing",
+          value: constraintValues["data-governance"] || "developing",
           options: ["none", "developing", "established", "mature"],
           type: "select",
           importance: "important",
@@ -191,7 +200,7 @@ export const FeasibilityForm = ({
         {
           id: "regulatory-compliance",
           label: "Regulatory Requirements",
-          value: "moderate",
+          value: constraintValues["regulatory-compliance"] || "moderate",
           options: ["minimal", "moderate", "strict", "complex"],
           type: "select",
           importance: "critical",
@@ -202,7 +211,7 @@ export const FeasibilityForm = ({
         {
           id: "partnerships",
           label: "External Partnerships",
-          value: false,
+          value: constraintValues["partnerships"] ?? false,
           type: "toggle",
           importance: "moderate",
           helpText: "Access to external expertise, technology providers, or research institutions",
@@ -212,7 +221,7 @@ export const FeasibilityForm = ({
         {
           id: "sustainability",
           label: "Long-term Sustainability Plan",
-          value: false,
+          value: constraintValues["sustainability"] ?? false,
           type: "toggle",
           importance: "important",
           helpText: "Strategy for maintaining and evolving the AI solution over time",
@@ -272,13 +281,14 @@ export const FeasibilityForm = ({
   ];
 
   const handleCategoryConstraintUpdate = (categoryId: string, constraintId: string, value: string | boolean) => {
-    // Find the constraint and update it
-    const category = feasibilityCategories.find(cat => cat.id === categoryId);
-    const constraint = category?.constraints.find(c => c.id === constraintId);
-    if (constraint) {
-      constraint.value = value;
-      handleConstraintUpdate(constraintId, value);
-    }
+    // Update local state
+    setConstraintValues(prev => ({
+      ...prev,
+      [constraintId]: value
+    }));
+    
+    // Update parent component
+    handleConstraintUpdate(constraintId, value);
   };
 
   return (
