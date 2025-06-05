@@ -1,15 +1,10 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, AlertTriangle, Info } from "lucide-react";
-
-type HelpContent = {
-  lookFor: string[];
-  warningsSigns: string[];
-  whyMatters: string;
-};
+import { SuitabilityHelpContent } from "@/types/scoping-phase";
 
 type SuitabilityHelpPanelProps = {
-  helpContent: HelpContent;
+  helpContent: SuitabilityHelpContent;
 };
 
 export const SuitabilityHelpPanel = ({ helpContent }: SuitabilityHelpPanelProps) => {

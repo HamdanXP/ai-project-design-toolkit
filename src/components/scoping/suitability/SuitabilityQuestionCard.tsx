@@ -3,30 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, ChevronDown, ChevronUp, Check, X, AlertTriangle } from "lucide-react";
 import { SuitabilityHelpPanel } from "./SuitabilityHelpPanel";
-
-type ResponseOption = {
-  value: 'yes' | 'unknown' | 'no';
-  label: string;
-  description: string;
-};
-
-type HelpContent = {
-  lookFor: string[];
-  warningsSigns: string[];
-  whyMatters: string;
-};
-
-type QuestionData = {
-  id: string;
-  title: string;
-  question: string;
-  description: string;
-  helpContent: HelpContent;
-  responseOptions: ResponseOption[];
-};
+import { EnhancedSuitabilityQuestion } from "@/types/scoping-phase";
 
 type SuitabilityQuestionCardProps = {
-  question: QuestionData;
+  question: EnhancedSuitabilityQuestion;
   currentAnswer: 'yes' | 'no' | 'unknown' | null;
   isHelpExpanded: boolean;
   onAnswerSelect: (answer: 'yes' | 'no' | 'unknown') => void;

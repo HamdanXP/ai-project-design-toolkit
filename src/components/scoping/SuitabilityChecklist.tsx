@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
-import { DataSuitabilityCheck } from "@/types/scoping-phase";
+import { DataSuitabilityCheck, EnhancedSuitabilityQuestion } from "@/types/scoping-phase";
 import { StepHeading } from "./common/StepHeading";
 import { SuitabilityQuestionCard } from "./suitability/SuitabilityQuestionCard";
 import { SuitabilityScoreCard } from "./suitability/SuitabilityScoreCard";
@@ -26,7 +26,7 @@ export const SuitabilityChecklist = ({
   const [expandedHelp, setExpandedHelp] = useState<string | null>(null);
 
   // Enhanced questions with practical guidance
-  const enhancedQuestions = [
+  const enhancedQuestions: EnhancedSuitabilityQuestion[] = [
     {
       id: "completeness",
       title: "Data Completeness Assessment",
@@ -48,9 +48,9 @@ export const SuitabilityChecklist = ({
         whyMatters: "Complete, consistent data is essential for AI models to learn accurate patterns and make reliable predictions for humanitarian decisions."
       },
       responseOptions: [
-        { value: "yes", label: "Looks Clean", description: "Most data is complete and consistent" },
-        { value: "unknown", label: "Some Issues", description: "Noticeable problems but still usable" },
-        { value: "no", label: "Many Problems", description: "Significant cleaning needed" }
+        { value: "yes" as const, label: "Looks Clean", description: "Most data is complete and consistent" },
+        { value: "unknown" as const, label: "Some Issues", description: "Noticeable problems but still usable" },
+        { value: "no" as const, label: "Many Problems", description: "Significant cleaning needed" }
       ]
     },
     {
@@ -74,9 +74,9 @@ export const SuitabilityChecklist = ({
         whyMatters: "Biased or unrepresentative data can lead to AI solutions that don't work for the most vulnerable populations, potentially worsening inequalities."
       },
       responseOptions: [
-        { value: "yes", label: "Representative", description: "Covers target population well" },
-        { value: "unknown", label: "Partially", description: "Some gaps but generally adequate" },
-        { value: "no", label: "Limited Coverage", description: "Missing key populations or areas" }
+        { value: "yes" as const, label: "Representative", description: "Covers target population well" },
+        { value: "unknown" as const, label: "Partially", description: "Some gaps but generally adequate" },
+        { value: "no" as const, label: "Limited Coverage", description: "Missing key populations or areas" }
       ]
     },
     {
@@ -100,9 +100,9 @@ export const SuitabilityChecklist = ({
         whyMatters: "Privacy violations can harm vulnerable populations, damage trust in humanitarian organizations, and violate legal regulations."
       },
       responseOptions: [
-        { value: "yes", label: "Privacy Safe", description: "Low risk of privacy concerns" },
-        { value: "unknown", label: "Need Review", description: "Some concerns need addressing" },
-        { value: "no", label: "High Risk", description: "Significant privacy or ethical issues" }
+        { value: "yes" as const, label: "Privacy Safe", description: "Low risk of privacy concerns" },
+        { value: "unknown" as const, label: "Need Review", description: "Some concerns need addressing" },
+        { value: "no" as const, label: "High Risk", description: "Significant privacy or ethical issues" }
       ]
     },
     {
@@ -126,9 +126,9 @@ export const SuitabilityChecklist = ({
         whyMatters: "Insufficient or poor quality data will limit your AI model's effectiveness and could lead to unreliable results in humanitarian contexts."
       },
       responseOptions: [
-        { value: "yes", label: "Sufficient", description: "Good quality and adequate volume" },
-        { value: "unknown", label: "Borderline", description: "May work but with limitations" },
-        { value: "no", label: "Insufficient", description: "Need more or better quality data" }
+        { value: "yes" as const, label: "Sufficient", description: "Good quality and adequate volume" },
+        { value: "unknown" as const, label: "Borderline", description: "May work but with limitations" },
+        { value: "no" as const, label: "Insufficient", description: "Need more or better quality data" }
       ]
     }
   ];
