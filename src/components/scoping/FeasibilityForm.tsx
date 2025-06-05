@@ -26,7 +26,7 @@ export const FeasibilityForm = ({
       id: "resources",
       title: "Resources & Budget",
       description: "Assess your available resources and funding for the AI project",
-      icon: "💰",
+      icon: "Resources",
       constraints: [
         {
           id: "budget",
@@ -67,7 +67,7 @@ export const FeasibilityForm = ({
       id: "technical",
       title: "Technical Infrastructure",
       description: "Evaluate your technical capabilities and infrastructure",
-      icon: "🖥️",
+      icon: "Technical",
       constraints: [
         {
           id: "compute",
@@ -106,7 +106,7 @@ export const FeasibilityForm = ({
       id: "expertise",
       title: "Team Expertise",
       description: "Assess your team's skills and experience with AI projects",
-      icon: "🧠",
+      icon: "Expertise",
       constraints: [
         {
           id: "ai-experience",
@@ -146,7 +146,7 @@ export const FeasibilityForm = ({
       id: "organizational",
       title: "Organizational Readiness",
       description: "Evaluate organizational support and readiness for AI implementation",
-      icon: "🏢",
+      icon: "Organization",
       constraints: [
         {
           id: "stakeholder-support",
@@ -186,7 +186,7 @@ export const FeasibilityForm = ({
       id: "external",
       title: "External Factors",
       description: "Consider external constraints and requirements",
-      icon: "🌍",
+      icon: "External",
       constraints: [
         {
           id: "regulatory-compliance",

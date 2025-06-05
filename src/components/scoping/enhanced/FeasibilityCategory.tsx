@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FeasibilityCategory as CategoryType } from "@/types/scoping-phase";
 import { EnhancedConstraintTooltip } from "../common/EnhancedConstraintTooltip";
 
@@ -15,7 +16,6 @@ export const FeasibilityCategory = ({ category, onUpdateConstraint }: Feasibilit
     <Card className="border-l-4 border-l-primary">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <span className="text-2xl">{category.icon}</span>
           <div>
             <h3 className="text-lg font-semibold">{category.title}</h3>
             <p className="text-sm text-muted-foreground font-normal">{category.description}</p>
@@ -62,17 +62,21 @@ export const FeasibilityCategory = ({ category, onUpdateConstraint }: Feasibilit
                     </label>
                   </div>
                 ) : constraint.type === 'select' && constraint.options ? (
-                  <select 
+                  <Select 
                     value={constraint.value as string}
-                    onChange={(e) => onUpdateConstraint(constraint.id, e.target.value)}
-                    className="w-full p-3 border border-input rounded-md bg-background text-sm"
+                    onValueChange={(value) => onUpdateConstraint(constraint.id, value)}
                   >
-                    {constraint.options.map(option => (
-                      <option key={option} value={option}>
-                        {option.charAt(0).toUpperCase() + option.slice(1).replace('-', ' ')}
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={`Select ${constraint.label.toLowerCase()}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {constraint.options.map(option => (
+                        <SelectItem key={option} value={option}>
+                          {option.charAt(0).toUpperCase() + option.slice(1).replace('-', ' ')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 ) : (
                   <Input 
                     value={constraint.value as string}

@@ -19,9 +19,9 @@ export const RiskMitigationPanel = ({ riskMitigations, feasibilityRisk }: RiskMi
 
   const getRiskColor = (impact: string) => {
     switch (impact) {
-      case 'high': return 'border-l-red-500 bg-red-50/50';
-      case 'medium': return 'border-l-yellow-500 bg-yellow-50/50';
-      default: return 'border-l-green-500 bg-green-50/50';
+      case 'high': return 'border-l-red-500 bg-red-50 dark:bg-red-950/20';
+      case 'medium': return 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950/20';
+      default: return 'border-l-green-500 bg-green-50 dark:bg-green-950/20';
     }
   };
 
@@ -36,12 +36,12 @@ export const RiskMitigationPanel = ({ riskMitigations, feasibilityRisk }: RiskMi
       <CardContent>
         <div className="space-y-4">
           {feasibilityRisk === 'high' && (
-            <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+            <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 p-4 rounded-lg">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
                 <div>
-                  <h4 className="font-medium text-red-800">High Risk Detected</h4>
-                  <p className="text-sm text-red-700 mt-1">
+                  <h4 className="font-medium text-red-800 dark:text-red-200">High Risk Detected</h4>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">
                     Your project faces significant challenges. Consider addressing critical constraints before proceeding or adjusting project scope.
                   </p>
                 </div>
