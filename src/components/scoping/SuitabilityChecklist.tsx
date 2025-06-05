@@ -7,6 +7,7 @@ import { DataSuitabilityCheck, EnhancedSuitabilityQuestion } from "@/types/scopi
 import { StepHeading } from "./common/StepHeading";
 import { SuitabilityQuestionCard } from "./suitability/SuitabilityQuestionCard";
 import { SuitabilityScoreCard } from "./suitability/SuitabilityScoreCard";
+import { useProject } from "@/contexts/ProjectContext";
 
 type SuitabilityChecklistProps = {
   suitabilityChecks: DataSuitabilityCheck[];
@@ -24,6 +25,7 @@ export const SuitabilityChecklist = ({
   moveToNextStep,
 }: SuitabilityChecklistProps) => {
   const [expandedHelp, setExpandedHelp] = useState<string | null>(null);
+  const { setSuitabilityChecks } = useProject();
 
   // Enhanced questions with practical guidance
   const enhancedQuestions: EnhancedSuitabilityQuestion[] = [
@@ -142,6 +144,35 @@ export const SuitabilityChecklist = ({
     return check?.answer || null;
   };
 
+  const handleAnswerUpdate = (questionId: string, answer: 'yes' | 'no' | 'unknown') => {
+    console.log('Updating answer for question:', questionId, 'with answer:', answer);
+    
+    // Update the context state directly
+    setSuitabilityChecks(prevChecks => {
+      const existingCheck = prevChecks.find(c => c.id === questionId);
+      if (existingCheck) {
+        // Update existing check
+        return prevChecks.map(c => 
+          c.id === questionId 
+            ? { ...c, answer } 
+            : c
+        );
+      } else {
+        // Add new check
+        const question = enhancedQuestions.find(q => q.id === questionId);
+        return [...prevChecks, {
+          id: questionId,
+          question: question?.question || '',
+          answer,
+          description: question?.description || ''
+        }];
+      }
+    });
+    
+    // Also call the prop function for backward compatibility
+    handleSuitabilityUpdate(questionId, answer);
+  };
+
   const allQuestionsAnswered = enhancedQuestions.every(q => 
     getAnswerForQuestion(q.id) !== null
   );
@@ -163,7 +194,7 @@ export const SuitabilityChecklist = ({
               question={question}
               currentAnswer={getAnswerForQuestion(question.id)}
               isHelpExpanded={expandedHelp === question.id}
-              onAnswerSelect={(answer) => handleSuitabilityUpdate(question.id, answer)}
+              onAnswerSelect={(answer) => handleAnswerUpdate(question.id, answer)}
               onToggleHelp={() => toggleHelp(question.id)}
             />
           ))}

@@ -148,10 +148,10 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   ]);
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [suitabilityChecks, setSuitabilityChecks] = useState<DataSuitabilityCheck[]>([
-    { id: "clean", question: "Is the data clean and usable?", answer: "unknown", description: "" },
-    { id: "representative", question: "Is it representative and fair?", answer: "unknown", description: "" },
-    { id: "privacy", question: "Are there privacy/ethical concerns?", answer: "unknown", description: "" },
-    { id: "quality", question: "Is the data quality sufficient?", answer: "unknown", description: "" }
+    { id: "completeness", question: "When you examine the data, what do you observe?", answer: "unknown", description: "Assess how complete and consistent your dataset appears" },
+    { id: "representativeness", question: "Does this data fairly represent the people you want to help?", answer: "unknown", description: "Evaluate if the data covers your target communities adequately" },
+    { id: "privacy", question: "Could using this data cause harm or raise privacy concerns?", answer: "unknown", description: "Consider potential risks to individuals and communities" },
+    { id: "sufficiency", question: "Do you have enough good quality data for your project?", answer: "unknown", description: "Assess if the data volume and quality meet your project needs" }
   ]);
   const [scopingFinalDecision, setScopingFinalDecision] = useState<'proceed' | 'revise' | null>(null);
 
