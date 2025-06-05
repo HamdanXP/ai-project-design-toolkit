@@ -42,7 +42,7 @@ type ReflectionPhaseProps = {
 };
 
 export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: ReflectionPhaseProps) => {
-  const { reflectionAnswers, setReflectionAnswers } = useProject();
+  const { reflectionAnswers, setReflectionAnswers, updatePhaseSteps } = useProject();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [questions, setQuestions] = useState<Question[]>(FALLBACK_REFLECTION_QUESTIONS);
@@ -70,17 +70,24 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
               key: key as keyof ReflectionQuestions
             }));
             setQuestions(convertedQuestions);
+            
+            // Update the phase step count in the context
+            updatePhaseSteps("reflection", convertedQuestions.length);
           }
         } catch (error) {
           console.log('Using fallback questions');
-          // Keep using fallback questions
+          // Keep using fallback questions and update step count
+          updatePhaseSteps("reflection", FALLBACK_REFLECTION_QUESTIONS.length);
         }
+      } else {
+        // Update step count for fallback questions
+        updatePhaseSteps("reflection", FALLBACK_REFLECTION_QUESTIONS.length);
       }
       setIsLoading(false);
     };
     
     fetchQuestions();
-  }, [projectId]);
+  }, [projectId, updatePhaseSteps]);
 
   const totalQuestions = questions.length;
 

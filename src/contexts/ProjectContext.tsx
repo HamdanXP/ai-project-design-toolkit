@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode } from "react";
 import { ProjectPhase } from "@/types/project";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
@@ -23,6 +22,9 @@ interface ProjectContextType {
   activePhaseId: string;
   setActivePhaseId: React.Dispatch<React.SetStateAction<string>>;
   
+  // Dynamic phase step updates
+  updatePhaseSteps: (phaseId: string, totalSteps: number) => void;
+  
   // Project details
   projectPrompt: string;
   setProjectPrompt: React.Dispatch<React.SetStateAction<string>>;
@@ -30,8 +32,8 @@ interface ProjectContextType {
   setProjectFiles: React.Dispatch<React.SetStateAction<string[]>>;
   
   // Reflection phase data
-  reflectionAnswers: Record<number, string>;
-  setReflectionAnswers: React.Dispatch<React.SetStateAction<Record<number, string>>>;
+  reflectionAnswers: Record<string, string>;
+  setReflectionAnswers: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   
   // Scoping phase data
   scopingActiveStep: number;
@@ -88,7 +90,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       name: "Reflection",
       status: "in-progress",
       progress: 0,
-      totalSteps: 7,
+      totalSteps: 8, // Default fallback, will be updated by backend
       completedSteps: 0
     },
     {
@@ -118,12 +120,21 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   ]);
   const [activePhaseId, setActivePhaseId] = useState<string>("reflection");
   
+  // Function to update phase step counts based on backend data
+  const updatePhaseSteps = (phaseId: string, totalSteps: number) => {
+    setPhases(prev => prev.map(phase => 
+      phase.id === phaseId 
+        ? { ...phase, totalSteps }
+        : phase
+    ));
+  };
+  
   // Project details state
   const [projectPrompt, setProjectPrompt] = useState<string>("");
   const [projectFiles, setProjectFiles] = useState<string[]>([]);
   
-  // Reflection phase state
-  const [reflectionAnswers, setReflectionAnswers] = useState<Record<number, string>>({});
+  // Reflection phase state - using string keys to match backend format
+  const [reflectionAnswers, setReflectionAnswers] = useState<Record<string, string>>({});
   
   // Scoping phase state
   const [scopingActiveStep, setScopingActiveStep] = useState<number>(1);
@@ -175,6 +186,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         setPhases,
         activePhaseId, 
         setActivePhaseId,
+        updatePhaseSteps,
         projectPrompt, 
         setProjectPrompt,
         projectFiles, 
