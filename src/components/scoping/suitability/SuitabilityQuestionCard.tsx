@@ -81,7 +81,7 @@ export const SuitabilityQuestionCard = ({
                   option.value,
                   isSelected
                 )}`}
-                onClick={() => onAnswerSelect(option.value)}
+                onClick={() => onAnswerSelect(option.value as 'yes' | 'no' | 'unknown')}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center mb-2">
