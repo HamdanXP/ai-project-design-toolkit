@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode } from "react";
 import { ProjectPhase } from "@/types/project";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
@@ -87,7 +88,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       name: "Reflection",
       status: "in-progress",
       progress: 0,
-      totalSteps: 8, // Updated to match the actual number of questions
+      totalSteps: 7,
       completedSteps: 0
     },
     {
