@@ -25,6 +25,11 @@ export type FeasibilityConstraint = {
   value: string | boolean;
   options?: string[];
   type: 'toggle' | 'select' | 'input';
+  category?: string;
+  helpText?: string;
+  examples?: string[];
+  riskLevel?: 'low' | 'medium' | 'high';
+  importance?: 'critical' | 'important' | 'moderate';
 };
 
 export type DataSuitabilityCheck = {
@@ -32,4 +37,19 @@ export type DataSuitabilityCheck = {
   question: string;
   answer: 'yes' | 'no' | 'unknown';
   description: string;
+};
+
+export type FeasibilityCategory = {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  constraints: FeasibilityConstraint[];
+};
+
+export type RiskMitigation = {
+  risk: string;
+  impact: 'low' | 'medium' | 'high';
+  mitigation: string;
+  examples: string[];
 };
