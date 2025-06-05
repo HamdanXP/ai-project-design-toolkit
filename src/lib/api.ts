@@ -20,8 +20,9 @@ export async function apiRequest<T>(
   endpoint: string, 
   options: ApiRequestOptions = {}
 ): Promise<T> {
-  // Build URL with query parameters
-  const url = new URL(endpoint, env.apiUrl);
+  // Use the backend base URL
+  const baseUrl = 'http://localhost:8000/api/v1';
+  const url = new URL(endpoint, baseUrl);
   
   if (options.params) {
     Object.entries(options.params).forEach(([key, value]) => {
@@ -149,7 +150,56 @@ function handleLocalStorageFallback<T>(endpoint: string, options: ApiRequestOpti
 }
 
 /**
- * Type definitions for API responses
+ * Backend API response types
+ */
+export interface BackendProject {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  current_phase: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BackendApiResponse<T> {
+  success: boolean;
+  message?: string;
+  data: T;
+}
+
+export interface ReflectionQuestions {
+  problem_definition: string;
+  target_beneficiaries: string;
+  potential_harm: string;
+  data_availability: string;
+  resource_constraints: string;
+  success_metrics: string;
+  stakeholder_involvement: string;
+  cultural_sensitivity: string;
+}
+
+export interface ReflectionAnswers {
+  problem_definition: string;
+  target_beneficiaries: string;
+  potential_harm: string;
+  data_availability: string;
+  resource_constraints: string;
+  success_metrics: string;
+  stakeholder_involvement: string;
+  cultural_sensitivity: string;
+}
+
+export interface ReflectionAnalysis {
+  answers: ReflectionAnswers;
+  ai_analysis: string;
+  ethical_score: number;
+  proceed_recommendation: boolean;
+  concerns: string[];
+}
+
+/**
+ * Type definitions for legacy API responses (for fallback compatibility)
  */
 export interface Project {
   id: string;
@@ -195,7 +245,42 @@ export const api = {
     apiRequest<T>(endpoint, { method: 'DELETE', ...options }),
     
   /**
-   * Project-specific API methods that use localStorage fallback when necessary
+   * Backend API methods
+   */
+  backend: {
+    projects: {
+      create: async (description: string): Promise<BackendApiResponse<BackendProject>> => {
+        return await api.post<BackendApiResponse<BackendProject>>('/projects/', { description });
+      },
+      
+      getById: async (projectId: string): Promise<BackendApiResponse<BackendProject>> => {
+        return await api.get<BackendApiResponse<BackendProject>>(`/projects/${projectId}`);
+      },
+      
+      list: async (skip = 0, limit = 10, status?: string): Promise<BackendApiResponse<BackendProject[]>> => {
+        const params: Record<string, string> = {
+          skip: skip.toString(),
+          limit: limit.toString()
+        };
+        if (status) params.status = status;
+        
+        return await api.get<BackendApiResponse<BackendProject[]>>('/projects/', { params });
+      }
+    },
+    
+    reflection: {
+      getQuestions: async (projectId: string): Promise<BackendApiResponse<ReflectionQuestions>> => {
+        return await api.get<BackendApiResponse<ReflectionQuestions>>(`/reflection/${projectId}/questions`);
+      },
+      
+      submitAnswers: async (projectId: string, answers: ReflectionAnswers): Promise<BackendApiResponse<ReflectionAnalysis>> => {
+        return await api.post<BackendApiResponse<ReflectionAnalysis>>(`/reflection/${projectId}/submit`, answers);
+      }
+    }
+  },
+    
+  /**
+   * Legacy project methods (for fallback compatibility)
    */
   projects: {
     getAll: async (): Promise<Project[]> => {

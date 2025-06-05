@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useProject } from "@/contexts/ProjectContext";
+import { useLocation } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
+import { api, ReflectionQuestions, ReflectionAnswers } from "@/lib/api";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -18,18 +20,20 @@ import {
 } from "@/components/ui/alert-dialog";
 
 type Question = {
-  id: number;
+  id: string;
   text: string;
+  key: keyof ReflectionQuestions;
 };
 
-const REFLECTION_QUESTIONS: Question[] = [
-  { id: 1, text: "What problem are you trying to solve with your project?" },
-  { id: 2, text: "Who are the primary users or beneficiaries of your solution?" },
-  { id: 3, text: "What existing solutions have you researched, and how will yours be different?" },
-  { id: 4, text: "What are the key features your project must have to be successful?" },
-  { id: 5, text: "What technical challenges do you anticipate in building this project?" },
-  { id: 6, text: "What resources (time, skills, tools) do you currently have available?" },
-  { id: 7, text: "What is your timeline for completing this project?" },
+const FALLBACK_REFLECTION_QUESTIONS: Question[] = [
+  { id: "1", text: "What problem are you trying to solve with your project?", key: "problem_definition" },
+  { id: "2", text: "Who are the primary users or beneficiaries of your solution?", key: "target_beneficiaries" },
+  { id: "3", text: "What potential harm could this AI system cause?", key: "potential_harm" },
+  { id: "4", text: "What data do you have access to for this project?", key: "data_availability" },
+  { id: "5", text: "What are your resource constraints (time, budget, team)?", key: "resource_constraints" },
+  { id: "6", text: "How will you measure the success of your project?", key: "success_metrics" },
+  { id: "7", text: "How will stakeholders be involved in the design process?", key: "stakeholder_involvement" },
+  { id: "8", text: "How will your solution account for cultural considerations?", key: "cultural_sensitivity" },
 ];
 
 type ReflectionPhaseProps = {
@@ -41,7 +45,44 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   const { reflectionAnswers, setReflectionAnswers } = useProject();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const totalQuestions = REFLECTION_QUESTIONS.length;
+  const [questions, setQuestions] = useState<Question[]>(FALLBACK_REFLECTION_QUESTIONS);
+  const [backendQuestions, setBackendQuestions] = useState<ReflectionQuestions | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const location = useLocation();
+  const { toast } = useToast();
+  
+  // Get projectId from URL query params
+  const searchParams = new URLSearchParams(location.search);
+  const projectId = searchParams.get('projectId') || 'current';
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      if (projectId !== 'current') {
+        try {
+          const response = await api.backend.reflection.getQuestions(projectId);
+          if (response.success) {
+            setBackendQuestions(response.data);
+            // Convert backend questions to our format
+            const convertedQuestions: Question[] = Object.entries(response.data).map(([key, text], index) => ({
+              id: (index + 1).toString(),
+              text: text,
+              key: key as keyof ReflectionQuestions
+            }));
+            setQuestions(convertedQuestions);
+          }
+        } catch (error) {
+          console.log('Using fallback questions');
+          // Keep using fallback questions
+        }
+      }
+      setIsLoading(false);
+    };
+    
+    fetchQuestions();
+  }, [projectId]);
+
+  const totalQuestions = questions.length;
 
   const handleNext = () => {
     if (currentQuestionIndex < totalQuestions - 1) {
@@ -59,7 +100,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
 
   const updateProgress = () => {
     const completedCount = Object.keys(reflectionAnswers).filter(key => 
-      reflectionAnswers[parseInt(key)] && reflectionAnswers[parseInt(key)].trim() !== ""
+      reflectionAnswers[key] && reflectionAnswers[key].trim() !== ""
     ).length;
     onUpdateProgress(completedCount, totalQuestions);
   };
@@ -70,31 +111,78 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   }, [reflectionAnswers]);
 
   const handleAnswerChange = (value: string) => {
-    const currentQuestion = REFLECTION_QUESTIONS[currentQuestionIndex];
+    const currentQuestion = questions[currentQuestionIndex];
     setReflectionAnswers(prev => ({
       ...prev,
-      [currentQuestion.id]: value
+      [currentQuestion.key]: value
     }));
   };
 
-  const handleCompletePhaseConfirm = () => {
+  const handleCompletePhaseConfirm = async () => {
+    if (projectId !== 'current' && backendQuestions) {
+      try {
+        // Submit answers to backend
+        const answers: ReflectionAnswers = {
+          problem_definition: reflectionAnswers['problem_definition'] || '',
+          target_beneficiaries: reflectionAnswers['target_beneficiaries'] || '',
+          potential_harm: reflectionAnswers['potential_harm'] || '',
+          data_availability: reflectionAnswers['data_availability'] || '',
+          resource_constraints: reflectionAnswers['resource_constraints'] || '',
+          success_metrics: reflectionAnswers['success_metrics'] || '',
+          stakeholder_involvement: reflectionAnswers['stakeholder_involvement'] || '',
+          cultural_sensitivity: reflectionAnswers['cultural_sensitivity'] || '',
+        };
+        
+        const response = await api.backend.reflection.submitAnswers(projectId, answers);
+        
+        if (response.success) {
+          setAiAnalysis(response.data.ai_analysis);
+          toast({
+            title: "Reflection Analysis Complete",
+            description: `Ethical score: ${Math.round(response.data.ethical_score * 100)}%. ${response.data.proceed_recommendation ? 'Recommended to proceed.' : 'Review concerns before proceeding.'}`,
+          });
+          
+          if (response.data.concerns.length > 0) {
+            console.log('AI Analysis Concerns:', response.data.concerns);
+          }
+        }
+      } catch (error) {
+        console.log('Backend submission failed, proceeding with local completion');
+      }
+    }
+    
     if (onCompletePhase) {
-      // Ensure that phase is marked as completed by setting all answers
       updateProgress();
       onCompletePhase();
     }
   };
 
-  const currentQuestion = REFLECTION_QUESTIONS[currentQuestionIndex];
+  if (isLoading) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-2">Reflection Phase</h2>
+          <p className="text-muted-foreground">
+            Loading reflection questions...
+          </p>
+        </div>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentQuestion = questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
-  const currentAnswer = reflectionAnswers[currentQuestion.id] || "";
+  const currentAnswer = reflectionAnswers[currentQuestion.key] || "";
   
   // Check if the user has reached the last question and provided an answer
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
   
   // Calculate how many questions have been answered
   const answeredQuestionsCount = Object.keys(reflectionAnswers).filter(key => 
-    reflectionAnswers[parseInt(key)] && reflectionAnswers[parseInt(key)].trim() !== ""
+    reflectionAnswers[key] && reflectionAnswers[key].trim() !== ""
   ).length;
   
   // Phase is complete if all questions are answered
@@ -108,6 +196,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
             <AlertDialogTitle>Complete Reflection Phase?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to complete the Reflection Phase? This will mark this phase as complete and move you to the next step.
+              {projectId !== 'current' && ' Your answers will be analyzed by AI for ethical considerations and feasibility.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -146,6 +235,13 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
             value={currentAnswer}
             onChange={(e) => handleAnswerChange(e.target.value)}
           />
+          
+          {aiAnalysis && isLastQuestion && (
+            <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+              <h4 className="font-medium mb-2">AI Analysis</h4>
+              <p className="text-sm text-muted-foreground">{aiAnalysis}</p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -66,7 +66,25 @@ const HomePage = () => {
       setIsLoading(true);
       
       try {
-        // Create a new project using the API
+        // Try to create project using the backend API first
+        const backendResponse = await api.backend.projects.create(inputValue.trim());
+        
+        if (backendResponse.success) {
+          toast({
+            title: "Project Created",
+            description: "Your new project has been created successfully."
+          });
+          
+          // Navigate to the project blueprint with the new project ID
+          navigate(`/project-blueprint?projectId=${backendResponse.data.id}`);
+          return;
+        }
+      } catch (error) {
+        console.log('Backend API not available, falling back to legacy method');
+      }
+      
+      try {
+        // Fallback to legacy API if backend is not available
         const newProject = await api.projects.create({
           name: inputValue.split('.')[0].substring(0, 50), // Use the first sentence as the project name
           description: inputValue,
@@ -90,7 +108,7 @@ const HomePage = () => {
         // Navigate to the project blueprint with the new project ID
         navigate(`/project-blueprint?projectId=${newProject.id}`);
       } catch (error) {
-        // Fallback to localStorage if API fails
+        // Final fallback to localStorage
         localStorage.setItem('projectPrompt', inputValue);
         localStorage.setItem('projectFiles', JSON.stringify(selectedFiles.map(file => file.name)));
         
@@ -236,7 +254,7 @@ const HomePage = () => {
                   <Button
                     className="rounded-full aspect-square p-1.5"
                     size="icon"
-                    disabled={!inputValue.trim()}
+                    disabled={!inputValue.trim() || isLoading}
                     onClick={handleGoToBlueprint}
                   >
                     <ArrowRight className={`size-4 ${!inputValue.trim() ? 'text-muted-foreground' : ''}`} />
