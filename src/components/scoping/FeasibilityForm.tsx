@@ -45,7 +45,7 @@ const constraintInfo = {
     description: "Existing technology infrastructure at your organization or project location.",
     examples: ["Computers, servers, network equipment", "Data storage systems", "Power and connectivity"]
   }
-};
+} as const;
 
 export const FeasibilityForm = ({
   constraints,
@@ -111,7 +111,7 @@ export const FeasibilityForm = ({
                     <ConstraintTooltip
                       title={info.title}
                       description={info.description}
-                      examples={info.examples}
+                      examples={'examples' in info ? info.examples : undefined}
                     />
                   )}
                 </div>
