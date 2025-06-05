@@ -53,3 +53,24 @@ export type RiskMitigation = {
   mitigation: string;
   examples: string[];
 };
+
+export type SuitabilityResponseOption = {
+  value: 'yes' | 'unknown' | 'no';
+  label: string;
+  description: string;
+};
+
+export type SuitabilityHelpContent = {
+  lookFor: string[];
+  warningsSigns: string[];
+  whyMatters: string;
+};
+
+export type EnhancedSuitabilityQuestion = {
+  id: string;
+  title: string;
+  question: string;
+  description: string;
+  helpContent: SuitabilityHelpContent;
+  responseOptions: SuitabilityResponseOption[];
+};
