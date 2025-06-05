@@ -9,7 +9,6 @@ import { ArrowRight } from "lucide-react";
 import { FeasibilityConstraint } from "@/types/scoping-phase";
 import { StepHeading } from "./common/StepHeading";
 import { RiskIndicator } from "./common/RiskIndicator";
-import { ConstraintTooltip } from "./common/ConstraintTooltip";
 
 type FeasibilityFormProps = {
   constraints: FeasibilityConstraint[];
@@ -20,47 +19,32 @@ type FeasibilityFormProps = {
   moveToNextStep: () => void;
 };
 
-// User-friendly constraint information with tooltips and help text
+// User-friendly constraint information
 const constraintInfo = {
   time: {
     title: "Project Timeline",
-    description: "How much time do you have to complete this project from start to finish?",
-    examples: [
-      "Short-term: A few weeks to 2-3 months",
-      "Medium-term: 3-12 months", 
-      "Long-term: More than a year"
-    ],
+    description: "How much time do you have to complete this project?",
     helpText: "Consider deadlines, other commitments, and how urgently you need results."
   },
   tech: {
-    title: "Technical Skills & Experience",
+    title: "Technical Skills & Experience", 
     description: "What's your team's experience with AI and technology projects?",
-    examples: [
-      "Limited: New to AI, basic computer skills",
-      "Moderate: Some programming or data experience",
-      "Extensive: Strong technical background, AI experience"
-    ],
     helpText: "Be honest about your current skills - you can always learn more or get help."
   },
   compute: {
-    title: "Computing Power & Budget",
-    description: "What computing resources do you have access to for training and running your AI model?",
-    examples: [
-      "Local: Using your own computer/laptop",
-      "Cloud: Online services like Google, Amazon, or Microsoft",
-      "Hybrid: Mix of local and cloud computing"
-    ],
+    title: "Computing Resources & Budget",
+    description: "What computing resources do you have access to?",
     helpText: "Cloud services offer more power but may cost money. Local is free but limited."
   },
   internet: {
     title: "Reliable Internet Connection",
-    description: "Do you have consistent, fast internet access for your project?",
+    description: "Do you have consistent, fast internet access?",
     helpText: "Most AI tools and data sources require good internet connectivity."
   },
   infrastructure: {
     title: "Local Technology Setup",
-    description: "Do you have access to necessary local technology infrastructure?",
-    helpText: "This includes things like reliable electricity, computers, and workspace."
+    description: "Do you have access to necessary local technology?",
+    helpText: "This includes reliable electricity, computers, and workspace."
   }
 };
 
@@ -78,76 +62,91 @@ export const FeasibilityForm = ({
         <StepHeading stepNumber={2} title="Project Feasibility Check" />
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground mb-6">
+        <p className="text-muted-foreground mb-8">
           Let's assess what resources and constraints you're working with. This helps us understand what's realistically achievable for your project.
         </p>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="space-y-8">
           {constraints.map(constraint => {
             const info = constraintInfo[constraint.id as keyof typeof constraintInfo];
             
             return (
-              <div key={constraint.id} className="space-y-3">
-                <div className="flex items-center">
-                  <label className="text-sm font-medium">{info?.title || constraint.label}</label>
-                  {info && <ConstraintTooltip {...info} />}
+              <div key={constraint.id} className="space-y-4 p-6 border rounded-lg bg-card">
+                <div>
+                  <h3 className="text-lg font-medium mb-2">{info?.title || constraint.label}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">{info?.description}</p>
                 </div>
                 
-                {constraint.type === 'toggle' ? (
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id={constraint.id}
-                      checked={constraint.value as boolean} 
-                      onCheckedChange={(checked) => handleConstraintUpdate(constraint.id, !!checked)}
-                    />
-                    <label 
-                      htmlFor={constraint.id}
-                      className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                <div className="space-y-3">
+                  {constraint.type === 'toggle' ? (
+                    <div className="flex items-center space-x-3">
+                      <Checkbox 
+                        id={constraint.id}
+                        checked={constraint.value as boolean} 
+                        onCheckedChange={(checked) => handleConstraintUpdate(constraint.id, !!checked)}
+                      />
+                      <label 
+                        htmlFor={constraint.id}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Yes, I have this available
+                      </label>
+                    </div>
+                  ) : constraint.type === 'select' && constraint.options ? (
+                    <select 
+                      value={constraint.value as string}
+                      onChange={(e) => handleConstraintUpdate(constraint.id, e.target.value)}
+                      className="w-full p-3 border border-input rounded-md bg-background text-sm"
                     >
-                      Yes, I have this available
-                    </label>
-                  </div>
-                ) : constraint.type === 'select' && constraint.options ? (
-                  <select 
-                    value={constraint.value as string}
-                    onChange={(e) => handleConstraintUpdate(constraint.id, e.target.value)}
-                    className="w-full p-2 border border-input rounded-md bg-background"
-                  >
-                    {constraint.options.map(option => (
-                      <option key={option} value={option}>
-                        {option.charAt(0).toUpperCase() + option.slice(1).replace('-', ' ')}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <Input 
-                    value={constraint.value as string}
-                    onChange={(e) => handleConstraintUpdate(constraint.id, e.target.value)}
-                  />
-                )}
-                
-                {info?.helpText && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    💡 {info.helpText}
-                  </p>
-                )}
+                      {constraint.options.map(option => (
+                        <option key={option} value={option}>
+                          {option.charAt(0).toUpperCase() + option.slice(1).replace('-', ' ')}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input 
+                      value={constraint.value as string}
+                      onChange={(e) => handleConstraintUpdate(constraint.id, e.target.value)}
+                      className="w-full"
+                    />
+                  )}
+                  
+                  {info?.helpText && (
+                    <p className="text-xs text-muted-foreground bg-muted/50 p-3 rounded border-l-4 border-primary/20">
+                      💡 {info.helpText}
+                    </p>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
         
-        <Card className="border border-border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-medium">Feasibility Assessment</h3>
+        <Card className="border border-border shadow-sm mt-8">
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-medium">Feasibility Assessment</h3>
               <RiskIndicator risk={feasibilityRisk} />
             </div>
-            <Progress value={feasibilityScore} className="h-2 mt-3" />
-            <p className="text-sm text-muted-foreground mt-2">
-              {feasibilityScore <= 40 && "Your project may face significant challenges with current resources. Consider adjusting scope, timeline, or seeking additional support."}
-              {feasibilityScore > 40 && feasibilityScore < 75 && "Your project appears moderately feasible, but may require careful planning and resource management."}
-              {feasibilityScore >= 75 && "Great! Your project appears highly feasible given your available resources."}
-            </p>
+            <Progress value={feasibilityScore} className="h-3 mb-4" />
+            <div className="space-y-2">
+              {feasibilityScore <= 40 && (
+                <p className="text-sm text-muted-foreground">
+                  Your project may face significant challenges with current resources. Consider adjusting scope, timeline, or seeking additional support.
+                </p>
+              )}
+              {feasibilityScore > 40 && feasibilityScore < 75 && (
+                <p className="text-sm text-muted-foreground">
+                  Your project appears moderately feasible, but may require careful planning and resource management.
+                </p>
+              )}
+              {feasibilityScore >= 75 && (
+                <p className="text-sm text-muted-foreground">
+                  Great! Your project appears highly feasible given your available resources.
+                </p>
+              )}
+            </div>
           </CardContent>
         </Card>
       </CardContent>
