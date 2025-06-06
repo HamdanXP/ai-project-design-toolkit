@@ -8,6 +8,7 @@ import { StepHeading } from "./common/StepHeading";
 import { SuitabilityQuestionCard } from "./suitability/SuitabilityQuestionCard";
 import { SuitabilityScoreCard } from "./suitability/SuitabilityScoreCard";
 import { useProject } from "@/contexts/ProjectContext";
+import { scopingApi, DataSuitabilityRequest } from "@/lib/scoping-api";
 
 type SuitabilityChecklistProps = {
   suitabilityChecks: DataSuitabilityCheck[];
@@ -25,12 +26,13 @@ export const SuitabilityChecklist = ({
   moveToNextStep,
 }: SuitabilityChecklistProps) => {
   const [expandedHelp, setExpandedHelp] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { setSuitabilityChecks } = useProject();
 
   // Enhanced questions with practical guidance
   const enhancedQuestions: EnhancedSuitabilityQuestion[] = [
     {
-      id: "completeness",
+      id: "data_completeness",
       title: "Data Completeness Assessment",
       question: "When you examine the data, what do you observe?",
       description: "Assess how complete and consistent your dataset appears",
@@ -56,7 +58,7 @@ export const SuitabilityChecklist = ({
       ]
     },
     {
-      id: "representativeness",
+      id: "population_representativeness",
       title: "Population Representativeness",
       question: "Does this data fairly represent the people you want to help?",
       description: "Evaluate if the data covers your target communities adequately",
@@ -82,7 +84,7 @@ export const SuitabilityChecklist = ({
       ]
     },
     {
-      id: "privacy",
+      id: "privacy_ethics",
       title: "Privacy & Ethics Assessment",
       question: "Could using this data cause harm or raise privacy concerns?",
       description: "Consider potential risks to individuals and communities",
@@ -108,7 +110,7 @@ export const SuitabilityChecklist = ({
       ]
     },
     {
-      id: "sufficiency",
+      id: "quality_sufficiency",
       title: "Quality & Sufficiency Check",
       question: "Do you have enough good quality data for your project?",
       description: "Assess if the data volume and quality meet your project needs",
@@ -151,14 +153,12 @@ export const SuitabilityChecklist = ({
     setSuitabilityChecks(prevChecks => {
       const existingCheck = prevChecks.find(c => c.id === questionId);
       if (existingCheck) {
-        // Update existing check
         return prevChecks.map(c => 
           c.id === questionId 
             ? { ...c, answer } 
             : c
         );
       } else {
-        // Add new check
         const question = enhancedQuestions.find(q => q.id === questionId);
         return [...prevChecks, {
           id: questionId,
@@ -169,13 +169,43 @@ export const SuitabilityChecklist = ({
       }
     });
     
-    // Also call the prop function for backward compatibility
     handleSuitabilityUpdate(questionId, answer);
   };
 
   const allQuestionsAnswered = enhancedQuestions.every(q => 
     getAnswerForQuestion(q.id) !== null
   );
+
+  const handleNextStep = async () => {
+    if (!allQuestionsAnswered) return;
+
+    setIsSubmitting(true);
+    try {
+      // Convert answers to API format
+      const apiRequest: DataSuitabilityRequest = {
+        data_completeness: getAnswerForQuestion('data_completeness') === 'yes' ? 'looks_clean' : 
+                          getAnswerForQuestion('data_completeness') === 'unknown' ? 'some_issues' : 'many_problems',
+        population_representativeness: getAnswerForQuestion('population_representativeness') === 'yes' ? 'representative' : 
+                                     getAnswerForQuestion('population_representativeness') === 'unknown' ? 'partially' : 'limited_coverage',
+        privacy_ethics: getAnswerForQuestion('privacy_ethics') === 'yes' ? 'privacy_safe' : 
+                       getAnswerForQuestion('privacy_ethics') === 'unknown' ? 'need_review' : 'high_risk',
+        quality_sufficiency: getAnswerForQuestion('quality_sufficiency') === 'yes' ? 'sufficient' : 
+                            getAnswerForQuestion('quality_sufficiency') === 'unknown' ? 'borderline' : 'insufficient'
+      };
+
+      // Submit to API
+      const response = await scopingApi.assessDataSuitability('current', apiRequest);
+      console.log('Data suitability assessment response:', response);
+      
+      moveToNextStep();
+    } catch (error) {
+      console.error('Failed to submit data suitability assessment:', error);
+      // Continue anyway since we have fallback scoring
+      moveToNextStep();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Card className="mb-6">
@@ -207,10 +237,10 @@ export const SuitabilityChecklist = ({
           Previous
         </Button>
         <Button 
-          onClick={moveToNextStep} 
-          disabled={!allQuestionsAnswered}
+          onClick={handleNextStep} 
+          disabled={!allQuestionsAnswered || isSubmitting}
         >
-          Next Step <ArrowRight className="ml-2 h-4 w-4" />
+          {isSubmitting ? 'Submitting...' : 'Next Step'} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </CardFooter>
     </Card>

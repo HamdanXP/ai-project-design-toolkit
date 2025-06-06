@@ -1,9 +1,12 @@
+
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle } from "lucide-react";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
 import { StepHeading } from "./common/StepHeading";
 import { RiskIndicator } from "./common/RiskIndicator";
+import { scopingApi, FinalFeasibilityRequest } from "@/lib/scoping-api";
+import { useState } from "react";
 
 type FinalFeasibilityGateProps = {
   selectedUseCase: UseCase | null;
@@ -37,24 +40,72 @@ export const FinalFeasibilityGate = ({
   resetPhase,
 }: FinalFeasibilityGateProps) => {
   
-  // Handle "Yes, Ready to Proceed" button click - this now only changes the UI state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const handleReadyToProceed = () => {
     setReadyToAdvance(true);
   };
   
-  // Handle "No, Revise Approach" button click - this now only changes the UI state
   const handleReviseApproach = () => {
     setReadyToAdvance(false);
   };
   
-  // Handle the final "Complete Phase" button click
-  const onCompletePhase = () => {
-    console.log("FinalFeasibilityGate: Complete Phase clicked");
-    // Simply call the handleCompletePhase provided by the navigation hook
-    handleCompletePhase();
+  const onCompletePhase = async () => {
+    if (!selectedUseCase || !selectedDataset) return;
+
+    setIsSubmitting(true);
+    try {
+      console.log("FinalFeasibilityGate: Complete Phase clicked");
+      
+      // Prepare API request
+      const apiRequest: FinalFeasibilityRequest = {
+        selected_use_case: {
+          id: selectedUseCase.id,
+          title: selectedUseCase.title,
+          description: selectedUseCase.description,
+          category: selectedUseCase.tags[0] || 'General',
+          complexity: selectedUseCase.tags[1] || 'medium'
+        },
+        selected_dataset: {
+          name: selectedDataset.title,
+          source: selectedDataset.source,
+          format: selectedDataset.format,
+          size: selectedDataset.size,
+          license: selectedDataset.license
+        },
+        feasibility_summary: {
+          overall_percentage: feasibilityScore,
+          feasibility_level: feasibilityRisk === 'low' ? 'high' : feasibilityRisk === 'medium' ? 'medium_high' : 'low',
+          key_constraints: constraints
+            .filter(c => c.importance === 'critical' && 
+              ((typeof c.value === 'string' && ['limited', 'low', 'none'].includes(c.value)) ||
+               (typeof c.value === 'boolean' && !c.value)))
+            .map(c => c.label)
+        },
+        data_suitability: {
+          percentage: suitabilityScore,
+          suitability_level: suitabilityScore >= 80 ? 'excellent' : suitabilityScore >= 60 ? 'good' : 'needs_work'
+        },
+        ready_to_proceed: readyToAdvance,
+        reasoning: readyToAdvance 
+          ? "Project shows good feasibility and data suitability for proceeding to development phase."
+          : "Project needs additional review and improvements before proceeding."
+      };
+
+      // Submit to API
+      const response = await scopingApi.submitFinalFeasibilityGate('current', apiRequest);
+      console.log('Final feasibility gate response:', response);
+      
+      handleCompletePhase();
+    } catch (error) {
+      console.error('Failed to submit final feasibility gate:', error);
+      // Continue anyway since we have fallback behavior
+      handleCompletePhase();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
-  // Reset the entire phase to start from step 1
   const handleRevisePhase = () => {
     resetPhase();
   };
@@ -201,8 +252,8 @@ export const FinalFeasibilityGate = ({
           Previous
         </Button>
         {readyToAdvance ? (
-          <Button onClick={onCompletePhase}>
-            Complete Phase
+          <Button onClick={onCompletePhase} disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Complete Phase'}
           </Button>
         ) : (
           <Button 
