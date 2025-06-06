@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -263,7 +264,7 @@ const HomePage = () => {
             </CardContent>
           </Card>
 
-          <div className="flex flex-wrap gap-2 justify-center mb-8">
+          <div className="flex flex-wrap gap-2 justify-center">
             {suggestions.map((suggestion, index) => (
               <button
                 key={index}
