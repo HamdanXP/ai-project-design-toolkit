@@ -8,8 +8,6 @@ import { StepHeading } from "./common/StepHeading";
 import { SuitabilityQuestionCard } from "./suitability/SuitabilityQuestionCard";
 import { SuitabilityScoreCard } from "./suitability/SuitabilityScoreCard";
 import { useProject } from "@/contexts/ProjectContext";
-import { scopingApi, DataSuitabilityRequest } from "@/lib/scoping-api";
-import { toast } from "sonner";
 
 type SuitabilityChecklistProps = {
   suitabilityChecks: DataSuitabilityCheck[];
@@ -27,7 +25,6 @@ export const SuitabilityChecklist = ({
   moveToNextStep,
 }: SuitabilityChecklistProps) => {
   const [expandedHelp, setExpandedHelp] = useState<string | null>(null);
-  const [isAssessing, setIsAssessing] = useState(false);
   const { setSuitabilityChecks } = useProject();
 
   // Enhanced questions with practical guidance
@@ -147,23 +144,7 @@ export const SuitabilityChecklist = ({
     return check?.answer || null;
   };
 
-  // Convert internal answer format to API format
-  const convertToApiFormat = (answers: Record<string, 'yes' | 'no' | 'unknown'>): DataSuitabilityRequest => {
-    const mapping = {
-      yes: { completeness: 'looks_clean', representativeness: 'representative', privacy: 'privacy_safe', sufficiency: 'sufficient' },
-      unknown: { completeness: 'some_issues', representativeness: 'partially', privacy: 'need_review', sufficiency: 'borderline' },
-      no: { completeness: 'many_problems', representativeness: 'limited_coverage', privacy: 'high_risk', sufficiency: 'insufficient' }
-    };
-
-    return {
-      data_completeness: mapping[answers.completeness]?.completeness || 'some_issues',
-      population_representativeness: mapping[answers.representativeness]?.representativeness || 'partially',
-      privacy_ethics: mapping[answers.privacy]?.privacy || 'need_review',
-      quality_sufficiency: mapping[answers.sufficiency]?.sufficiency || 'borderline'
-    } as DataSuitabilityRequest;
-  };
-
-  const handleAnswerUpdate = async (questionId: string, answer: 'yes' | 'no' | 'unknown') => {
+  const handleAnswerUpdate = (questionId: string, answer: 'yes' | 'no' | 'unknown') => {
     console.log('Updating answer for question:', questionId, 'with answer:', answer);
     
     // Update the context state directly
@@ -190,52 +171,6 @@ export const SuitabilityChecklist = ({
     
     // Also call the prop function for backward compatibility
     handleSuitabilityUpdate(questionId, answer);
-
-    // Check if all questions are answered and submit to API
-    const updatedChecks = suitabilityChecks.map(c => 
-      c.id === questionId ? { ...c, answer } : c
-    );
-    
-    // Add new check if it doesn't exist
-    if (!updatedChecks.find(c => c.id === questionId)) {
-      const question = enhancedQuestions.find(q => q.id === questionId);
-      updatedChecks.push({
-        id: questionId,
-        question: question?.question || '',
-        answer,
-        description: question?.description || ''
-      });
-    }
-
-    // Check if all required questions have answers
-    const requiredQuestions = ['completeness', 'representativeness', 'privacy', 'sufficiency'];
-    const allAnswered = requiredQuestions.every(qId => 
-      updatedChecks.find(c => c.id === qId)?.answer
-    );
-
-    if (allAnswered) {
-      try {
-        setIsAssessing(true);
-        const answers: Record<string, 'yes' | 'no' | 'unknown'> = {};
-        requiredQuestions.forEach(qId => {
-          const check = updatedChecks.find(c => c.id === qId);
-          if (check?.answer) {
-            answers[qId] = check.answer;
-          }
-        });
-
-        const apiRequest = convertToApiFormat(answers);
-        const result = await scopingApi.assessDataSuitability("default", apiRequest);
-        
-        toast.success(`Data suitability assessment complete: ${result.suitability_level} (${result.percentage}%)`);
-        console.log('API assessment result:', result);
-      } catch (error) {
-        console.error('Failed to assess data suitability:', error);
-        toast.error('Failed to complete API assessment, using local scoring');
-      } finally {
-        setIsAssessing(false);
-      }
-    }
   };
 
   const allQuestionsAnswered = enhancedQuestions.every(q => 
@@ -266,12 +201,6 @@ export const SuitabilityChecklist = ({
         </div>
         
         <SuitabilityScoreCard score={suitabilityScore} />
-        
-        {isAssessing && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-800 text-sm">Analyzing your data suitability assessment...</p>
-          </div>
-        )}
       </CardContent>
       <CardFooter className="flex justify-between">
         <Button variant="outline" onClick={moveToPreviousStep}>
