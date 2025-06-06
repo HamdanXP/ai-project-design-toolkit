@@ -1,9 +1,13 @@
+
+import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, X, AlertTriangle } from "lucide-react";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
 import { StepHeading } from "./common/StepHeading";
 import { RiskIndicator } from "./common/RiskIndicator";
+import { scopingApi, FinalFeasibilityRequest } from "@/lib/scoping-api";
+import { toast } from "sonner";
 
 type FinalFeasibilityGateProps = {
   selectedUseCase: UseCase | null;
@@ -36,15 +40,79 @@ export const FinalFeasibilityGate = ({
   updatePhaseStatus,
   resetPhase,
 }: FinalFeasibilityGateProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Handle "Yes, Ready to Proceed" button click - this now only changes the UI state
-  const handleReadyToProceed = () => {
+  const handleReadyToProceed = async () => {
     setReadyToAdvance(true);
+    await submitFinalAssessment(true);
   };
   
   // Handle "No, Revise Approach" button click - this now only changes the UI state
-  const handleReviseApproach = () => {
+  const handleReviseApproach = async () => {
     setReadyToAdvance(false);
+    await submitFinalAssessment(false);
+  };
+
+  // Submit the final assessment to the API
+  const submitFinalAssessment = async (ready: boolean) => {
+    if (!selectedUseCase || !selectedDataset) {
+      toast.error("Missing required data for final assessment");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      const request: FinalFeasibilityRequest = {
+        selected_use_case: {
+          id: selectedUseCase.id,
+          title: selectedUseCase.title,
+          description: selectedUseCase.description,
+          category: selectedUseCase.tags[0] || "General",
+          complexity: selectedUseCase.tags[1] || "medium"
+        },
+        selected_dataset: {
+          name: selectedDataset.title,
+          source: selectedDataset.source,
+          format: selectedDataset.format,
+          size: selectedDataset.size,
+          license: selectedDataset.license
+        },
+        feasibility_summary: {
+          overall_percentage: feasibilityScore,
+          feasibility_level: feasibilityRisk === 'low' ? 'high' : feasibilityRisk === 'medium' ? 'medium_high' : 'low',
+          key_constraints: constraints
+            .filter(c => c.importance === 'critical' && (c.value === false || c.value === 'limited' || c.value === 'none'))
+            .map(c => c.label)
+        },
+        data_suitability: {
+          percentage: suitabilityScore,
+          suitability_level: suitabilityScore >= 80 ? 'excellent' : suitabilityScore >= 60 ? 'good' : 'needs_improvement'
+        },
+        ready_to_proceed: ready,
+        reasoning: ready 
+          ? "Assessment indicates project is ready for development phase based on feasibility and data quality analysis."
+          : "Project needs revision in key areas before proceeding to development."
+      };
+
+      const result = await scopingApi.finalFeasibilityGate("default", request);
+      
+      console.log('Final assessment result:', result);
+      toast.success(`Final assessment complete: ${result.final_summary.recommendation}`);
+      
+      if (result.ready_to_proceed) {
+        updatePhaseStatus("scoping", "in-progress", 100);
+      } else {
+        updatePhaseStatus("scoping", "in-progress", 80);
+      }
+
+    } catch (error) {
+      console.error('Failed to submit final assessment:', error);
+      toast.error('Failed to submit final assessment to API, proceeding with local data');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   // Handle the final "Complete Phase" button click
@@ -174,6 +242,7 @@ export const FinalFeasibilityGate = ({
               variant={!readyToAdvance ? "default" : "outline"} 
               className={!readyToAdvance ? "bg-red-600 hover:bg-red-700" : ""}
               onClick={handleReviseApproach}
+              disabled={isSubmitting}
             >
               <X className="h-4 w-4 mr-2" />
               No, Revise Approach
@@ -183,6 +252,7 @@ export const FinalFeasibilityGate = ({
               variant={readyToAdvance ? "default" : "outline"}
               className={readyToAdvance ? "bg-green-600 hover:bg-green-700" : ""} 
               onClick={handleReadyToProceed}
+              disabled={isSubmitting}
             >
               <Check className="h-4 w-4 mr-2" />
               Yes, Ready to Proceed
@@ -192,6 +262,12 @@ export const FinalFeasibilityGate = ({
           {!readyToAdvance && (
             <div className="mt-4 text-sm text-muted-foreground">
               Consider revisiting earlier steps to adjust your approach before proceeding.
+            </div>
+          )}
+
+          {isSubmitting && (
+            <div className="mt-4 text-sm text-blue-600">
+              Submitting final assessment...
             </div>
           )}
         </div>

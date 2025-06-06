@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { UseCase, Dataset } from "@/types/scoping-phase";
 import { useProject } from "@/contexts/ProjectContext";
+import { scopingApi, ApiUseCase, ApiDataset } from "@/lib/scoping-api";
+import { toast } from "sonner";
 
 export const useScopingPhaseData = () => {
   // State for UI
@@ -12,143 +14,139 @@ export const useScopingPhaseData = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [previewDataset, setPreviewDataset] = useState<Dataset | null>(null);
-  const [loadingDatasets, setLoadingDatasets] = useState(true);
+  const [loadingDatasets, setLoadingDatasets] = useState(false);
   
   // Derived state
   const [feasibilityScore, setFeasibilityScore] = useState<number>(0);
   const [feasibilityRisk, setFeasibilityRisk] = useState<'low' | 'medium' | 'high'>('medium');
   const [suitabilityScore, setSuitabilityScore] = useState<number>(0);
 
-  const { constraints, suitabilityChecks } = useProject();
+  const { constraints, suitabilityChecks, selectedUseCase } = useProject();
 
-  // Initialize mock data
+  // Convert API use case to internal format
+  const convertApiUseCase = (apiUseCase: ApiUseCase): UseCase => ({
+    id: apiUseCase.id,
+    title: apiUseCase.title,
+    description: apiUseCase.description,
+    tags: [apiUseCase.category, apiUseCase.complexity],
+    selected: false
+  });
+
+  // Convert API dataset to internal format
+  const convertApiDataset = (apiDataset: ApiDataset, index: number): Dataset => ({
+    id: `api_${index}`,
+    title: apiDataset.name,
+    source: apiDataset.source,
+    format: "JSON", // Default since API doesn't specify
+    size: "Unknown",
+    license: "Check source",
+    description: apiDataset.description,
+    columns: apiDataset.data_types,
+    sampleRows: [] // API doesn't provide sample data
+  });
+
+  // Initialize use cases from API
   useEffect(() => {
-    // Simulate loading use cases
-    setTimeout(() => {
-      setUseCases([
-        {
-          id: "uc1",
-          title: "Forecasting water shortages",
-          description: "Use historical weather and water usage data to predict shortages in vulnerable areas.",
-          tags: ["Forecasting", "Resource Management"],
-          selected: false
-        },
-        {
-          id: "uc2", 
-          title: "Disease outbreak prediction",
-          description: "Analyze population movement and health data to predict potential disease outbreaks.",
-          tags: ["Healthcare", "Predictive Analytics"],
-          selected: false
-        },
-        {
-          id: "uc3",
-          title: "Crop yield optimization",
-          description: "Recommend optimal planting strategies based on soil, weather and climate data.",
-          tags: ["Agriculture", "Optimization"],
-          selected: false
-        },
-        {
-          id: "uc4",
-          title: "Refugee movement patterns",
-          description: "Analyze migration patterns to better allocate humanitarian resources.",
-          tags: ["Migration", "Resource Allocation"],
-          selected: false
-        },
-        {
-          id: "uc5",
-          title: "Food security monitoring",
-          description: "Track food availability and price indicators to identify at-risk communities.",
-          tags: ["Food Security", "Monitoring"],
-          selected: false
-        }
-      ]);
-      setLoadingUseCases(false);
-    }, 1000);
+    const loadUseCases = async () => {
+      try {
+        // For now, use a default project ID - in real app this would come from context
+        const projectId = "default";
+        const apiUseCases = await scopingApi.getUseCases(projectId);
+        const convertedUseCases = apiUseCases.map(convertApiUseCase);
+        setUseCases(convertedUseCases);
+      } catch (error) {
+        console.error("Failed to load use cases from API:", error);
+        toast.error("Failed to load use cases. Using fallback data.");
+        
+        // Fallback to mock data
+        setUseCases([
+          {
+            id: "uc1",
+            title: "Forecasting water shortages",
+            description: "Use historical weather and water usage data to predict shortages in vulnerable areas.",
+            tags: ["Forecasting", "Resource Management"],
+            selected: false
+          },
+          {
+            id: "uc2", 
+            title: "Disease outbreak prediction",
+            description: "Analyze population movement and health data to predict potential disease outbreaks.",
+            tags: ["Healthcare", "Predictive Analytics"],
+            selected: false
+          },
+          {
+            id: "uc3",
+            title: "Crop yield optimization",
+            description: "Recommend optimal planting strategies based on soil, weather and climate data.",
+            tags: ["Agriculture", "Optimization"],
+            selected: false
+          },
+          {
+            id: "uc4",
+            title: "Refugee movement patterns",
+            description: "Analyze migration patterns to better allocate humanitarian resources.",
+            tags: ["Migration", "Resource Allocation"],
+            selected: false
+          },
+          {
+            id: "uc5",
+            title: "Food security monitoring",
+            description: "Track food availability and price indicators to identify at-risk communities.",
+            tags: ["Food Security", "Monitoring"],
+            selected: false
+          }
+        ]);
+      } finally {
+        setLoadingUseCases(false);
+      }
+    };
 
-    // Simulate loading datasets
-    setTimeout(() => {
-      const mockDatasets = [
-        {
-          id: "ds1",
-          title: "Global Water Access Database",
-          source: "UN Water",
-          format: "CSV",
-          size: "2.3 GB",
-          license: "CC BY 4.0",
-          description: "Comprehensive data on water access across 150 countries, updated quarterly.",
-          columns: ["Country", "Region", "Year", "WaterAccessPercent", "WaterQuality"],
-          sampleRows: [
-            ["Kenya", "Eastern Africa", "2024", "67.5%", "Moderate"],
-            ["India", "South Asia", "2024", "89.2%", "Variable"],
-            ["Bolivia", "South America", "2024", "78.4%", "Good"]
-          ]
-        },
-        {
-          id: "ds2",
-          title: "Global Disease Surveillance Data",
-          source: "WHO",
-          format: "JSON",
-          size: "850 MB",
-          license: "Open Data Commons",
-          description: "Disease incidence reports from health facilities worldwide",
-          columns: ["Country", "Disease", "Date", "Confirmed_Cases", "Deaths"],
-          sampleRows: [
-            ["Brazil", "Dengue", "2024-01-15", "234", "3"],
-            ["Nigeria", "Malaria", "2024-01-20", "567", "12"],
-            ["Thailand", "Dengue", "2024-01-25", "112", "1"]
-          ]
-        },
-        {
-          id: "ds3",
-          title: "Agricultural Yield Dataset",
-          source: "FAO",
-          format: "CSV",
-          size: "1.5 GB",
-          license: "CC BY-NC 4.0",
-          description: "Historical crop yield data with soil and weather conditions",
-          columns: ["Region", "Crop", "Year", "Yield_Tons", "Rainfall_mm", "Soil_pH"],
-          sampleRows: [
-            ["Sub-Saharan Africa", "Maize", "2023", "4.2", "750", "6.5"],
-            ["South Asia", "Rice", "2023", "5.8", "1200", "7.1"],
-            ["Central America", "Beans", "2023", "1.9", "850", "6.2"]
-          ]
-        },
-        {
-          id: "ds4",
-          title: "Refugee Movement Patterns",
-          source: "UNHCR",
-          format: "GeoJSON",
-          size: "1.2 GB",
-          license: "Open Data Commons",
-          description: "Anonymized migration patterns and displacement data",
-          columns: ["Origin", "Destination", "Time_Period", "Population_Count", "Reason"],
-          sampleRows: [
-            ["Syria", "Lebanon", "Q1 2024", "15400", "Conflict"],
-            ["Venezuela", "Colombia", "Q1 2024", "18900", "Economic"],
-            ["South Sudan", "Uganda", "Q1 2024", "12300", "Conflict"]
-          ]
-        },
-        {
-          id: "ds5",
-          title: "Global Food Price Index",
-          source: "World Food Programme",
-          format: "Excel",
-          size: "450 MB",
-          license: "CC BY 4.0",
-          description: "Monthly food price data across 80 countries",
-          columns: ["Country", "Month", "Year", "Staple_Food", "Price_USD", "Change_Percent"],
-          sampleRows: [
-            ["Ethiopia", "March", "2024", "Teff", "2.15", "+4.2%"],
-            ["Philippines", "March", "2024", "Rice", "1.30", "+2.8%"],
-            ["Haiti", "March", "2024", "Rice", "1.85", "+7.3%"]
-          ]
-        }
-      ];
-      setDatasets(mockDatasets);
-      setFilteredDatasets(mockDatasets);
-      setLoadingDatasets(false);
-    }, 1500);
+    loadUseCases();
   }, []);
+
+  // Load datasets when a use case is selected
+  useEffect(() => {
+    const loadDatasets = async () => {
+      if (!selectedUseCase) return;
+
+      setLoadingDatasets(true);
+      try {
+        const projectId = "default";
+        const apiDatasets = await scopingApi.getRecommendedDatasets(projectId, selectedUseCase.id);
+        const convertedDatasets = apiDatasets.map(convertApiDataset);
+        setDatasets(convertedDatasets);
+        setFilteredDatasets(convertedDatasets);
+      } catch (error) {
+        console.error("Failed to load datasets from API:", error);
+        toast.error("Failed to load recommended datasets. Using fallback data.");
+        
+        // Fallback to mock data
+        const mockDatasets = [
+          {
+            id: "ds1",
+            title: "Global Water Access Database",
+            source: "UN Water",
+            format: "CSV",
+            size: "2.3 GB",
+            license: "CC BY 4.0",
+            description: "Comprehensive data on water access across 150 countries, updated quarterly.",
+            columns: ["Country", "Region", "Year", "WaterAccessPercent", "WaterQuality"],
+            sampleRows: [
+              ["Kenya", "Eastern Africa", "2024", "67.5%", "Moderate"],
+              ["India", "South Asia", "2024", "89.2%", "Variable"],
+              ["Bolivia", "South America", "2024", "78.4%", "Good"]
+            ]
+          }
+        ];
+        setDatasets(mockDatasets);
+        setFilteredDatasets(mockDatasets);
+      } finally {
+        setLoadingDatasets(false);
+      }
+    };
+
+    loadDatasets();
+  }, [selectedUseCase]);
 
   // Calculate feasibility score when constraints change
   useEffect(() => {
