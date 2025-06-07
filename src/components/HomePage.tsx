@@ -264,7 +264,7 @@ const HomePage = () => {
             </CardContent>
           </Card>
 
-          <div className="flex flex-wrap gap-2 justify-center">
+          <div className="flex flex-wrap gap-2 justify-center mb-8">
             {suggestions.map((suggestion, index) => (
               <button
                 key={index}
