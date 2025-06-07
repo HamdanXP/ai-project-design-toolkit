@@ -16,6 +16,8 @@ const HomePage = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
+  
+  // Initialize with default suggestions that won't disappear
   const [suggestions, setSuggestions] = useState<ProjectSuggestion[]>([
     { title: "🌪 Disaster Response", prompt: "I want to implement AI for real-time disaster assessment and resource allocation." },
     { title: "🏥 Healthcare", prompt: "I want to implement AI for diagnostic assistance and predictive disease outbreak monitoring." },
@@ -32,15 +34,6 @@ const HomePage = () => {
         // Fetch recent projects
         const projects = await api.projects.getAll();
         setRecentProjects(projects.slice(0, 4)); // Only show the 4 most recent projects
-        
-        // Try to fetch project suggestions from API, but keep defaults if it fails
-        try {
-          const fetchedSuggestions = await api.projects.getSuggestions();
-          setSuggestions(fetchedSuggestions);
-        } catch (error) {
-          // Keep the default suggestions already set in state
-          console.log('Using default suggestions');
-        }
       } catch (error) {
         // If API fails, use fallback data
         setRecentProjects([
@@ -49,6 +42,15 @@ const HomePage = () => {
           { id: "3", name: "Financial Services AI", description: "AI for financial analysis and prediction", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Finance", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 60, tags: ["Finance", "AI"], phases: [] },
           { id: "4", name: "Environmental AI Project", description: "AI solutions for environmental monitoring", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Environment", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 80, tags: ["Environment", "AI"], phases: [] },
         ]);
+      }
+      
+      // Try to fetch project suggestions from API, but preserve defaults if it fails
+      try {
+        const fetchedSuggestions = await api.projects.getSuggestions();
+        setSuggestions(fetchedSuggestions);
+      } catch (error) {
+        // Keep the default suggestions - they're already set in state initialization
+        console.log('Using default suggestions');
       }
     };
     
@@ -266,8 +268,8 @@ const HomePage = () => {
             </CardContent>
           </Card>
 
-          {/* Suggestion buttons */}
-          {suggestions.length > 0 && (
+          {/* Suggestion buttons - always render if we have suggestions */}
+          {suggestions && suggestions.length > 0 && (
             <div className="flex flex-wrap gap-2 justify-center mb-8">
               {suggestions.map((suggestion, index) => (
                 <button
