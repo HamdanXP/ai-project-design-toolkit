@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,14 @@ const HomePage = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [recentProjects, setRecentProjects] = useState<Project[]>([]);
-  const [suggestions, setSuggestions] = useState<ProjectSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<ProjectSuggestion[]>([
+    { title: "🌪 Disaster Response", prompt: "I want to implement AI for real-time disaster assessment and resource allocation." },
+    { title: "🏥 Healthcare", prompt: "I want to implement AI for diagnostic assistance and predictive disease outbreak monitoring." },
+    { title: "🌾 Food Security", prompt: "I want to implement AI for crop yield prediction and food distribution optimization." },
+    { title: "📢 Crisis Communication", prompt: "I want to implement AI for automated misinformation detection and emergency alert dissemination." },
+    { title: "🛂 Refugee Support", prompt: "I want to implement AI for streamlining refugee registration and personalised aid recommendations." },
+    { title: "🔍 Humanitarian Logistics", prompt: "I want to implement AI for optimising supply chain management and delivery of aid in crisis zones." }
+  ]);
   
   // Fetch recent projects and suggestions on component mount
   useEffect(() => {
@@ -27,9 +33,14 @@ const HomePage = () => {
         const projects = await api.projects.getAll();
         setRecentProjects(projects.slice(0, 4)); // Only show the 4 most recent projects
         
-        // Fetch project suggestions
-        const fetchedSuggestions = await api.projects.getSuggestions();
-        setSuggestions(fetchedSuggestions);
+        // Try to fetch project suggestions from API, but keep defaults if it fails
+        try {
+          const fetchedSuggestions = await api.projects.getSuggestions();
+          setSuggestions(fetchedSuggestions);
+        } catch (error) {
+          // Keep the default suggestions already set in state
+          console.log('Using default suggestions');
+        }
       } catch (error) {
         // If API fails, use fallback data
         setRecentProjects([
@@ -37,15 +48,6 @@ const HomePage = () => {
           { id: "2", name: "Education AI Solution", description: "AI-powered educational tools", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Education", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 40, tags: ["Education", "AI"], phases: [] },
           { id: "3", name: "Financial Services AI", description: "AI for financial analysis and prediction", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Finance", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 60, tags: ["Finance", "AI"], phases: [] },
           { id: "4", name: "Environmental AI Project", description: "AI solutions for environmental monitoring", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Environment", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 80, tags: ["Environment", "AI"], phases: [] },
-        ]);
-        
-        setSuggestions([
-          { title: "🌪 Disaster Response", prompt: "I want to implement AI for real-time disaster assessment and resource allocation." },
-          { title: "🏥 Healthcare", prompt: "I want to implement AI for diagnostic assistance and predictive disease outbreak monitoring." },
-          { title: "🌾 Food Security", prompt: "I want to implement AI for crop yield prediction and food distribution optimization." },
-          { title: "📢 Crisis Communication", prompt: "I want to implement AI for automated misinformation detection and emergency alert dissemination." },
-          { title: "🛂 Refugee Support", prompt: "I want to implement AI for streamlining refugee registration and personalised aid recommendations." },
-          { title: "🔍 Humanitarian Logistics", prompt: "I want to implement AI for optimising supply chain management and delivery of aid in crisis zones." }
         ]);
       }
     };
@@ -265,17 +267,19 @@ const HomePage = () => {
           </Card>
 
           {/* Suggestion buttons */}
-          <div className="flex flex-wrap gap-2 justify-center mb-8">
-            {suggestions.map((suggestion, index) => (
-              <button
-                key={index}
-                onClick={() => handleSuggestionClick(suggestion.prompt)}
-                className="bg-accent/50 text-foreground px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-full border border-border hover:bg-accent cursor-pointer transition-all text-xs whitespace-normal text-left"
-              >
-                {suggestion.title}
-              </button>
-            ))}
-          </div>
+          {suggestions.length > 0 && (
+            <div className="flex flex-wrap gap-2 justify-center mb-8">
+              {suggestions.map((suggestion, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSuggestionClick(suggestion.prompt)}
+                  className="bg-accent/50 text-foreground px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-full border border-border hover:bg-accent cursor-pointer transition-all text-xs whitespace-normal text-left"
+                >
+                  {suggestion.title}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <Card className="shadow-card-light dark:shadow-card-dark animate-fade">
