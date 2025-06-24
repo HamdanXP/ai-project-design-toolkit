@@ -35,6 +35,11 @@ export default defineConfig(({ mode }) => {
         return acc;
       }, {}),
     },
-    base:"/ai-project-design-toolkit/"
+    base:"/ai-project-design-toolkit/",
+    build: {
+      rollupOptions: {
+        input: './index.html',
+      },
+    },
   };
 });

@@ -18,7 +18,7 @@ import ProjectDetails from "@/pages/ProjectDetails";
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <Router>
+      <Router basename="/ai-project-design-toolkit/">
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/sign-in" element={<SignIn />} />
