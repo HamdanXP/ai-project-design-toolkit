@@ -34,6 +34,7 @@ export default defineConfig(({ mode }) => {
         }
         return acc;
       }, {}),
-    }
+    },
+    base:"/ai-project-design-toolkit/"
   };
 });
