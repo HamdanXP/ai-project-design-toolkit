@@ -20,9 +20,14 @@ const ProjectBlueprint = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Get projectId from URL query params
+  // Get projectId from URL query params - improved handling
   const searchParams = new URLSearchParams(location.search);
   const projectId = searchParams.get('projectId') || 'current';
+  
+  // Log project ID for debugging
+  useEffect(() => {
+    console.log('ProjectBlueprint loaded with projectId:', projectId);
+  }, [projectId]);
   
   // Get activePhaseId from context
   const { activePhaseId } = useProject();
@@ -76,14 +81,6 @@ const ProjectBlueprint = () => {
     if (canAccessPhase(phaseId)) {
       setActivePhaseId(phaseId);
       
-      // Update the project phase status via API
-      if (projectId !== 'current') {
-        api.projects.updatePhaseStatus(projectId, phaseId, "in-progress", 0)
-          .catch(() => {
-            // Silent fallback - handled by localStorage in the API module
-          });
-      }
-      
       // Close sidebar on mobile after selecting a phase
       if (isMobile) {
         setSidebarOpen(false);
@@ -100,29 +97,12 @@ const ProjectBlueprint = () => {
   // Enhanced complete phase handler with API integration
   const handleCompletePhaseWithApi = async (phaseId: string) => {
     handleCompletePhase(phaseId);
-    
-    // Also update via API if we have a project ID
-    if (projectId !== 'current') {
-      try {
-        await api.projects.completePhase(projectId, phaseId);
-      } catch (error) {
-        // Silent catch - already handled by localStorage in the API module
-      }
-    }
   };
   
   // Enhanced update phase status handler with API integration
   const handleUpdatePhaseStatusWithApi = async (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => {
     updatePhaseStatus(phaseId, status, progress);
     
-    // Also update via API if we have a project ID
-    if (projectId !== 'current') {
-      try {
-        await api.projects.updatePhaseStatus(projectId, phaseId, status, progress);
-      } catch (error) {
-        // Silent catch - already handled by localStorage in the API module
-      }
-    }
   };
   
   // Enhanced complete project handler with API integration
@@ -143,20 +123,6 @@ const ProjectBlueprint = () => {
     }
   };
   
-  // Enhanced progress handlers with API integration
-  const handlePhaseProgressWithApi = async (phaseId: string, completed: number, total: number) => {
-    const progress = Math.round((completed / total) * 100);
-    
-    // Update phase progress in the API if we have a project ID
-    if (projectId !== 'current') {
-      try {
-        await api.projects.updatePhaseProgress(projectId, phaseId, progress);
-      } catch (error) {
-        // Silent catch - already handled by localStorage in the API module
-      }
-    }
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <TopBar />
@@ -189,19 +155,15 @@ const ProjectBlueprint = () => {
               canAccessPhase={canAccessPhase}
               handleReflectionProgress={(completed, total) => {
                 handleReflectionProgress(completed, total);
-                handlePhaseProgressWithApi("reflection", completed, total);
               }}
               handleScopingProgress={(completed, total) => {
                 handleScopingProgress(completed, total);
-                handlePhaseProgressWithApi("scoping", completed, total);
               }}
               handleDevelopmentProgress={(completed, total) => {
                 handleDevelopmentProgress(completed, total);
-                handlePhaseProgressWithApi("development", completed, total);
               }}
               handleEvaluationProgress={(completed, total) => {
                 handleEvaluationProgress(completed, total);
-                handlePhaseProgressWithApi("evaluation", completed, total);
               }}
               handleCompleteProject={handleCompleteProjectWithApi}
               allPhasesCompleted={allPhasesCompleted}

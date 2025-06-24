@@ -1,796 +1,633 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from "@/components/ui/alert-dialog";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { 
-  PipelineType, 
-  PipelineTemplate, 
-  EthicalGuardrail, 
-  PrototypeMilestone,
-  TestResult,
-  EvaluationCriteria,
-  DevelopmentDecision
-} from "@/types/development-phase";
-import { useProject } from "@/contexts/ProjectContext";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, Circle, Info, Lightbulb, Download, Play, Shield, Eye, Users, AlertCircle, Loader2, RefreshCw } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import { useDevelopmentPhase } from "@/hooks/useDevelopmentPhase";
+import { formatTechnicalSpecs } from "@/lib/development-api";
+import { AISolution } from "@/types/development-phase";
 
-// Mock data for pipeline templates
-const PIPELINE_TEMPLATES: PipelineTemplate[] = [
-  { 
-    id: "classification", 
-    name: "Classification Pipeline", 
-    type: "classification", 
-    description: "For categorizing data into predefined classes", 
-    icon: "tag" 
-  },
-  { 
-    id: "regression", 
-    name: "Regression Pipeline", 
-    type: "regression", 
-    description: "For predicting continuous numerical values", 
-    icon: "line-chart" 
-  },
-  { 
-    id: "forecasting", 
-    name: "Forecasting Pipeline", 
-    type: "forecasting", 
-    description: "For predicting future values based on historical data", 
-    icon: "trending-up" 
-  },
-  { 
-    id: "clustering", 
-    name: "Clustering Pipeline", 
-    type: "clustering", 
-    description: "For grouping similar data points together", 
-    icon: "group" 
-  },
-  { 
-    id: "nlp", 
-    name: "NLP Pipeline", 
-    type: "nlp", 
-    description: "For processing and analyzing natural language", 
-    icon: "message-square" 
-  },
-  { 
-    id: "computer-vision", 
-    name: "Computer Vision Pipeline", 
-    type: "computer-vision", 
-    description: "For analyzing and processing visual data", 
-    icon: "eye" 
-  },
-  { 
-    id: "tabular", 
-    name: "Tabular Data Pipeline", 
-    type: "tabular", 
-    description: "For processing structured tabular data", 
-    icon: "table" 
-  }
-];
-
-// Initial ethical guardrails
-const INITIAL_GUARDRAILS: EthicalGuardrail[] = [
-  { 
-    id: "fairness", 
-    name: "Fairness Metrics", 
-    description: "Select appropriate fairness metrics for your model", 
-    completed: false 
-  },
-  { 
-    id: "privacy", 
-    name: "Privacy Preservation", 
-    description: "Implement privacy-preserving mechanisms", 
-    completed: false 
-  },
-  { 
-    id: "bias", 
-    name: "Bias Mitigation", 
-    description: "Apply bias detection and mitigation techniques", 
-    completed: false 
-  },
-  { 
-    id: "alignment", 
-    name: "Stakeholder Alignment", 
-    description: "Ensure solution aligns with stakeholder needs and expectations", 
-    completed: false 
-  }
-];
-
-// Initial prototype milestones
-const INITIAL_MILESTONES: PrototypeMilestone[] = [
-  { 
-    id: "data-prep", 
-    name: "Data Preprocessing", 
-    description: "Clean, transform, and prepare data for modeling", 
-    completed: false 
-  },
-  { 
-    id: "feature-eng", 
-    name: "Feature Engineering", 
-    description: "Create and select relevant features", 
-    completed: false 
-  },
-  { 
-    id: "model-train", 
-    name: "Model Training", 
-    description: "Train and optimize your model", 
-    completed: false 
-  },
-  { 
-    id: "model-eval", 
-    name: "Model Evaluation", 
-    description: "Evaluate model performance using appropriate metrics", 
-    completed: false 
-  },
-  { 
-    id: "prototype", 
-    name: "Build Prototype", 
-    description: "Create a functional prototype of your solution", 
-    completed: false 
-  }
-];
-
-// Initial evaluation criteria
-const INITIAL_EVALUATION_CRITERIA: EvaluationCriteria[] = [
-  { 
-    id: "goal-achievement", 
-    question: "Did the model achieve its intended goal?", 
-    answer: "unknown", 
-    notes: "" 
-  },
-  { 
-    id: "interpretability", 
-    question: "Are outputs interpretable and explainable?", 
-    answer: "unknown", 
-    notes: "" 
-  },
-  { 
-    id: "unintended-consequences", 
-    question: "Were any unintended consequences identified?", 
-    answer: "unknown", 
-    notes: "" 
-  },
-  { 
-    id: "bias-detection", 
-    question: "Was bias or potential harm detected?", 
-    answer: "unknown", 
-    notes: "" 
-  }
-];
-
-type DevelopmentPhaseProps = {
+interface DevelopmentPhaseProps {
   onUpdateProgress?: (completed: number, total: number) => void;
   onCompletePhase?: () => void;
-};
+}
 
 export const DevelopmentPhase = ({ onUpdateProgress, onCompletePhase }: DevelopmentPhaseProps) => {
-  const { 
-    developmentSelectedPipeline, 
-    setDevelopmentSelectedPipeline,
-    developmentGuardrails,
-    setDevelopmentGuardrails,
-    developmentMilestones,
-    setDevelopmentMilestones,
-    developmentTestResults,
-    setDevelopmentTestResults,
-    developmentEvaluationCriteria,
-    setDevelopmentEvaluationCriteria,
-    developmentDecision,
-    setDevelopmentDecision
-  } = useProject();
+  const [generationProgress, setGenerationProgress] = useState(0);
+  
+  const {
+    currentStep,
+    loading,
+    solutionsLoading,
+    error,
+    solutionsError,
+    developmentData,
+    contextData,
+    solutionsData,
+    selectedSolution,
+    generationInProgress,
+    generatedProject,
+    steps,
+    summary,
+    progressPercentage,
+    setCurrentStep,
+    selectSolution,
+    generateProject,
+    downloadFile,
+    retryLoading,
+    retrySolutions,
+    canProceedToNextPhase,
+    getSolutionBadgeInfo
+  } = useDevelopmentPhase();
 
-  const [activeTab, setActiveTab] = useState("pipeline");
-  const [newTest, setNewTest] = useState<Partial<TestResult>>({ inputs: "", outputs: "", notes: "" });
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  // Update progress when steps change
+  useEffect(() => {
+    if (onUpdateProgress) {
+      const completedSteps = steps.filter(s => s.completed).length;
+      onUpdateProgress(completedSteps, steps.length);
+    }
+  }, [steps, onUpdateProgress]);
 
-  // Initialize state from context or use defaults
-  const [guardrails, setGuardrails] = useState<EthicalGuardrail[]>(
-    developmentGuardrails?.length ? developmentGuardrails : INITIAL_GUARDRAILS
-  );
-  const [milestones, setMilestones] = useState<PrototypeMilestone[]>(
-    developmentMilestones?.length ? developmentMilestones : INITIAL_MILESTONES
-  );
-  const [testResults, setTestResults] = useState<TestResult[]>(
-    developmentTestResults || []
-  );
-  const [evaluationCriteria, setEvaluationCriteria] = useState<EvaluationCriteria[]>(
-    developmentEvaluationCriteria?.length ? developmentEvaluationCriteria : INITIAL_EVALUATION_CRITERIA
-  );
-  const [selectedPipeline, setSelectedPipeline] = useState<string>(
-    developmentSelectedPipeline || ""
-  );
-  const [decision, setDecision] = useState<DevelopmentDecision>(
-    developmentDecision || null
-  );
-
-  // Calculate progress
-  const calculateProgress = () => {
-    let totalItems = 0;
-    let completedItems = 0;
-
-    // Pipeline selection (1 item)
-    totalItems++;
-    if (selectedPipeline) completedItems++;
-
-    // Guardrails (each is an item)
-    totalItems += guardrails.length;
-    completedItems += guardrails.filter(g => g.completed).length;
-
-    // Milestones (each is an item)
-    totalItems += milestones.length;
-    completedItems += milestones.filter(m => m.completed).length;
-
-    // Test results (at least 1 expected)
-    totalItems++;
-    if (testResults.length > 0) completedItems++;
-
-    // Evaluation criteria (each with an answer other than 'unknown' is completed)
-    totalItems += evaluationCriteria.length;
-    completedItems += evaluationCriteria.filter(c => c.answer !== 'unknown').length;
-
-    // Final decision (1 item)
-    totalItems++;
-    if (decision) completedItems++;
-
-    return { completedItems, totalItems };
-  };
-
-  // Update progress whenever relevant state changes
-  const updateProgress = () => {
-    if (!onUpdateProgress) return;
+  // Animate progress bar during project generation
+  useEffect(() => {
+    let interval: number;
     
-    const { completedItems, totalItems } = calculateProgress();
-    onUpdateProgress(completedItems, totalItems);
-    
-    // Save state to context
-    setDevelopmentSelectedPipeline(selectedPipeline);
-    setDevelopmentGuardrails(guardrails);
-    setDevelopmentMilestones(milestones);
-    setDevelopmentTestResults(testResults);
-    setDevelopmentEvaluationCriteria(evaluationCriteria);
-    setDevelopmentDecision(decision);
-  };
+    if (generationInProgress) {
+      setGenerationProgress(0);
+      interval = window.setInterval(() => {
+        setGenerationProgress(prev => {
+          // Animate from 0 to 95% over ~8 seconds, then hold at 95% until completion
+          const increment = Math.random() * 8 + 2; // Random increment between 2-10%
+          const newProgress = Math.min(prev + increment, 95);
+          return newProgress;
+        });
+      }, 800); // Update every 800ms for realistic feel
+    } else {
+      // Reset progress when not generating
+      setGenerationProgress(0);
+    }
 
-  // Handle pipeline selection
-  const handleSelectPipeline = (pipelineId: string) => {
-    setSelectedPipeline(pipelineId);
-    updateProgress();
-  };
-
-  // Handle guardrail toggling
-  const handleToggleGuardrail = (id: string) => {
-    setGuardrails(guardrails.map(g => 
-      g.id === id ? { ...g, completed: !g.completed } : g
-    ));
-    updateProgress();
-  };
-
-  // Handle milestone toggling
-  const handleToggleMilestone = (id: string) => {
-    setMilestones(milestones.map(m => 
-      m.id === id ? { ...m, completed: !m.completed } : m
-    ));
-    updateProgress();
-  };
-
-  // Handle adding a new test result
-  const handleAddTestResult = () => {
-    if (!newTest.inputs || !newTest.outputs) return;
-    
-    const testResult: TestResult = {
-      id: `test-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      inputs: newTest.inputs || "",
-      outputs: newTest.outputs || "",
-      notes: newTest.notes || ""
+    return () => {
+      if (interval) clearInterval(interval);
     };
-    
-    setTestResults([...testResults, testResult]);
-    setNewTest({ inputs: "", outputs: "", notes: "" });
-    updateProgress();
-  };
+  }, [generationInProgress]);
 
-  // Handle updating evaluation criteria
-  const handleUpdateCriteria = (id: string, answer: 'yes' | 'no' | 'partially' | 'unknown', notes: string = "") => {
-    setEvaluationCriteria(evaluationCriteria.map(c => 
-      c.id === id ? { ...c, answer, notes } : c
-    ));
-    updateProgress();
-  };
+  // Complete progress bar when generation finishes
+  useEffect(() => {
+    if (!generationInProgress && generatedProject?.success) {
+      setGenerationProgress(100);
+    }
+  }, [generationInProgress, generatedProject]);
 
-  // Handle final decision
-  const handleSetDecision = (newDecision: DevelopmentDecision) => {
-    setDecision(newDecision);
-    updateProgress();
-    
-    if (newDecision === 'proceed') {
-      setConfirmDialogOpen(true);
+  // Complete phase when ready
+  useEffect(() => {
+    if (canProceedToNextPhase() && onCompletePhase) {
+      // Don't auto-complete - let user manually proceed after reviewing downloads
+      // onCompletePhase();
+    }
+  }, [canProceedToNextPhase, onCompletePhase]);
+
+  const handleSelectSolution = async (solution: AISolution) => {
+    try {
+      await selectSolution(solution);
+    } catch (err) {
+      // Error handling is done in the hook
     }
   };
 
-  // Handle phase completion
-  const handleCompletePhase = () => {
-    if (onCompletePhase) {
-      onCompletePhase();
+  const handleGenerateProject = async () => {
+    try {
+      await generateProject();
+      // Don't auto-complete the phase - let user review and download first
+      // onCompletePhase will be called when user clicks "Continue to Evaluation Phase"
+    } catch (err) {
+      // Error handling is done in the hook
     }
-    setConfirmDialogOpen(false);
   };
 
-  // Calculate current progress for the progress bar
-  const { completedItems, totalItems } = calculateProgress();
-  const progressPercentage = Math.round((completedItems / totalItems) * 100);
+  // Loading state for initial context
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-muted-foreground">Loading your project context...</p>
+      </div>
+    );
+  }
+
+  // Error state for context loading
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <AlertCircle className="h-12 w-12 text-destructive" />
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-destructive">Error Loading Development Phase</h3>
+          <p className="text-muted-foreground mt-2">{error}</p>
+          <Button onClick={retryLoading} className="mt-4">
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!contextData || !summary) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col space-y-6">
-      <AlertDialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Complete Development Phase?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to complete the Development Phase and move to Evaluation? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCompletePhase}>
-              Complete Phase
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
+      {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold mb-2">Development Phase</h2>
-        <p className="text-muted-foreground mb-4">
-          Build and test your AI solution with ethical considerations in mind.
+        <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-gray-100">Development Phase</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
+          Generate a complete, ethical AI solution tailored to your project
         </p>
         
-        <div className="mb-6 flex items-center">
-          <div className="flex-1 mr-4">
+        {/* Progress */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="flex-1">
             <Progress value={progressPercentage} className="h-2" />
           </div>
-          <div className="text-sm text-muted-foreground whitespace-nowrap">
-            {completedItems} of {totalItems} completed
-          </div>
+          <span className="text-sm text-gray-500 dark:text-gray-400">
+            {steps.filter(s => s.completed).length} of {steps.length} completed
+          </span>
+        </div>
+
+        {/* Step indicators */}
+        <div className="flex items-center gap-4 mb-8">
+          {steps.map((step, index) => (
+            <div key={step.id} className="flex items-center gap-2">
+              {step.completed ? (
+                <CheckCircle className="h-5 w-5 text-green-500" />
+              ) : (
+                <Circle className="h-5 w-5 text-gray-300" />
+              )}
+              <span className={`text-sm ${step.completed ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                {step.title}
+              </span>
+              {index < steps.length - 1 && (
+                <div className="w-8 h-px bg-gray-200 dark:bg-gray-700 ml-2" />
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-6 mb-6">
-          <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
-          <TabsTrigger value="guardrails">Guardrails</TabsTrigger>
-          <TabsTrigger value="workspace">Workspace</TabsTrigger>
-          <TabsTrigger value="simulation">Simulation</TabsTrigger>
-          <TabsTrigger value="evaluation">Evaluation</TabsTrigger>
-          <TabsTrigger value="decision">Decision</TabsTrigger>
-        </TabsList>
-        
-        {/* 1. AI Pipeline Builder */}
-        <TabsContent value="pipeline" className="space-y-4">
+      {/* Step Content */}
+      
+      {/* Step 1: Project Overview */}
+      {currentStep === 0 && (
+        <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>AI Pipeline Builder</CardTitle>
-              <CardDescription>
-                Select a template or build a custom AI pipeline for your project
-              </CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Info className="h-5 w-5" />
+                Your Project Context
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {PIPELINE_TEMPLATES.map((template) => (
-                  <Card 
-                    key={template.id} 
-                    className={`cursor-pointer transition-all ${selectedPipeline === template.id ? 'border-primary border-2' : 'hover:border-primary/50'}`}
-                    onClick={() => handleSelectPipeline(template.id)}
-                  >
-                    <CardHeader className="p-4">
-                      <CardTitle className="text-lg">{template.name}</CardTitle>
-                      <CardDescription>{template.description}</CardDescription>
-                    </CardHeader>
-                  </Card>
-                ))}
+            <CardContent className="space-y-4">
+              <div>
+                <h3 className="font-medium mb-2 text-gray-900 dark:text-gray-100">{summary.projectTitle}</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  We've analyzed your project and will generate AI solutions specifically designed for {summary.targetBeneficiaries}
+                </p>
               </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Project Domain</h4>
+                  <p className="text-blue-800 dark:text-blue-200 text-sm font-medium capitalize">
+                    {summary.domain.replace('_', ' ')}
+                  </p>
+                  <p className="text-blue-700 dark:text-blue-300 text-xs mt-1">
+                    {summary.hasUseCase ? 'Use case selected' : 'General approach'} • 
+                    {summary.hasDeploymentEnv ? ' Deployment configured' : ' Standard deployment'}
+                  </p>
+                </div>
+                
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <h4 className="font-medium text-green-900 dark:text-green-100 mb-2">AI Solutions Ready</h4>
+                  <div className="space-y-1 text-xs">
+                    <p className="text-green-800 dark:text-green-200">✓ Context analyzed and ready</p>
+                    <p className="text-green-800 dark:text-green-200">✓ Ethical safeguards built-in</p>
+                    <p className="text-green-800 dark:text-green-200">✓ Complete code generation ready</p>
+                    <p className="text-green-800 dark:text-green-200">✓ Solutions will be generated on-demand</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Recommendations - Handle empty state gracefully */}
+              {summary.keyRecommendations.length > 0 ? (
+                <div className="space-y-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Lightbulb className="h-4 w-4 text-yellow-500" />
+                    Strategic Recommendations for Your Project
+                  </h4>
+                  {summary.keyRecommendations.map((rec, index) => (
+                    <Alert key={index}>
+                      <AlertDescription>
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-900 dark:text-gray-100">{rec.title}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{rec.description}</p>
+                            </div>
+                            <Badge variant="outline" className="ml-2">
+                              {rec.type}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-500 italic">
+                            {rec.reason}
+                          </p>
+                        </div>
+                      </AlertDescription>
+                    </Alert>
+                  ))}
+                </div>
+              ) : (
+                // Empty state for recommendations
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                  <Lightbulb className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">Strategic recommendations will appear here based on your project analysis.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
           
           <div className="flex justify-end">
-            <Button 
-              onClick={() => setActiveTab("guardrails")} 
-              disabled={!selectedPipeline}
-            >
-              Next: Configure Guardrails
+            <Button onClick={() => setCurrentStep(1)}>
+              Choose Your AI Solution
             </Button>
           </div>
-        </TabsContent>
-        
-        {/* 2. Ethical Guardrails Configurator */}
-        <TabsContent value="guardrails" className="space-y-4">
+        </div>
+      )}
+
+      {/* Step 2: Choose Solution */}
+      {currentStep === 1 && (
+        <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Ethical Guardrails</CardTitle>
+              <CardTitle>Choose Your AI Solution</CardTitle>
               <CardDescription>
-                Configure ethical safeguards for your AI solution
+                Each solution is a complete, ready-to-deploy system with built-in ethical safeguards.
+                Recommended solutions are specifically optimized for your project.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {guardrails.map((guardrail) => (
-                  <div key={guardrail.id} className="flex items-start space-x-2">
-                    <Checkbox 
-                      id={`guardrail-${guardrail.id}`} 
-                      checked={guardrail.completed}
-                      onCheckedChange={() => handleToggleGuardrail(guardrail.id)}
-                    />
-                    <div className="space-y-1">
-                      <label 
-                        htmlFor={`guardrail-${guardrail.id}`}
-                        className="text-sm font-medium leading-none cursor-pointer"
-                      >
-                        {guardrail.name}
-                      </label>
-                      <p className="text-sm text-muted-foreground">
-                        {guardrail.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setActiveTab("pipeline")}>
-              Back: Pipeline
-            </Button>
-            <Button 
-              onClick={() => setActiveTab("workspace")} 
-              disabled={guardrails.every(g => !g.completed)}
-            >
-              Next: Workspace
-            </Button>
-          </div>
-        </TabsContent>
-        
-        {/* 3. Prototype/Implementation Workspace */}
-        <TabsContent value="workspace" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Implementation Workspace</CardTitle>
-              <CardDescription>
-                Build your prototype and track development milestones
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4">
-                <h4 className="text-sm font-medium mb-2">Development Environment</h4>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select environment" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="code-editor">Code Editor</SelectItem>
-                    <SelectItem value="notebook">Jupyter Notebook</SelectItem>
-                    <SelectItem value="huggingface">Hugging Face Spaces</SelectItem>
-                    <SelectItem value="colab">Google Colab</SelectItem>
-                    <SelectItem value="low-code">Low-code Builder</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-4 mt-6">
-                <h4 className="text-sm font-medium">Development Milestones</h4>
-                {milestones.map((milestone) => (
-                  <div key={milestone.id} className="flex items-start space-x-2">
-                    <Checkbox 
-                      id={`milestone-${milestone.id}`} 
-                      checked={milestone.completed}
-                      onCheckedChange={() => handleToggleMilestone(milestone.id)}
-                    />
-                    <div className="space-y-1">
-                      <label 
-                        htmlFor={`milestone-${milestone.id}`}
-                        className="text-sm font-medium leading-none cursor-pointer"
-                      >
-                        {milestone.name}
-                      </label>
-                      <p className="text-sm text-muted-foreground">
-                        {milestone.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setActiveTab("guardrails")}>
-              Back: Guardrails
-            </Button>
-            <Button 
-              onClick={() => setActiveTab("simulation")} 
-              disabled={milestones.every(m => !m.completed)}
-            >
-              Next: Simulation
-            </Button>
-          </div>
-        </TabsContent>
-        
-        {/* 4. Simulation & Test Environment */}
-        <TabsContent value="simulation" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Simulation & Test Environment</CardTitle>
-              <CardDescription>
-                Test your model with real data and capture the results
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="test-input" className="text-sm font-medium">
-                      Test Input Data
-                    </label>
-                    <Textarea 
-                      id="test-input" 
-                      placeholder="Enter test inputs or scenarios here"
-                      value={newTest.inputs}
-                      onChange={(e) => setNewTest({ ...newTest, inputs: e.target.value })}
-                      className="mt-1"
-                      rows={4}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="test-output" className="text-sm font-medium">
-                      Test Output/Results
-                    </label>
-                    <Textarea 
-                      id="test-output" 
-                      placeholder="Enter test outputs or results here"
-                      value={newTest.outputs}
-                      onChange={(e) => setNewTest({ ...newTest, outputs: e.target.value })}
-                      className="mt-1"
-                      rows={4}
-                    />
+              {/* Solutions Loading State */}
+              {solutionsLoading && (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <div className="text-center">
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Generating AI Solutions</h3>
+                    <p className="text-gray-600 dark:text-gray-400 text-sm">
+                      Analyzing your project and creating tailored AI solutions...
+                    </p>
+                    <p className="text-gray-500 dark:text-gray-500 text-xs mt-2">
+                      This may take a moment while we generate 5 custom solutions for your project
+                    </p>
                   </div>
                 </div>
-                
-                <div>
-                  <label htmlFor="test-notes" className="text-sm font-medium">
-                    Notes & Observations
-                  </label>
-                  <Textarea 
-                    id="test-notes" 
-                    placeholder="Any notes or observations about the test"
-                    value={newTest.notes}
-                    onChange={(e) => setNewTest({ ...newTest, notes: e.target.value })}
-                    className="mt-1"
-                    rows={2}
-                  />
+              )}
+
+              {/* Solutions Error State */}
+              {solutionsError && !solutionsLoading && (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <AlertCircle className="h-12 w-12 text-destructive" />
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold text-destructive">Error Generating Solutions</h3>
+                    <p className="text-muted-foreground mt-2">{solutionsError}</p>
+                    <Button onClick={retrySolutions} className="mt-4 flex items-center gap-2">
+                      <RefreshCw className="h-4 w-4" />
+                      Retry Generating Solutions
+                    </Button>
+                  </div>
                 </div>
-                
-                <div className="flex justify-end">
-                  <Button onClick={handleAddTestResult} disabled={!newTest.inputs || !newTest.outputs}>
-                    Save Test Result
-                  </Button>
-                </div>
-                
-                {testResults.length > 0 && (
-                  <div className="mt-6">
-                    <h4 className="text-sm font-medium mb-2">Previous Test Results</h4>
-                    <div className="space-y-2">
-                      {testResults.map((result) => (
-                        <Card key={result.id} className="p-4">
-                          <div className="text-xs text-muted-foreground mb-2">
-                            {new Date(result.timestamp).toLocaleString()}
-                          </div>
-                          <div className="text-sm mb-1">
-                            <span className="font-medium">Input:</span> {result.inputs}
-                          </div>
-                          <div className="text-sm mb-1">
-                            <span className="font-medium">Output:</span> {result.outputs}
-                          </div>
-                          {result.notes && (
-                            <div className="text-sm">
-                              <span className="font-medium">Notes:</span> {result.notes}
+              )}
+
+              {/* Solutions Content */}
+              {solutionsData && !solutionsLoading && (
+                <div className="space-y-6">
+                  {/* Solution Options - Group recommended first */}
+                  <div className="space-y-4">
+                    {/* Recommended Solutions First */}
+                    {solutionsData.available_solutions
+                      .filter(solution => solution.recommended)
+                      .map((solution) => {
+                        const badges = getSolutionBadgeInfo(solution);
+                        
+                        return (
+                          <Card 
+                            key={solution.id}
+                            className={`cursor-pointer transition-all hover:border-gray-300 dark:hover:border-gray-600 ${
+                              selectedSolution?.id === solution.id 
+                                ? 'border-blue-500 border-2 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400' 
+                                : 'border-green-200 dark:border-green-700 bg-green-50/50 dark:bg-green-900/10'
+                            }`}
+                            onClick={() => handleSelectSolution(solution)}
+                          >
+                            <CardContent className="p-6">
+                              <div className="flex items-start justify-between mb-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">{solution.title}</h3>
+                                    {badges.map((badge, idx) => (
+                                      <Badge 
+                                        key={idx}
+                                        className={
+                                          badge.variant === 'success' 
+                                            ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-700"
+                                            : badge.variant === 'primary'
+                                            ? "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700"
+                                            : ""
+                                        }
+                                      >
+                                        {badge.text}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{solution.description}</p>
+                                  <p className="text-xs text-green-600 dark:text-green-400 font-medium">{solution.best_for}</p>
+                                </div>
+                              </div>
+                              
+                              <div className="grid md:grid-cols-2 gap-4">
+                                <div>
+                                  <h4 className="font-medium text-sm mb-2 text-gray-900 dark:text-gray-100">What You'll Get:</h4>
+                                  <ul className="text-xs space-y-1">
+                                    {solution.capabilities.slice(0, 4).map((capability, idx) => (
+                                      <li key={idx} className="flex items-center gap-2">
+                                        <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                                        <span className="text-gray-700 dark:text-gray-300">{capability}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                                
+                                <div>
+                                  <h4 className="font-medium text-sm mb-2 text-gray-900 dark:text-gray-100">Technical Stack:</h4>
+                                  <div className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                    {formatTechnicalSpecs(solution).map((spec, idx) => (
+                                      <p key={idx}>
+                                        <span className="font-medium">{spec.label}:</span> {spec.value}
+                                      </p>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+
+                    {/* Other Solutions */}
+                    {solutionsData.available_solutions
+                      .filter(solution => !solution.recommended)
+                      .map((solution) => {
+                        const badges = getSolutionBadgeInfo(solution);
+                        
+                        return (
+                          <Card 
+                            key={solution.id}
+                            className={`cursor-pointer transition-all hover:border-gray-300 dark:hover:border-gray-600 ${
+                              selectedSolution?.id === solution.id 
+                                ? 'border-blue-500 border-2 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-400' 
+                                : 'border-gray-200 dark:border-gray-700'
+                            }`}
+                            onClick={() => handleSelectSolution(solution)}
+                          >
+                            <CardContent className="p-6">
+                              <div className="flex items-start justify-between mb-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">{solution.title}</h3>
+                                    {badges.map((badge, idx) => (
+                                      <Badge 
+                                        key={idx}
+                                        variant="outline"
+                                      >
+                                        {badge.text}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">{solution.description}</p>
+                                  <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">{solution.best_for}</p>
+                                </div>
+                              </div>
+                              
+                              <div className="grid md:grid-cols-2 gap-4">
+                                <div>
+                                  <h4 className="font-medium text-sm mb-2 text-gray-900 dark:text-gray-100">What You'll Get:</h4>
+                                  <ul className="text-xs space-y-1">
+                                    {solution.capabilities.slice(0, 4).map((capability, idx) => (
+                                      <li key={idx} className="flex items-center gap-2">
+                                        <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                                        <span className="text-gray-700 dark:text-gray-300">{capability}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                                
+                                <div>
+                                  <h4 className="font-medium text-sm mb-2 text-gray-900 dark:text-gray-100">Technical Stack:</h4>
+                                  <div className="text-xs space-y-1 text-gray-600 dark:text-gray-400">
+                                    {formatTechnicalSpecs(solution).map((spec, idx) => (
+                                      <p key={idx}>
+                                        <span className="font-medium">{spec.label}:</span> {spec.value}
+                                      </p>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                  </div>
+
+                  {/* Show Ethical Safeguards for Selected Solution */}
+                  {selectedSolution && (
+                    <Card className="border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/10">
+                      <CardHeader>
+                        <CardTitle className="text-green-800 dark:text-green-200 flex items-center gap-2">
+                          <Shield className="h-5 w-5" />
+                          Built-in Ethical Safeguards
+                        </CardTitle>
+                        <CardDescription className="text-green-700 dark:text-green-300">
+                          Your {selectedSolution.title} automatically includes these ethical protections
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {selectedSolution.ethical_safeguards.map((safeguard, index) => (
+                          <div key={index} className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-4 h-4 flex items-center justify-center">
+                                {safeguard.icon === 'users' && <Users className="h-4 w-4" />}
+                                {safeguard.icon === 'eye' && <Eye className="h-4 w-4" />}
+                                {safeguard.icon === 'shield' && <Shield className="h-4 w-4" />}
+                              </div>
+                              <h4 className="font-medium text-green-800 dark:text-green-200">{safeguard.category}</h4>
                             </div>
-                          )}
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setActiveTab("workspace")}>
-              Back: Workspace
-            </Button>
-            <Button 
-              onClick={() => setActiveTab("evaluation")} 
-              disabled={testResults.length === 0}
-            >
-              Next: Evaluation
-            </Button>
-          </div>
-        </TabsContent>
-        
-        {/* 5. Prototype Evaluation Checklist */}
-        <TabsContent value="evaluation" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Prototype Evaluation</CardTitle>
-              <CardDescription>
-                Assess your prototype against key criteria
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {evaluationCriteria.map((criteria) => (
-                  <div key={criteria.id} className="space-y-2">
-                    <label className="text-sm font-medium">
-                      {criteria.question}
-                    </label>
-                    <div className="flex space-x-2">
-                      <Button 
-                        variant={criteria.answer === "yes" ? "default" : "outline"} 
-                        size="sm"
-                        onClick={() => handleUpdateCriteria(criteria.id, "yes")}
-                      >
-                        Yes
-                      </Button>
-                      <Button 
-                        variant={criteria.answer === "no" ? "default" : "outline"} 
-                        size="sm"
-                        onClick={() => handleUpdateCriteria(criteria.id, "no")}
-                      >
-                        No
-                      </Button>
-                      <Button 
-                        variant={criteria.answer === "partially" ? "default" : "outline"} 
-                        size="sm"
-                        onClick={() => handleUpdateCriteria(criteria.id, "partially")}
-                      >
-                        Partially
-                      </Button>
-                      <Button 
-                        variant={criteria.answer === "unknown" ? "default" : "outline"} 
-                        size="sm"
-                        onClick={() => handleUpdateCriteria(criteria.id, "unknown")}
-                      >
-                        Unknown
-                      </Button>
-                    </div>
-                    <Textarea 
-                      placeholder="Additional notes (optional)"
-                      value={criteria.notes}
-                      onChange={(e) => handleUpdateCriteria(criteria.id, criteria.answer, e.target.value)}
-                      className="mt-1"
-                      rows={2}
-                    />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setActiveTab("simulation")}>
-              Back: Simulation
-            </Button>
-            <Button 
-              onClick={() => setActiveTab("decision")} 
-              disabled={evaluationCriteria.some(c => c.answer === "unknown")}
-            >
-              Next: Final Decision
-            </Button>
-          </div>
-        </TabsContent>
-        
-        {/* 6. Final Decision Block */}
-        <TabsContent value="decision" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Final Decision</CardTitle>
-              <CardDescription>
-                Decide how to proceed with your AI project
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card 
-                    className={`cursor-pointer transition-all p-4 ${decision === 'proceed' ? 'border-primary border-2' : 'hover:border-primary/50'}`}
-                    onClick={() => handleSetDecision('proceed')}
-                  >
-                    <div className="text-center">
-                      <div className="text-2xl mb-2">✅</div>
-                      <h3 className="font-medium">Proceed to Evaluation</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        The prototype is ready for formal evaluation
-                      </p>
-                    </div>
-                  </Card>
-                  
-                  <Card 
-                    className={`cursor-pointer transition-all p-4 ${decision === 'iterate' ? 'border-primary border-2' : 'hover:border-primary/50'}`}
-                    onClick={() => handleSetDecision('iterate')}
-                  >
-                    <div className="text-center">
-                      <div className="text-2xl mb-2">🔁</div>
-                      <h3 className="font-medium">Iterate Prototype</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        The prototype needs further refinement
-                      </p>
-                    </div>
-                  </Card>
-                  
-                  <Card 
-                    className={`cursor-pointer transition-all p-4 ${decision === 'revisit' ? 'border-primary border-2' : 'hover:border-primary/50'}`}
-                    onClick={() => handleSetDecision('revisit')}
-                  >
-                    <div className="text-center">
-                      <div className="text-2xl mb-2">❌</div>
-                      <h3 className="font-medium">Revisit Scoping</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Fundamental issues require re-evaluation
-                      </p>
-                    </div>
-                  </Card>
+                            
+                            <div className="ml-6 space-y-1">
+                              {safeguard.measures.map((measure, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <CheckCircle className="h-3 w-3 text-green-600" />
+                                  <span className="text-sm text-green-700 dark:text-green-300">{measure}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                        
+                        <Alert className="bg-green-100 dark:bg-green-900/20 border-green-300 dark:border-green-700">
+                          <Info className="h-4 w-4 text-green-600" />
+                          <AlertDescription className="text-green-800 dark:text-green-200">
+                            These safeguards are automatically implemented in your generated project based on humanitarian AI ethics guidelines.
+                          </AlertDescription>
+                        </Alert>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
-                
-                {decision && (
-                  <div className="mt-6">
-                    <h4 className="text-sm font-medium mb-2">Decision Summary</h4>
-                    {decision === 'proceed' && (
-                      <p className="text-sm">
-                        Your prototype is ready for formal evaluation. The next phase will include more in-depth assessment of your AI solution's impact and performance.
-                      </p>
-                    )}
-                    {decision === 'iterate' && (
-                      <p className="text-sm">
-                        Your prototype needs further refinement. Review your test results and evaluation criteria to identify areas for improvement.
-                      </p>
-                    )}
-                    {decision === 'revisit' && (
-                      <p className="text-sm">
-                        There are fundamental issues with your current approach. It's recommended to revisit the scoping phase to redefine your project goals and constraints.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+              )}
             </CardContent>
           </Card>
           
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setActiveTab("evaluation")}>
-              Back: Evaluation
+            <Button variant="outline" onClick={() => setCurrentStep(0)}>
+              Back to Overview
             </Button>
             <Button 
-              onClick={() => setConfirmDialogOpen(true)} 
-              disabled={!decision || decision !== 'proceed'}
+              onClick={() => setCurrentStep(2)}
+              disabled={!selectedSolution}
             >
-              Complete Development Phase
+              Generate Complete Project
             </Button>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
+
+      {/* Step 3: Generate Project */}
+      {currentStep === 2 && selectedSolution && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Generate Your AI Project</CardTitle>
+              <CardDescription>
+                Creating your complete {selectedSolution.title} with all ethical safeguards
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!generatedProject ? (
+                <div className="text-center py-8">
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">Ready to Generate:</h3>
+                    <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                      <p>✅ {selectedSolution.title}</p>
+                      <p>✅ Complete source code (frontend + backend)</p>
+                      <p>✅ Ethical safeguards automatically integrated</p>
+                      <p>✅ Documentation and deployment guide</p>
+                      <p>✅ Sample data and test cases</p>
+                      <p>✅ Configuration for your deployment environment</p>
+                    </div>
+
+                    {generationInProgress ? (
+                      <div className="space-y-4">
+                        <div className="animate-spin mx-auto h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Generating your AI project...
+                        </p>
+                        <div className="w-64 mx-auto space-y-2">
+                          <Progress value={generationProgress} className="h-2" />
+                          <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+                            {generationProgress < 95 
+                              ? `Creating project structure and code... ${Math.round(generationProgress)}%`
+                              : "Finalizing project files... 95%"
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button onClick={handleGenerateProject} className="mx-auto flex items-center gap-2">
+                        <Play className="h-4 w-4" />
+                        Generate Complete Project
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 space-y-6">
+                  <div className="text-6xl">🎉</div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-green-600 mb-2">Project Generated Successfully!</h3>
+                    <p className="text-gray-600 dark:text-gray-400">Your complete AI solution is ready with all ethical safeguards built-in</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <Button onClick={() => downloadFile('complete')} className="flex items-center gap-2">
+                      <Download className="h-4 w-4" />
+                      Complete Project
+                    </Button>
+                    <Button variant="outline" onClick={() => downloadFile('documentation')}>
+                      Documentation
+                    </Button>
+                    <Button variant="outline" onClick={() => downloadFile('setup')}>
+                      Setup Guide
+                    </Button>
+                    <Button variant="outline" onClick={() => downloadFile('ethical-report')}>
+                      Ethics Report
+                    </Button>
+                    <Button variant="outline" onClick={() => downloadFile('deployment')}>
+                      Deployment
+                    </Button>
+                  </div>
+
+                  <Separator />
+
+                  <Alert>
+                    <AlertDescription>
+                      <strong>What's Included:</strong> Complete source code, deployment scripts,
+                      documentation, ethical audit reports, and step-by-step setup instructions.
+                      Ready to deploy to your environment.
+                    </AlertDescription>
+                  </Alert>
+
+                  {generatedProject.next_steps && generatedProject.next_steps.length > 0 && (
+                    <div className="text-left">
+                      <h4 className="font-medium mb-2">Next Steps:</h4>
+                      <ul className="text-sm space-y-1 text-gray-600 dark:text-gray-400">
+                        {generatedProject.next_steps.map((step, index) => (
+                          <li key={index} className="flex items-start gap-2">
+                            <span className="font-medium text-primary">{index + 1}.</span>
+                            {step}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={() => setCurrentStep(1)}>
+              Back to Choose Solution
+            </Button>
+
+            {generatedProject && (
+              <Button size="lg" onClick={onCompletePhase}>
+                Continue to Evaluation Phase
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

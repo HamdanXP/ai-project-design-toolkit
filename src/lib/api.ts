@@ -1,7 +1,13 @@
-
 import { env } from './env';
 import { toast } from "sonner";
 import { ProjectPhase } from "@/types/project";
+import { 
+  DevelopmentPhaseData, 
+  ProjectGenerationRequest, 
+  ProjectGenerationResponse,
+  SolutionSelection,
+  DevelopmentStatus
+} from '@/types/development-phase';
 
 /**
  * API request options
@@ -21,7 +27,7 @@ export async function apiRequest<T>(
   options: ApiRequestOptions = {}
 ): Promise<T> {
   // Use the backend base URL
-  const baseUrl = 'http://localhost:8000/api/v1';
+  const baseUrl = 'http://localhost:8000/api/v1/';
   const url = new URL(endpoint, baseUrl);
   
   if (options.params) {
@@ -169,27 +175,12 @@ export interface BackendApiResponse<T> {
 }
 
 export interface ReflectionQuestions {
-  problem_definition: string;
-  target_beneficiaries: string;
-  potential_harm: string;
-  data_availability: string;
-  resource_constraints: string;
-  success_metrics: string;
-  stakeholder_involvement: string;
-  cultural_sensitivity: string;
+  [key: string]: string; // Dynamic questions
 }
 
-export interface ReflectionAnswers {
-  problem_definition: string;
-  target_beneficiaries: string;
-  potential_harm: string;
-  data_availability: string;
-  resource_constraints: string;
-  success_metrics: string;
-  stakeholder_involvement: string;
-  cultural_sensitivity: string;
+export interface ReflectionAnswers  {
+  [key: string]: string;
 }
-
 export interface ReflectionAnalysis {
   answers: ReflectionAnswers;
   ai_analysis: string;
@@ -250,11 +241,11 @@ export const api = {
   backend: {
     projects: {
       create: async (description: string): Promise<BackendApiResponse<BackendProject>> => {
-        return await api.post<BackendApiResponse<BackendProject>>('/projects/', { description });
+        return await api.post<BackendApiResponse<BackendProject>>('projects/', { description });
       },
       
       getById: async (projectId: string): Promise<BackendApiResponse<BackendProject>> => {
-        return await api.get<BackendApiResponse<BackendProject>>(`/projects/${projectId}`);
+        return await api.get<BackendApiResponse<BackendProject>>(`projects/${projectId}`);
       },
       
       list: async (skip = 0, limit = 10, status?: string): Promise<BackendApiResponse<BackendProject[]>> => {
@@ -264,17 +255,64 @@ export const api = {
         };
         if (status) params.status = status;
         
-        return await api.get<BackendApiResponse<BackendProject[]>>('/projects/', { params });
+        return await api.get<BackendApiResponse<BackendProject[]>>('projects/', { params });
+      },
+      getProjectSync: async (projectId: string) => {
+        const response = await fetch(`/api/v1/projects/${projectId}/sync`);
+        return response.json();
+      }
+    },
+    reflection: {
+      getQuestions: async (projectId: string): Promise<BackendApiResponse<ReflectionQuestions>> => {
+        return await api.get<BackendApiResponse<ReflectionQuestions>>(`reflection/${projectId}/questions`);
+      },
+      
+      completePhase: async (projectId: string, answers: Record<string, string>): Promise<BackendApiResponse<any>> => {
+        return await api.post<BackendApiResponse<any>>(`reflection/${projectId}/complete`, answers);
+      },
+      
+      advancePhase: async (projectId: string): Promise<BackendApiResponse<any>> => {
+        return await api.post<BackendApiResponse<any>>(`reflection/${projectId}/advance`);
       }
     },
     
-    reflection: {
-      getQuestions: async (projectId: string): Promise<BackendApiResponse<ReflectionQuestions>> => {
-        return await api.get<BackendApiResponse<ReflectionQuestions>>(`/reflection/${projectId}/questions`);
+    /**
+     * NEW: Development API methods
+     */
+    development: {
+      getContext: async (projectId: string): Promise<BackendApiResponse<DevelopmentPhaseData>> => {
+        return await api.get<BackendApiResponse<DevelopmentPhaseData>>(`development/${projectId}/context`);
       },
       
-      submitAnswers: async (projectId: string, answers: ReflectionAnswers): Promise<BackendApiResponse<ReflectionAnalysis>> => {
-        return await api.post<BackendApiResponse<ReflectionAnalysis>>(`/reflection/${projectId}/submit`, answers);
+      selectSolution: async (
+        projectId: string, 
+        solutionData: any
+      ): Promise<BackendApiResponse<{ selected_solution: SolutionSelection }>> => {
+        return await api.post<BackendApiResponse<{ selected_solution: SolutionSelection }>>(
+          `development/${projectId}/select-solution`,
+          solutionData
+        );
+      },
+      
+      generateProject: async (
+        projectId: string,
+        generationRequest: ProjectGenerationRequest
+      ): Promise<BackendApiResponse<ProjectGenerationResponse>> => {
+        return await api.post<BackendApiResponse<ProjectGenerationResponse>>(
+          `development/${projectId}/generate`,
+          generationRequest
+        );
+      },
+      
+      downloadFile: async (
+        projectId: string,
+        fileType: string
+      ): Promise<any> => {
+        return await api.get(`development/${projectId}/download/${fileType}`);
+      },
+      
+      getStatus: async (projectId: string): Promise<BackendApiResponse<DevelopmentStatus>> => {
+        return await api.get<BackendApiResponse<DevelopmentStatus>>(`development/${projectId}/status`);
       }
     }
   },
@@ -284,46 +322,35 @@ export const api = {
    */
   projects: {
     getAll: async (): Promise<Project[]> => {
-      return await api.get<Project[]>('/projects');
+      return await api.get<Project[]>('projects');
     },
     
     getById: async (id: string): Promise<Project> => {
-      return await api.get<Project>(`/projects/${id}`);
+      return await api.get<Project>(`projects/${id}`);
     },
     
     create: async (projectData: Partial<Project>): Promise<Project> => {
-      return await api.post<Project>('/projects', projectData);
+      return await api.post<Project>('projects', projectData);
     },
     
     update: async (id: string, projectData: Partial<Project>): Promise<Project> => {
-      return await api.put<Project>(`/projects/${id}`, projectData);
+      return await api.put<Project>(`projects/${id}`, projectData);
     },
     
     delete: async (id: string): Promise<{success: boolean}> => {
-      return await api.delete<{success: boolean}>(`/projects/${id}`);
+      return await api.delete<{success: boolean}>(`projects/${id}`);
     },
 
     getSuggestions: async (): Promise<ProjectSuggestion[]> => {
-      return await api.get<ProjectSuggestion[]>('/project-suggestions');
-    },
-
-    completePhase: async (projectId: string, phaseId: string): Promise<Project> => {
-      return await api.post<Project>(`/projects/${projectId}/phases/${phaseId}/complete`);
+      return await api.get<ProjectSuggestion[]>('project-suggestions');
     },
 
     updatePhaseProgress: async (projectId: string, phaseId: string, progress: number): Promise<Project> => {
-      return await api.put<Project>(`/projects/${projectId}/phases/${phaseId}/progress`, { progress });
-    },
-
-    updatePhaseStatus: async (projectId: string, phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number): Promise<Project> => {
-      return await api.put<Project>(`/projects/${projectId}/phases/${phaseId}/status`, { 
-        status, 
-        progress 
-      });
+      return await api.put<Project>(`projects/${projectId}/phases/${phaseId}/progress`, { progress });
     },
 
     completeProject: async (projectId: string): Promise<Project> => {
-      return await api.post<Project>(`/projects/${projectId}/complete`);
+      return await api.post<Project>(`projects/${projectId}/complete`);
     }
   }
 };

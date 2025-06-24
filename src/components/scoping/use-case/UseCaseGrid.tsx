@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { UseCase } from "@/types/scoping-phase";
 import { UseCaseCard } from "./UseCaseCard";
@@ -9,7 +8,7 @@ interface UseCaseGridProps {
   useCases: UseCase[];
   selectedUseCase: UseCase | null;
   loadingUseCases: boolean;
-  handleSelectUseCase: (useCase: UseCase) => void;
+  handleSelectUseCase: (useCase: UseCase | null) => void; // Modified to handle null
 }
 
 export const UseCaseGrid = ({ 
@@ -57,7 +56,7 @@ export const UseCaseGrid = ({
           key={useCase.id}
           useCase={useCase}
           isSelected={selectedUseCase?.id === useCase.id}
-          onSelect={handleSelectUseCase}
+          onSelect={handleSelectUseCase} // Pass the updated handler
           isExpanded={!!expandedCards[useCase.id]}
           onToggleExpand={handleToggleExpand}
         />

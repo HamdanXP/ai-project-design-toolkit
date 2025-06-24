@@ -1,243 +1,367 @@
 import { useState, useEffect } from "react";
 import { UseCase, Dataset } from "@/types/scoping-phase";
 import { useProject } from "@/contexts/ProjectContext";
-import { scopingApi, ApiUseCase, ApiDataset } from "@/lib/scoping-api";
+import { scopingApi, convertApiUseCase, convertApiDataset } from "@/lib/scoping-api";
 
 export const useScopingPhaseData = () => {
   // State for UI
   const [useCases, setUseCases] = useState<UseCase[]>([]);
-  const [loadingUseCases, setLoadingUseCases] = useState(true);
+  const [loadingUseCases, setLoadingUseCases] = useState(false);
+  const [errorUseCases, setErrorUseCases] = useState<string | null>(null);
+  const [noUseCasesFound, setNoUseCasesFound] = useState(false);
+  const [hasSearchedUseCases, setHasSearchedUseCases] = useState(false);
+  
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [filteredDatasets, setFilteredDatasets] = useState<Dataset[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [previewDataset, setPreviewDataset] = useState<Dataset | null>(null);
   const [loadingDatasets, setLoadingDatasets] = useState(false);
+  const [noDatasets, setNoDatasets] = useState(false);
+  const [hasSearchedDatasets, setHasSearchedDatasets] = useState(false);
   
   // Derived state
   const [feasibilityScore, setFeasibilityScore] = useState<number>(0);
-  const [feasibilityRisk, setFeasibilityRisk] = useState<'low' | 'medium' | 'high'>('medium');
+  const [feasibilityLevel, setFeasibilityLevel] = useState<'high' | 'medium' | 'low'>('medium'); // Changed from feasibilityRisk
   const [suitabilityScore, setSuitabilityScore] = useState<number>(0);
 
-  const { constraints, suitabilityChecks, selectedUseCase } = useProject();
+  const { 
+    constraints, 
+    suitabilityChecks, 
+    selectedUseCase,
+    setSelectedUseCase,
+    setSelectedDataset,
+    scopingActiveStep
+  } = useProject();
 
-  // Convert API use case to internal format
-  const convertApiUseCase = (apiUseCase: ApiUseCase): UseCase => ({
-    id: apiUseCase.id,
-    title: apiUseCase.title,
-    description: apiUseCase.description,
-    tags: [apiUseCase.category, apiUseCase.complexity],
-    selected: false
-  });
+  const searchParams = new URLSearchParams(location.search);
+  const projectId = searchParams.get('projectId') || 'current';
 
-  // Convert API dataset to internal format
-  const convertApiDataset = (apiDataset: ApiDataset): Dataset => ({
-    id: apiDataset.name.toLowerCase().replace(/\s+/g, '_'),
-    title: apiDataset.name,
-    source: apiDataset.source,
-    format: "JSON", // Default format
-    size: "Unknown",
-    license: "Various",
-    description: apiDataset.description,
-    columns: apiDataset.data_types,
-    sampleRows: []
-  });
-
-  // Load use cases from API
-  useEffect(() => {
-    const loadUseCases = async () => {
-      setLoadingUseCases(true);
-      try {
-        const apiUseCases = await scopingApi.getUseCases('current');
-        const convertedUseCases = apiUseCases.map(convertApiUseCase);
-        setUseCases(convertedUseCases);
-      } catch (error) {
-        console.error('Failed to load use cases:', error);
-        // Fallback to existing mock data
-        setUseCases([
-          {
-            id: "uc1",
-            title: "Forecasting water shortages",
-            description: "Use historical weather and water usage data to predict shortages in vulnerable areas.",
-            tags: ["Forecasting", "Resource Management"],
-            selected: false
-          },
-          {
-            id: "uc2", 
-            title: "Disease outbreak prediction",
-            description: "Analyze population movement and health data to predict potential disease outbreaks.",
-            tags: ["Healthcare", "Predictive Analytics"],
-            selected: false
-          },
-          {
-            id: "uc3",
-            title: "Crop yield optimization",
-            description: "Recommend optimal planting strategies based on soil, weather and climate data.",
-            tags: ["Agriculture", "Optimization"],
-            selected: false
-          },
-          {
-            id: "uc4",
-            title: "Refugee movement patterns",
-            description: "Analyze migration patterns to better allocate humanitarian resources.",
-            tags: ["Migration", "Resource Allocation"],
-            selected: false
-          },
-          {
-            id: "uc5",
-            title: "Food security monitoring",
-            description: "Track food availability and price indicators to identify at-risk communities.",
-            tags: ["Food Security", "Monitoring"],
-            selected: false
-          }
-        ]);
-      } finally {
-        setLoadingUseCases(false);
-      }
-    };
-
-    loadUseCases();
-  }, []);
-
-  // Load datasets when use case is selected
-  useEffect(() => {
-    const loadDatasets = async () => {
-      if (!selectedUseCase) return;
+  // Manual function to load use cases
+  const loadUseCases = async () => {
+    setLoadingUseCases(true);
+    setErrorUseCases(null);
+    setNoUseCasesFound(false);
+    setHasSearchedUseCases(true);
+    
+    try {
+      console.log('Loading AI-focused use cases...');
+      const apiUseCases = await scopingApi.getUseCases(projectId);
       
-      setLoadingDatasets(true);
-      try {
-        const apiDatasets = await scopingApi.getRecommendedDatasets('current', selectedUseCase.id);
-        const convertedDatasets = apiDatasets.map(convertApiDataset);
-        setDatasets(convertedDatasets);
-        setFilteredDatasets(convertedDatasets);
-      } catch (error) {
-        console.error('Failed to load datasets:', error);
-        // Keep existing fallback data
-        const mockDatasets = [
-          {
-            id: "ds1",
-            title: "Global Water Access Database",
-            source: "UN Water",
-            format: "CSV",
-            size: "2.3 GB",
-            license: "CC BY 4.0",
-            description: "Comprehensive data on water access across 150 countries, updated quarterly.",
-            columns: ["Country", "Region", "Year", "WaterAccessPercent", "WaterQuality"],
-            sampleRows: [
-              ["Kenya", "Eastern Africa", "2024", "67.5%", "Moderate"],
-              ["India", "South Asia", "2024", "89.2%", "Variable"],
-              ["Bolivia", "South America", "2024", "78.4%", "Good"]
-            ]
-          },
-          {
-            id: "ds2",
-            title: "Global Disease Surveillance Data",
-            source: "WHO",
-            format: "JSON",
-            size: "850 MB",
-            license: "Open Data Commons",
-            description: "Disease incidence reports from health facilities worldwide",
-            columns: ["Country", "Disease", "Date", "Confirmed_Cases", "Deaths"],
-            sampleRows: [
-              ["Brazil", "Dengue", "2024-01-15", "234", "3"],
-              ["Nigeria", "Malaria", "2024-01-20", "567", "12"],
-              ["Thailand", "Dengue", "2024-01-25", "112", "1"]
-            ]
-          },
-          {
-            id: "ds3",
-            title: "Agricultural Yield Dataset",
-            source: "FAO",
-            format: "CSV",
-            size: "1.5 GB",
-            license: "CC BY-NC 4.0",
-            description: "Historical crop yield data with soil and weather conditions",
-            columns: ["Region", "Crop", "Year", "Yield_Tons", "Rainfall_mm", "Soil_pH"],
-            sampleRows: [
-              ["Sub-Saharan Africa", "Maize", "2023", "4.2", "750", "6.5"],
-              ["South Asia", "Rice", "2023", "5.8", "1200", "7.1"],
-              ["Central America", "Beans", "2023", "1.9", "850", "6.2"]
-            ]
-          },
-          {
-            id: "ds4",
-            title: "Refugee Movement Patterns",
-            source: "UNHCR",
-            format: "GeoJSON",
-            size: "1.2 GB",
-            license: "Open Data Commons",
-            description: "Anonymized migration patterns and displacement data",
-            columns: ["Origin", "Destination", "Time_Period", "Population_Count", "Reason"],
-            sampleRows: [
-              ["Syria", "Lebanon", "Q1 2024", "15400", "Conflict"],
-              ["Venezuela", "Colombia", "Q1 2024", "18900", "Economic"],
-              ["South Sudan", "Uganda", "Q1 2024", "12300", "Conflict"]
-            ]
-          },
-          {
-            id: "ds5",
-            title: "Global Food Price Index",
-            source: "World Food Programme",
-            format: "Excel",
-            size: "450 MB",
-            license: "CC BY 4.0",
-            description: "Monthly food price data across 80 countries",
-            columns: ["Country", "Month", "Year", "Staple_Food", "Price_USD", "Change_Percent"],
-            sampleRows: [
-              ["Ethiopia", "March", "2024", "Teff", "2.15", "+4.2%"],
-              ["Philippines", "March", "2024", "Rice", "1.30", "+2.8%"],
-              ["Haiti", "March", "2024", "Rice", "1.85", "+7.3%"]
-            ]
-          }
-        ];
-        setDatasets(mockDatasets);
-        setFilteredDatasets(mockDatasets);
-      } finally {
-        setLoadingDatasets(false);
+      if (!Array.isArray(apiUseCases)) {
+        throw new Error('Invalid use cases data format');
       }
-    };
+      
+      if (apiUseCases.length === 0) {
+        console.log('No AI use cases found from search');
+        setUseCases([]);
+        setNoUseCasesFound(true);
+        setErrorUseCases(null);
+        return;
+      }
+      
+      const convertedUseCases = apiUseCases.map(convertApiUseCase);
+      console.log(`Converted ${convertedUseCases.length} AI use cases successfully`);
+      
+      const validUseCases = convertedUseCases.filter(uc => 
+        uc.title && 
+        uc.title !== 'Use Case' && 
+        uc.description && 
+        uc.description !== 'Description not available'
+      );
+      
+      if (validUseCases.length === 0) {
+        console.log('No valid use cases after conversion');
+        setUseCases([]);
+        setNoUseCasesFound(true);
+        setErrorUseCases(null);
+        return;
+      }
+      
+      setUseCases(validUseCases);
+      setNoUseCasesFound(false);
+      setErrorUseCases(null);
+      
+    } catch (error) {
+      console.error('Failed to load AI use cases:', error);
+      
+      setUseCases([]);
+      setNoUseCasesFound(false);
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        setErrorUseCases('Unable to connect to search services. Please check your connection and try again.');
+      } else {
+        setErrorUseCases(error instanceof Error ? error.message : 'Unknown error occurred while searching');
+      }
+      
+    } finally {
+      setLoadingUseCases(false);
+    }
+  };
 
-    loadDatasets();
-  }, [selectedUseCase]);
+  // Manual function to load datasets
+  const loadDatasets = async () => {
+    if (!selectedUseCase) {
+      setDatasets([]);
+      setFilteredDatasets([]);
+      setNoDatasets(false);
+      return;
+    }
+    
+    setLoadingDatasets(true);
+    setNoDatasets(false);
+    setHasSearchedDatasets(true);
+    
+    try {
+      console.log(`Loading datasets for use case: ${selectedUseCase.title}`);
+      
+      const apiDatasets = await scopingApi.getRecommendedDatasets(
+        projectId, 
+        selectedUseCase.id,
+        selectedUseCase.title,
+        selectedUseCase.description
+      );
+      
+      if (!Array.isArray(apiDatasets) || apiDatasets.length === 0) {
+        console.log('No datasets found from humanitarian sources');
+        setDatasets([]);
+        setFilteredDatasets([]);
+        setNoDatasets(true);
+        return;
+      }
+      
+      const convertedDatasets = apiDatasets.map(convertApiDataset);
+      setDatasets(convertedDatasets);
+      setFilteredDatasets(convertedDatasets);
+      setNoDatasets(false);
+      console.log(`Loaded ${convertedDatasets.length} datasets from humanitarian sources`);
+      
+    } catch (error) {
+      console.error('Failed to load datasets:', error);
+      setDatasets([]);
+      setFilteredDatasets([]);
+      setNoDatasets(true);
+    } finally {
+      setLoadingDatasets(false);
+    }
+  };
 
-  // Calculate feasibility score when constraints change
+  // Load datasets when use case is selected AND we're on step 3
   useEffect(() => {
+    if (selectedUseCase && scopingActiveStep === 3) {
+      loadDatasets();
+    } else {
+      setDatasets([]);
+      setFilteredDatasets([]);
+      setNoDatasets(false);
+      setHasSearchedDatasets(false);
+    }
+  }, [selectedUseCase, scopingActiveStep, projectId]);
+
+  // Enhanced feasibility calculation with debugging
+  useEffect(() => {
+    console.log('=== FEASIBILITY CALCULATION START ===');
+    console.log('Current constraints:', constraints);
+    
     let score = 0;
     
-    // Simple scoring logic (would be more sophisticated in a real app)
-    if (constraints.find(c => c.id === "time")?.value === "long-term") score += 25;
-    else if (constraints.find(c => c.id === "time")?.value === "medium-term") score += 15;
-    else score += 5;
+    // Helper function to find constraint value
+    const getConstraintValue = (id: string): string | boolean | undefined => {
+      const constraint = constraints.find(c => c.id === id);
+      const value = constraint?.value;
+      console.log(`Constraint ${id}:`, value);
+      return value;
+    };
     
-    if (constraints.find(c => c.id === "tech")?.value === "extensive") score += 25;
-    else if (constraints.find(c => c.id === "tech")?.value === "moderate") score += 15;
-    else score += 5;
+    // ORGANIZATIONAL FACTORS (50% total)
     
-    if (constraints.find(c => c.id === "internet")?.value === true) score += 15;
-    if (constraints.find(c => c.id === "infrastructure")?.value === true) score += 15;
+    // Stakeholder Support (25%) - Most critical factor
+    const stakeholderSupport = getConstraintValue("stakeholder-support");
+    let stakeholderScore = 0;
+    if (stakeholderSupport === "champion") stakeholderScore = 25;
+    else if (stakeholderSupport === "high") stakeholderScore = 22;
+    else if (stakeholderSupport === "moderate") stakeholderScore = 15;
+    else stakeholderScore = 8; // Even low support gets some points
+    score += stakeholderScore;
+    console.log(`Stakeholder support score: ${stakeholderScore}`);
     
-    // Determine risk level
-    let risk: 'low' | 'medium' | 'high' = 'medium';
-    if (score >= 75) risk = 'low';
-    else if (score >= 40) risk = 'medium';
-    else risk = 'high';
+    // Budget (20%) - Important but not everything
+    const budget = getConstraintValue("budget");
+    let budgetScore = 0;
+    if (budget === "unlimited") budgetScore = 20;
+    else if (budget === "substantial") budgetScore = 18;
+    else if (budget === "moderate") budgetScore = 14;
+    else budgetScore = 10; // Limited budget can work with smart planning
+    score += budgetScore;
+    console.log(`Budget score: ${budgetScore}`);
     
-    setFeasibilityScore(score);
-    setFeasibilityRisk(risk);
+    // Sustainability Planning (5%)
+    const sustainability = getConstraintValue("sustainability");
+    let sustainabilityScore = 0;
+    if (sustainability === true) sustainabilityScore = 5;
+    else sustainabilityScore = 2;
+    score += sustainabilityScore;
+    console.log(`Sustainability score: ${sustainabilityScore}`);
+    
+    // PRACTICAL CONSTRAINTS (30% total)
+    
+    // Infrastructure & Connectivity (15%) - Critical in humanitarian contexts
+    const internet = getConstraintValue("internet");
+    const infrastructure = getConstraintValue("infrastructure");
+    const compute = getConstraintValue("compute");
+    
+    let infraScore = 0;
+    if (internet === true && infrastructure === true && (compute === "cloud" || compute === "hybrid" || compute === "enterprise")) {
+      infraScore = 15; // Excellent setup
+    } else if (internet === true && (infrastructure === true || compute === "cloud" || compute === "enterprise")) {
+      infraScore = 12; // Good enough for most projects
+    } else if (internet === true || infrastructure === true) {
+      infraScore = 9;  // Workable with planning
+    } else {
+      infraScore = 5;  // Major constraint but not impossible
+    }
+    score += infraScore;
+    console.log(`Infrastructure score: ${infraScore}`);
+    
+    // Timeline (10%) - More flexible than previously thought
+    const time = getConstraintValue("time");
+    let timeScore = 0;
+    if (time === "ongoing" || time === "long-term") timeScore = 10;
+    else if (time === "medium-term") timeScore = 8;
+    else timeScore = 6; // Short timeline just means smaller scope
+    score += timeScore;
+    console.log(`Time score: ${timeScore}`);
+    
+    // Regulatory Compliance (5%)
+    const regulatory = getConstraintValue("regulatory-compliance");
+    let regulatoryScore = 0;
+    if (regulatory === "minimal") regulatoryScore = 5;
+    else if (regulatory === "moderate") regulatoryScore = 4;
+    else regulatoryScore = 2;
+    score += regulatoryScore;
+    console.log(`Regulatory score: ${regulatoryScore}`);
+    
+    // CAPABILITY FACTORS (20% total)
+    
+    // Learning Willingness (10%) - More important than current skills
+    const learningCapacity = getConstraintValue("learning-capacity");
+    let learningScore = 0;
+    if (learningCapacity === true) learningScore = 10;
+    else learningScore = 5; // Everyone can learn
+    score += learningScore;
+    console.log(`Learning score: ${learningScore}`);
+    
+    // Team Size & Support (5%)
+    const teamSize = getConstraintValue("team-size");
+    let teamScore = 0;
+    if (teamSize === "large" || teamSize === "medium") teamScore = 5;
+    else if (teamSize === "small") teamScore = 4;
+    else teamScore = 3; // Individual projects can work too
+    score += teamScore;
+    console.log(`Team size score: ${teamScore}`);
+    
+    // Current Experience (5%) - Lowest weight since toolkit helps with this
+    const aiExp = getConstraintValue("ai-experience");
+    const techSkills = getConstraintValue("technical-skills");
+    
+    let experienceScore = 0;
+    if (aiExp === "advanced" || techSkills === "excellent") experienceScore = 5;
+    else if (aiExp === "intermediate" || techSkills === "good") experienceScore = 4;
+    else if (aiExp === "beginner" || techSkills === "moderate") experienceScore = 3;
+    else experienceScore = 2; // Base score - everyone starts somewhere!
+    score += experienceScore;
+    console.log(`Experience score: ${experienceScore}`);
+    
+    const finalScore = Math.min(Math.round(score), 100);
+    console.log(`Total calculated score: ${score}, final score: ${finalScore}`);
+    
+    // More encouraging feasibility levels
+    let level: 'high' | 'medium' | 'low' = 'medium';
+    if (finalScore >= 70) level = 'high';    // High feasibility
+    else if (finalScore >= 50) level = 'medium'; // Medium feasibility
+    else level = 'low'; // Low feasibility
+    
+    console.log(`Feasibility level: ${level}`);
+    console.log('=== FEASIBILITY CALCULATION END ===');
+    
+    setFeasibilityScore(finalScore);
+    setFeasibilityLevel(level); // Changed from setFeasibilityRisk
   }, [constraints]);
 
-  // Calculate suitability score when checks change
+  // Humanitarian-focused suitability calculation
   useEffect(() => {
-    let score = 0;
+    const calculateHumanitarianSuitabilityScore = () => {
+      // Humanitarian-focused weights
+      const weights = {
+        privacy_ethics: 0.35,           // 35% - Safety and ethics first
+        population_representativeness: 0.30,  // 30% - Core to humanitarian impact  
+        data_completeness: 0.20,        // 20% - Important but manageable
+        quality_sufficiency: 0.15       // 15% - Often workable
+      };
+      
+      // Context-aware scoring
+      const calculateQuestionScore = (questionId: string, answer: string): number => {
+        switch (questionId) {
+          case 'privacy_ethics':
+          case 'privacy':
+            if (answer === 'yes') return 1.0;    // Privacy Safe
+            if (answer === 'unknown') return 0.4; // Need Review - concerning
+            return 0.0;                           // High Risk - unacceptable
+            
+          case 'population_representativeness':
+          case 'representativeness':
+            if (answer === 'yes') return 1.0;    // Representative
+            if (answer === 'unknown') return 0.6; // Partially - workable
+            return 0.2;                           // Limited Coverage - major issue
+            
+          case 'data_completeness':
+          case 'completeness':
+            if (answer === 'yes') return 1.0;    // Looks Clean
+            if (answer === 'unknown') return 0.7; // Some Issues - common and fixable
+            return 0.3;                           // Many Problems - significant work
+            
+          case 'quality_sufficiency':
+          case 'sufficiency':
+            if (answer === 'yes') return 1.0;    // Sufficient
+            if (answer === 'unknown') return 0.6; // Borderline - might work
+            return 0.2;                           // Insufficient - need alternatives
+            
+          default:
+            if (answer === 'yes') return 1.0;
+            if (answer === 'unknown') return 0.5;
+            return 0.0;
+        }
+      };
+      
+      let weightedScore = 0;
+      let totalWeight = 0;
+      
+      // Map old IDs to new IDs for backwards compatibility
+      const idMapping = {
+        'completeness': 'data_completeness',
+        'representativeness': 'population_representativeness', 
+        'privacy': 'privacy_ethics',
+        'sufficiency': 'quality_sufficiency'
+      };
+      
+      // Calculate weighted score for each component
+      Object.entries(weights).forEach(([newId, weight]) => {
+        // Find check by new ID or old ID
+        const oldId = Object.keys(idMapping).find(key => idMapping[key] === newId);
+        const check = suitabilityChecks.find(c => c.id === newId || c.id === oldId);
+        
+        if (check) {
+          const score = calculateQuestionScore(newId, check.answer);
+          weightedScore += score * weight;
+          totalWeight += weight;
+        }
+      });
+      
+      // Convert to percentage
+      return totalWeight > 0 ? Math.round((weightedScore / totalWeight) * 100) : 0;
+    };
     
-    // Calculate score based on answers
-    suitabilityChecks.forEach(check => {
-      if (check.answer === "yes") score += 25;
-      else if (check.answer === "unknown") score += 10;
-      // No points for "no" answers
-    });
-    
-    setSuitabilityScore(score);
+    const newScore = calculateHumanitarianSuitabilityScore();
+    setSuitabilityScore(newScore);
   }, [suitabilityChecks]);
 
   // Dataset filtering functions
@@ -267,29 +391,93 @@ export const useScopingPhaseData = () => {
     setSelectedCategory(category);
     filterDatasets(searchTerm, category);
   };
-  
-  const handlePreviewDataset = (dataset: Dataset) => {
-    setPreviewDataset(dataset);
-  };
 
-  const handleSelectUseCase = (useCase: UseCase, setSelectedUseCase: (useCase: UseCase | null) => void) => {
-    setSelectedUseCase(useCase);
+  // Enhanced use case selection with storage and unselection support
+  const handleSelectUseCase = (useCase: UseCase | null, setSelectedUseCaseFunc: (useCase: UseCase | null) => void) => {
+    setSelectedUseCaseFunc(useCase);
     setUseCases(prevUseCases => 
       prevUseCases.map(uc => ({
         ...uc,
-        selected: uc.id === useCase.id
+        selected: useCase ? uc.id === useCase.id : false
       }))
     );
+
+    if (projectId !== 'current') {
+      const selectionData = {
+        selected_use_case: useCase,
+        available_use_cases: useCases,
+        timestamp: new Date().toISOString(),
+        reasoning: useCase ? `Selected ${useCase.title} for project goals` : 'Unselected use case'
+      };
+      
+      console.log('Storing use case selection:', selectionData);
+    }
+  };
+
+  // Enhanced dataset selection with storage
+  const handleSelectDataset = (dataset: Dataset) => {
+    setSelectedDataset(dataset);
+
+    if (projectId !== 'current') {
+      const datasetData = {
+        selected_dataset: dataset,
+        available_datasets: datasets,
+        timestamp: new Date().toISOString()
+      };      
+      console.log('Storing dataset selection:', datasetData);
+    }
+  };
+
+  // Continue without use case
+  const handleContinueWithoutUseCase = () => {
+    setSelectedUseCase({
+      id: "no_use_case_selected",
+      title: "Proceeding without specific use case",
+      description: "Continuing with general AI principles and custom solution development",
+      tags: ["Custom Solution"],
+      selected: true,
+      type: "custom",
+      category: "General"
+    });
+    
+    if (projectId !== 'current') {
+      const selectionData = {
+        selected_use_case: null,
+        available_use_cases: useCases,
+        timestamp: new Date().toISOString(),
+        reasoning: "User chose to proceed without selecting a specific use case - will develop custom AI solution"
+      };
+      
+      console.log('Storing no use case selection:', selectionData);
+    }
+  };
+
+  // Fixed retry function for use cases
+  const handleRetryUseCases = () => {
+    setErrorUseCases(null);
+    setNoUseCasesFound(false);
+    setUseCases([]);
+    loadUseCases();
+  };
+
+  // Retry function for datasets
+  const handleRetryDatasets = () => {
+    setNoDatasets(false);
+    setDatasets([]);
+    setFilteredDatasets([]);
+    loadDatasets();
   };
 
   return {
     // Data
     useCases,
+    errorUseCases,
+    noUseCasesFound,
     datasets,
     filteredDatasets,
     searchTerm,
     selectedCategory,
-    previewDataset,
+    noDatasets,
     
     // Loading states
     loadingUseCases,
@@ -297,15 +485,21 @@ export const useScopingPhaseData = () => {
     
     // Derived data
     feasibilityScore,
-    feasibilityRisk,
+    feasibilityLevel, // Changed from feasibilityRisk
     suitabilityScore,
     
     // Handler functions
     handleSearch,
     handleCategorySelect,
-    handlePreviewDataset,
-    setPreviewDataset,
     handleSelectUseCase,
-    filterDatasets
+    handleSelectDataset,
+    handleContinueWithoutUseCase,
+    handleRetryUseCases,
+    handleRetryDatasets,
+    filterDatasets,
+    
+    // Manual trigger functions
+    loadUseCases,
+    loadDatasets
   };
 };

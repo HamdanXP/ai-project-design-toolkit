@@ -27,7 +27,7 @@ export const DatasetSearchBar = ({
         />
       </div>
       
-      <select 
+      {/* <select 
         className="px-3 py-2 border border-input rounded-md bg-background"
         value={selectedCategory}
         onChange={(e) => handleCategorySelect(e.target.value)}
@@ -38,7 +38,7 @@ export const DatasetSearchBar = ({
         <option value="agriculture">Agriculture</option>
         <option value="refugee">Migration</option>
         <option value="food">Food Security</option>
-      </select>
+      </select> */}
     </div>
   );
 };

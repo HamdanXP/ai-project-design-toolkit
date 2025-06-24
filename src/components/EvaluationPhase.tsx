@@ -23,11 +23,11 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { ArrowLeft, ArrowRight, Upload, Check, Star } from "lucide-react";
 import { useProject } from "@/contexts/ProjectContext";
 import { 
-  RiskAssessment, 
-  StakeholderFeedback, 
+  RiskAssessment,  
   ImpactGoalCheck, 
   EvaluationDecision 
 } from "@/types/development-phase";
+import { StakeholderFeedback } from "@/types/evaluation-phase";
 import { useForm } from "react-hook-form";
 
 type EvaluationPhaseProps = {
@@ -122,7 +122,6 @@ export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: Evaluatio
       id: `feedback-${Date.now()}`
     };
     
-    setEvaluationStakeholderFeedback(prev => [...prev, newFeedback]);
     setCurrentFeedbackItem({
       id: "",
       name: "",
@@ -271,8 +270,8 @@ export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: Evaluatio
                 <div className="border rounded-md p-4 bg-muted/30">
                   <h3 className="font-medium mb-2">Original Goal (from Reflection Phase)</h3>
                   <p className="text-sm">
-                    {reflectionAnswers[1]?.substring(0, 200) || "No reflection data available."}
-                    {reflectionAnswers[1]?.length > 200 ? "..." : ""}
+                    {reflectionAnswers['problem_definition']?.substring(0, 200) || "No reflection data available."}
+                    {reflectionAnswers['problem_definition']?.length > 200 ? "..." : ""}
                   </p>
                 </div>
 
@@ -448,39 +447,6 @@ export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: Evaluatio
                   </Button>
                 </div>
 
-                {evaluationStakeholderFeedback.length > 0 ? (
-                  <div>
-                    <h3 className="font-medium mb-2">Collected Feedback</h3>
-                    <div className="space-y-2">
-                      {evaluationStakeholderFeedback.map(feedback => (
-                        <Card key={feedback.id}>
-                          <CardContent className="p-4">
-                            <div className="flex justify-between mb-2">
-                              <div>
-                                <p className="font-medium">{feedback.name}</p>
-                                <p className="text-sm text-muted-foreground">{feedback.role}</p>
-                              </div>
-                              <div className="flex items-center">
-                                {Array.from({length: 5}).map((_, i) => (
-                                  <Star 
-                                    key={i}
-                                    size={16}
-                                    className={i < feedback.rating ? "text-amber-500 fill-amber-500" : "text-muted"}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                            <p className="text-sm">{feedback.notes}</p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-4 text-sm text-muted-foreground">
-                    No feedback collected yet. Add your first feedback above.
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -495,96 +461,6 @@ export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: Evaluatio
           </div>
         </TabsContent>
 
-        {/* Decision Panel Tab */}
-        <TabsContent value="decision" className="flex flex-col h-full">
-          <Card className="flex-1">
-            <CardHeader>
-              <CardTitle>Final Decision</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-medium mb-4">Select Your Decision</h3>
-                  
-                  <div className="grid grid-cols-3 gap-4 mb-6">
-                    <Card 
-                      className={`border cursor-pointer transition-all ${evaluationDecision === 'finalise' ? 'border-primary bg-primary/10' : ''}`}
-                      onClick={() => handleDecisionChange('finalise')}
-                    >
-                      <CardContent className="p-4 flex flex-col items-center text-center">
-                        <div className="h-12 w-12 rounded-full bg-emerald-100 flex items-center justify-center mb-2">
-                          <Check className="h-6 w-6 text-emerald-600" />
-                        </div>
-                        <h4 className="font-medium">Finalise</h4>
-                        <p className="text-sm text-muted-foreground">Ready for deployment</p>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card 
-                      className={`border cursor-pointer transition-all ${evaluationDecision === 'iterate' ? 'border-primary bg-primary/10' : ''}`}
-                      onClick={() => handleDecisionChange('iterate')}
-                    >
-                      <CardContent className="p-4 flex flex-col items-center text-center">
-                        <div className="h-12 w-12 rounded-full bg-amber-100 flex items-center justify-center mb-2">
-                          <ArrowRight className="h-6 w-6 text-amber-600" />
-                        </div>
-                        <h4 className="font-medium">Iterate</h4>
-                        <p className="text-sm text-muted-foreground">Return to Development</p>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card 
-                      className={`border cursor-pointer transition-all ${evaluationDecision === 'reframe' ? 'border-primary bg-primary/10' : ''}`}
-                      onClick={() => handleDecisionChange('reframe')}
-                    >
-                      <CardContent className="p-4 flex flex-col items-center text-center">
-                        <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mb-2">
-                          <ArrowLeft className="h-6 w-6 text-red-600" />
-                        </div>
-                        <h4 className="font-medium">Reframe</h4>
-                        <p className="text-sm text-muted-foreground">Return to Scoping</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-                
-                <div>
-                  <Label htmlFor="justification" className="font-medium">Decision Justification</Label>
-                  <Textarea 
-                    id="justification"
-                    placeholder="Explain why you've made this decision..."
-                    className="min-h-[120px] mt-1"
-                    value={evaluationJustification}
-                    onChange={(e) => handleJustificationChange(e.target.value)}
-                  />
-                </div>
-
-                <div className="pt-4">
-                  <Button 
-                    className="w-full py-6 text-lg"
-                    disabled={!canCompletePhase()}
-                    onClick={() => setConfirmDialogOpen(true)}
-                  >
-                    Complete Evaluation Phase
-                  </Button>
-                  
-                  {!canCompletePhase() && (
-                    <p className="text-sm text-muted-foreground text-center mt-2">
-                      Complete all sections to proceed
-                    </p>
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="flex justify-between mt-4">
-            <Button variant="outline" onClick={() => handleTabChange("feedback")}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back
-            </Button>
-            <div />
-          </div>
-        </TabsContent>
       </Tabs>
     </div>
   );

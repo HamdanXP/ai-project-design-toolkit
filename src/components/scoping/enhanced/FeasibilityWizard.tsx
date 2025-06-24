@@ -1,12 +1,10 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight, ArrowLeft, Shield, TrendingUp, AlertTriangle } from "lucide-react";
+import { ArrowRight, ArrowLeft, Shield, TrendingUp } from "lucide-react";
 import { FeasibilityCategory, RiskMitigation } from "@/types/scoping-phase";
 import { StepHeading } from "../common/StepHeading";
-import { RiskIndicator } from "../common/RiskIndicator";
 import { FeasibilityCategory as CategoryComponent } from "./FeasibilityCategory";
 import { FeasibilityScoreCard } from "./FeasibilityScoreCard";
 import { RiskMitigationPanel } from "./RiskMitigationPanel";
@@ -15,23 +13,25 @@ type FeasibilityWizardProps = {
   categories: FeasibilityCategory[];
   onUpdateConstraint: (categoryId: string, constraintId: string, value: string | boolean) => void;
   feasibilityScore: number;
-  feasibilityRisk: 'low' | 'medium' | 'high';
+  feasibilityLevel: 'high' | 'medium' | 'low'; // Changed from feasibilityRisk
   riskMitigations: RiskMitigation[];
   moveToPreviousStep: () => void;
   moveToNextStep: () => void;
+  constraintValues: Record<string, string | boolean>;
 };
 
 export const FeasibilityWizard = ({
   categories,
   onUpdateConstraint,
   feasibilityScore,
-  feasibilityRisk,
+  feasibilityLevel,
   riskMitigations,
   moveToPreviousStep,
   moveToNextStep,
+  constraintValues,
 }: FeasibilityWizardProps) => {
   const [activeCategory, setActiveCategory] = useState(0);
-  const [showRiskAnalysis, setShowRiskAnalysis] = useState(false);
+  const [showAssessment, setShowAssessment] = useState(false);
 
   const currentCategory = categories[activeCategory];
   const isLastCategory = activeCategory === categories.length - 1;
@@ -39,39 +39,38 @@ export const FeasibilityWizard = ({
 
   const handleNext = () => {
     if (isLastCategory) {
-      setShowRiskAnalysis(true);
+      // Show the assessment summary
+      setShowAssessment(true);
     } else {
       setActiveCategory(prev => prev + 1);
     }
   };
 
   const handlePrevious = () => {
-    if (showRiskAnalysis) {
-      setShowRiskAnalysis(false);
+    if (showAssessment) {
+      setShowAssessment(false);
     } else if (activeCategory > 0) {
       setActiveCategory(prev => prev - 1);
     } else {
+      // When on first category, go back to previous step
       moveToPreviousStep();
     }
   };
 
-  if (showRiskAnalysis) {
+  if (showAssessment) {
     return (
       <Card className="mb-6">
         <CardHeader>
-          <StepHeading stepNumber={2} title="Risk Analysis & Feasibility Assessment" />
+          <StepHeading stepNumber={2} title="Project Readiness Assessment" />
         </CardHeader>
         <CardContent className="space-y-6">
           <FeasibilityScoreCard 
             score={feasibilityScore}
-            risk={feasibilityRisk}
+            feasibilityLevel={feasibilityLevel} // Changed from risk
             categories={categories}
+            constraints={constraintValues}
           />
-          
-          <RiskMitigationPanel 
-            riskMitigations={riskMitigations}
-            feasibilityRisk={feasibilityRisk}
-          />
+        
         </CardContent>
         <CardFooter className="flex justify-between">
           <Button variant="outline" onClick={handlePrevious}>
@@ -133,15 +132,14 @@ export const FeasibilityWizard = ({
         <Button 
           variant="outline" 
           onClick={handlePrevious}
-          disabled={isFirstCategory && !showRiskAnalysis}
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          {isFirstCategory ? 'Previous Step' : 'Previous Category'}
+          {isFirstCategory ? 'Previous' : 'Previous Category'}
         </Button>
         <Button onClick={handleNext}>
           {isLastCategory ? (
             <>
-              View Risk Analysis <TrendingUp className="ml-2 h-4 w-4" />
+              View Assessment <TrendingUp className="ml-2 h-4 w-4" />
             </>
           ) : (
             <>

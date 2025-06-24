@@ -35,6 +35,17 @@ export const useProjectPhases = () => {
       }
     }
     
+    // Get current phase to check if update is needed
+    const currentPhase = phases.find(p => p.id === phaseId);
+    
+    // Skip update if values haven't changed
+    if (currentPhase && 
+        currentPhase.status === status && 
+        currentPhase.progress === progress) {
+      console.log(`Skipping redundant update for phase ${phaseId}`);
+      return;
+    }
+    
     console.log(`Updating phase ${phaseId} to status: ${status}, progress: ${progress}`);
     
     setPhases(prevPhases => 
@@ -108,6 +119,14 @@ export const useProjectPhases = () => {
     
     // Calculate the progress percentage
     const progress = Math.round((completed / total) * 100);
+    
+    // Don't update if progress hasn't changed
+    if (currentPhase?.progress === progress) {
+      console.log(`Progress for phase ${phaseId} hasn't changed (${progress}%). Skipping update.`);
+      return;
+    }
+    
+    console.log(`Updating progress for phase ${phaseId}: ${completed}/${total} = ${progress}%`);
     
     // Update the phase with the new progress, keeping the current status
     updatePhaseStatus(phaseId, currentPhase?.status || "in-progress", progress);

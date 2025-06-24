@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Image, Paperclip, File, X, Layers } from "lucide-react";
+import { ArrowRight, Image, Paperclip, File, X, Layers, Loader2} from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Footer } from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
@@ -76,45 +76,6 @@ const HomePage = () => {
         }
       } catch (error) {
         console.log('Backend API not available, falling back to legacy method');
-      }
-      
-      try {
-        // Fallback to legacy API if backend is not available
-        const newProject = await api.projects.create({
-          name: inputValue.split('.')[0].substring(0, 50), // Use the first sentence as the project name
-          description: inputValue,
-          prompt: inputValue,
-          files: selectedFiles.map(file => file.name),
-          progress: 0,
-          tags: [],
-          phases: [
-            { id: "reflection", name: "Reflection", status: "not-started", progress: 0, totalSteps: 5, completedSteps: 0 },
-            { id: "scoping", name: "Scoping", status: "not-started", progress: 0, totalSteps: 5, completedSteps: 0 },
-            { id: "development", name: "Development", status: "not-started", progress: 0, totalSteps: 5, completedSteps: 0 },
-            { id: "evaluation", name: "Evaluation", status: "not-started", progress: 0, totalSteps: 5, completedSteps: 0 }
-          ]
-        });
-        
-        toast({
-          title: "Project Created",
-          description: "Your new project has been created successfully."
-        });
-        
-        // Navigate to the project blueprint with the new project ID
-        navigate(`/project-blueprint?projectId=${newProject.id}`);
-      } catch (error) {
-        // Final fallback to localStorage
-        localStorage.setItem('projectPrompt', inputValue);
-        localStorage.setItem('projectFiles', JSON.stringify(selectedFiles.map(file => file.name)));
-        
-        toast({
-          title: "Project Created",
-          description: "Your new project has been created successfully."
-        });
-        
-        navigate("/project-blueprint");
-      } finally {
-        setIsLoading(false);
       }
     }
   };
@@ -252,7 +213,11 @@ const HomePage = () => {
                     disabled={!inputValue.trim() || isLoading}
                     onClick={handleGoToBlueprint}
                   >
-                    <ArrowRight className={`size-4 ${!inputValue.trim() ? 'text-muted-foreground' : ''}`} />
+                    {isLoading ? (
+                      <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                    ) : (
+                      <ArrowRight className={`size-4 ${!inputValue.trim() ? 'text-muted-foreground' : ''}`} />
+                    )}
                   </Button>
                 </div>
               </div>

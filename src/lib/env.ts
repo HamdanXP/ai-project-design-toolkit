@@ -33,7 +33,7 @@ export function getRequiredEnv(key: string): string {
  */
 export const env = {
   // API URLs
-  apiUrl: getEnv('VITE_API_URL', '/api'),
+  apiUrl: getEnv('BACKEND_URL', '/api'),
   
   // Feature flags
   isProduction: import.meta.env.PROD,
