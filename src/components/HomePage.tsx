@@ -1,118 +1,29 @@
-import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { ArrowRight, Image, Paperclip, File, X, Layers, Loader2} from "lucide-react";
+import { ArrowRight, Image, Paperclip, File, X, Layers, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Footer } from "@/components/Footer";
-import { useToast } from "@/hooks/useToast";
-import { api, Project, ProjectSuggestion } from "@/lib/api";
+import { useHomePage } from "@/hooks/useHomePage";
 
-// Define default suggestions as a constant outside the component
-const DEFAULT_SUGGESTIONS: ProjectSuggestion[] = [
-  { title: "🌪 Disaster Response", prompt: "I want to implement AI for real-time disaster assessment and resource allocation." },
-  { title: "🏥 Healthcare", prompt: "I want to implement AI for diagnostic assistance and predictive disease outbreak monitoring." },
-  { title: "🌾 Food Security", prompt: "I want to implement AI for crop yield prediction and food distribution optimization." },
-  { title: "📢 Crisis Communication", prompt: "I want to implement AI for automated misinformation detection and emergency alert dissemination." },
-  { title: "🛂 Refugee Support", prompt: "I want to implement AI for streamlining refugee registration and personalised aid recommendations." },
-  { title: "🔍 Humanitarian Logistics", prompt: "I want to implement AI for optimising supply chain management and delivery of aid in crisis zones." }
-];
 
 const HomePage = () => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const [inputValue, setInputValue] = useState("");
-  const [isAttachingFile, setIsAttachingFile] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [recentProjects, setRecentProjects] = useState<Project[]>([]);
-  const [suggestions] = useState<ProjectSuggestion[]>(DEFAULT_SUGGESTIONS);
-  
-  // Separate useEffect for loading projects only
-  useEffect(() => {
-    const loadProjects = async () => {
-      try {
-        const projects = await api.projects.getAll();
-        setRecentProjects(projects.slice(0, 4));
-      } catch (error) {
-        // Fallback projects
-        setRecentProjects([
-          { id: "1", name: "Healthcare AI Project", description: "AI solution for healthcare applications", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Healthcare", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 25, tags: ["Healthcare", "AI"], phases: [] },
-          { id: "2", name: "Education AI Solution", description: "AI-powered educational tools", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Education", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 40, tags: ["Education", "AI"], phases: [] },
-          { id: "3", name: "Financial Services AI", description: "AI for financial analysis and prediction", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Finance", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 60, tags: ["Finance", "AI"], phases: [] },
-          { id: "4", name: "Environmental AI Project", description: "AI solutions for environmental monitoring", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Environment", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), progress: 80, tags: ["Environment", "AI"], phases: [] },
-        ]);
-      }
-    };
-    
-    loadProjects();
-  }, []);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInputValue(e.target.value);
-    
-    // Automatically adjust the height
-    e.target.style.height = 'auto';
-    e.target.style.height = `${e.target.scrollHeight}px`;
-  };
-
-  const handleGoToBlueprint = async () => {
-    if (inputValue.trim()) {
-      setIsLoading(true);
-      
-      try {
-        // Try to create project using the backend API first
-        const backendResponse = await api.backend.projects.create(inputValue.trim());
-        
-        if (backendResponse.success) {
-          toast({
-            title: "Project Created",
-            description: "Your new project has been created successfully."
-          });
-          
-          // Navigate to the project blueprint with the new project ID
-          navigate(`/project-blueprint?projectId=${backendResponse.data.id}`);
-          return;
-        }
-      } catch (error) {
-      }
-    }
-  };
-
-  const handleSuggestionClick = (prompt: string) => {
-    setInputValue(prompt);
-    
-    // Update textarea height after setting the value
-    setTimeout(() => {
-      const textarea = document.getElementById('prompt-input') as HTMLTextAreaElement;
-      if (textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = `${textarea.scrollHeight}px`;
-      }
-    }, 0);
-  };
-
-  const handleViewAll = () => {
-    navigate("/my-projects");
-  };
-
-  const handleProjectClick = (projectId: string) => {
-    navigate(`/project/${projectId}`);
-  };
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      // Convert FileList to array and append to existing files
-      const newFiles = Array.from(e.target.files);
-      setSelectedFiles(prev => [...prev, ...newFiles]);
-      setIsAttachingFile(false);
-    }
-  };
-  
-  const handleRemoveFile = (indexToRemove: number) => {
-    setSelectedFiles(prev => prev.filter((_, index) => index !== indexToRemove));
-  };
-
+  const {
+    inputValue,
+    setInputValue,
+    isAttachingFile,
+    setIsAttachingFile,
+    selectedFiles,
+    isLoading,
+    recentProjects,
+    suggestions,
+    handleInputChange,
+    handleGoToBlueprint,
+    handleSuggestionClick,
+    handleViewAll,
+    handleProjectClick,
+    handleFileChange,
+    handleRemoveFile
+  } = useHomePage();
   return (
     <div className="pt-16 min-h-screen bg-background flex flex-col">
       <div className="container mx-auto px-4 py-6 md:py-12 flex-grow">

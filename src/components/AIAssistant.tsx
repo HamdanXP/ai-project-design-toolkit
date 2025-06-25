@@ -1,10 +1,9 @@
 
-import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MessageCircle, X, Send, ArrowDown } from "lucide-react";
-import { useToast } from "@/hooks/useToast";
+import { useAIAssistant } from "@/hooks/useAIAssistant";
 
 type Message = {
   id: string;
@@ -14,62 +13,16 @@ type Message = {
 };
 
 export const AIAssistant = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      content: "Hello! I'm your AI assistant. How can I help you with your project today?",
-      sender: 'assistant',
-      timestamp: new Date()
-    }
-  ]);
-  const [message, setMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const { toast } = useToast();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const toggleAssistant = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!message.trim()) return;
-    
-    // Add user message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: message,
-      sender: 'user',
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setMessage("");
-    setIsTyping(true);
-    
-    // Simulate AI response (in a real app, this would call an AI API)
-    setTimeout(() => {
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "This is a simulated response. In a production environment, this would connect to an AI assistant API.",
-        sender: 'assistant',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, aiResponse]);
-      setIsTyping(false);
-      scrollToBottom();
-    }, 1000);
-
-    // Scroll to bottom after user message
-    setTimeout(scrollToBottom, 100);
-  };
+  const {
+    isOpen,
+    messages,
+    message,
+    setMessage,
+    isTyping,
+    messagesEndRef,
+    toggleAssistant,
+    handleSubmit,
+  } = useAIAssistant();
 
   return (
     <div className="fixed bottom-6 right-6 z-50">

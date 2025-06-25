@@ -5,8 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Check, X, AlertTriangle, Loader2, Users, Clock, Wifi, CheckCircle, Target, Database, BarChart3, Globe, ExternalLink, ArrowRight, RefreshCw } from "lucide-react";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck, ScopingCompletionData } from "@/types/scoping-phase";
 import { StepHeading } from "./common/StepHeading";
-import { scopingApi } from "@/lib/scopingApi";
-import { useState } from "react";
+import { useFinalFeasibilityGate } from "@/hooks/useFinalFeasibilityGate";
 
 type FinalFeasibilityGateProps = {
   selectedUseCase: UseCase | null;
@@ -40,226 +39,29 @@ export const FinalFeasibilityGate = ({
   resetPhase,
 }: FinalFeasibilityGateProps) => {
 
-  const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get('projectId') || 'current';
-  
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  
-  const handleReadyToProceed = () => {
-    setReadyToAdvance(true);
-    setSubmitError(null);
-  };
-  
-  const handleReviseApproach = () => {
-    setReadyToAdvance(false);
-    setSubmitError(null);
-  };
-  
-  const onCompletePhase = async () => {
-    setIsSubmitting(true);
-    setSubmitError(null);
-    
-    try {
-      
-      // Create placeholder data if selections are missing
-      const useCaseData: UseCase = selectedUseCase || {
-        id: "no_use_case_selected",
-        title: "Custom AI Solution",
-        description: "Proceeding without a specific predefined use case",
-        category: "Custom",
-        complexity: "medium",
-        source: "",
-        source_url: '',
-        type: "Custom",
-        tags: ["Custom Solution"],
-        selected: true,
-        how_it_works: "Custom implementation based on project needs",
-        real_world_impact: "To be determined based on implementation"
-      };
-
-      const datasetData: Dataset = selectedDataset || {
-        name: "Custom Dataset",
-        source: "User-provided data", 
-        url: '',
-        description: "Using user-provided data for the project",
-        size_estimate: "Unknown",
-        data_types: [],
-        ethical_concerns: [],
-        id: "custom_dataset",
-        title: "Custom Dataset",
-        format: "Various",
-        size: "Unknown",
-        license: "Various"
-      };
-      
-      // Helper functions aligned with humanitarian focus
-      const getSuitabilityLevel = (score: number): 'excellent' | 'good' | 'moderate' | 'poor' => {
-        if (score >= 80) return 'excellent';
-        if (score >= 60) return 'good';
-        if (score >= 40) return 'moderate';
-        return 'poor';
-      };
-
-      const extractHumanitarianConstraints = (constraints: FeasibilityConstraint[]): string[] => {
-        const constraintMap: {
-          [key: string]: { values: (string | boolean)[]; label: string }
-        } = {
-          'budget': { values: ['limited'], label: 'Limited Budget' },
-          'stakeholder-support': { values: ['low'], label: 'Low Stakeholder Support' },
-          'ai-experience': { values: ['none'], label: 'No AI Experience' },
-          'time': { values: ['short-term'], label: 'Tight Timeline' },
-          'internet': { values: [false], label: 'Connectivity Issues' },
-          'technical-skills': { values: ['limited'], label: 'Technical Skills Gap' }
-        };
-
-        return constraints
-          .filter(c => {
-            const mapping = constraintMap[c.id as keyof typeof constraintMap];
-            return mapping && mapping.values.includes(c.value);
-          })
-          .map(c => constraintMap[c.id as keyof typeof constraintMap].label)
-          .slice(0, 3); // Top 3 constraints
-      };
-
-      const generateSimpleReasoning = (
-        readyToProceed: boolean,
-        feasibilityScore: number,
-        suitabilityScore: number,
-        constraints: FeasibilityConstraint[]
-      ): string => {
-        if (readyToProceed) {
-          const strengths = [];
-          if (feasibilityScore >= 70) strengths.push("strong project foundations");
-          if (suitabilityScore >= 60) strengths.push("suitable data available");
-          
-          const constraintIssues = extractHumanitarianConstraints(constraints);
-          if (constraintIssues.length === 0) strengths.push("no major barriers identified");
-          
-          return `Project is ready to proceed with ${strengths.join(", ")}. ${
-            constraintIssues.length > 0 ? `Areas to monitor: ${constraintIssues.join(", ")}.` : ""
-          }`;
-        } else {
-          const issues = [];
-          if (feasibilityScore < 50) issues.push("needs stronger foundations");
-          if (suitabilityScore < 40) issues.push("data concerns need addressing");
-          
-          const constraintIssues = extractHumanitarianConstraints(constraints);
-          if (constraintIssues.length > 0) issues.push("resource limitations");
-          
-          return `Recommend strengthening project setup: ${issues.join(", ")}. Consider revisiting earlier steps.`;
-        }
-      };
-      
-      // Prepare scoping completion data
-      const scopingCompletionData: ScopingCompletionData = {
-        selected_use_case: useCaseData,
-        selected_dataset: datasetData,
-        feasibility_summary: {
-          overall_percentage: feasibilityScore,
-          feasibility_level: feasibilityLevel,
-          key_constraints: extractHumanitarianConstraints(constraints)
-        },
-        data_suitability: {
-          percentage: suitabilityScore,
-          suitability_level: getSuitabilityLevel(suitabilityScore)
-        },
-        constraints: constraints.map(c => ({
-          id: c.id,
-          label: c.label,
-          value: c.value,
-          type: c.type
-        })),
-        suitability_checks: suitabilityChecks.map(c => ({
-          id: c.id,
-          question: c.question,
-          answer: c.answer,
-          description: c.description
-        })),
-        active_step: 5,
-        ready_to_proceed: readyToAdvance,
-        reasoning: generateSimpleReasoning(
-          readyToAdvance, 
-          feasibilityScore, 
-          suitabilityScore, 
-          constraints
-        )
-      };
-
-
-
-      // Submit scoping phase data to backend
-      const response = await scopingApi.completeScopingPhase(projectId, scopingCompletionData);
-      
-      if (response.success) {
-        
-        handleCompletePhase();
-      } else {
-        throw new Error(response.message || 'Failed to complete scoping phase');
-      }
-      
-    } catch (error) {
-      console.error('Failed to complete scoping phase:', error);
-      setSubmitError(error instanceof Error ? error.message : 'Unknown error occurred');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
-  const handleRevisePhase = () => {
-    resetPhase();
-  };
-
-  const getProjectStrengths = () => {
-    const strengths = [];
-    
-    // Check for organizational strengths
-    const stakeholderSupport = constraints.find(c => c.id === "stakeholder-support")?.value;
-    if (stakeholderSupport === "high" || stakeholderSupport === "champion") {
-      strengths.push("Strong organizational support");
-    }
-    
-    // Check for resource strengths
-    const budget = constraints.find(c => c.id === "budget")?.value;
-    if (budget === "substantial" || budget === "unlimited") {
-      strengths.push("Good budget allocation");
-    }
-    
-    // Check for infrastructure strengths
-    const internet = constraints.find(c => c.id === "internet")?.value;
-    const infrastructure = constraints.find(c => c.id === "infrastructure")?.value;
-    if (internet && infrastructure) {
-      strengths.push("Solid technical setup");
-    }
-    
-    return strengths;
-  };
-
-  const getAreasToImprove = () => {
-    const constraintMap: {
-      [key: string]: { values: (string | boolean)[]; label: string }
-    } = {
-      'budget': { values: ['limited'], label: 'Limited Budget' },
-      'stakeholder-support': { values: ['low'], label: 'Low Stakeholder Support' },
-      'ai-experience': { values: ['none'], label: 'No AI Experience' },
-      'time': { values: ['short-term'], label: 'Tight Timeline' },
-      'internet': { values: [false], label: 'Connectivity Issues' },
-      'technical-skills': { values: ['limited'], label: 'Technical Skills Gap' }
-    };
-
-    const constraintIssues = constraints
-      .filter(c => {
-        const mapping = constraintMap[c.id as keyof typeof constraintMap];
-        return mapping && mapping.values.includes(c.value);
-      })
-      .map(c => constraintMap[c.id as keyof typeof constraintMap].label)
-      .slice(0, 3);
-
-    return constraintIssues.map(issue => ({
-      area: issue,
-      icon: getConstraintIcon(issue)
-    }));
-  };
+  const {
+    isSubmitting,
+    submitError,
+    handleReadyToProceed,
+    handleReviseApproach,
+    onCompletePhase,
+    handleRevisePhase,
+    overallReadiness,
+    projectStrengths,
+    areasToImprove
+  } = useFinalFeasibilityGate({
+    selectedUseCase,
+    selectedDataset,
+    constraints,
+    feasibilityScore,
+    feasibilityLevel,
+    suitabilityChecks,
+    suitabilityScore,
+    readyToAdvance,
+    setReadyToAdvance,
+    handleCompletePhase,
+    resetPhase
+  });
 
   const getConstraintIcon = (constraint: string) => {
     if (constraint.includes('Support')) return <Users className="h-4 w-4" />;
@@ -267,11 +69,6 @@ export const FinalFeasibilityGate = ({
     if (constraint.includes('Connectivity')) return <Wifi className="h-4 w-4" />;
     return <AlertTriangle className="h-4 w-4" />;
   };
-
-  const overallReadiness = Math.round((feasibilityScore * 0.6) + (suitabilityScore * 0.4));
-  const projectStrengths = getProjectStrengths();
-  const areasToImprove = getAreasToImprove();
-
   // Component for displaying phase completion status
   const PhaseCompletionStatus = ({ title, completed, score }: { title: string, completed: boolean, score?: number }) => (
     <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 dark:bg-muted/20">
