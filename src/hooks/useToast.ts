@@ -71,7 +71,7 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout)
 }
 
-export const dismissToast = (toastId?: string) => {
+const dismissToast = (toastId?: string) => {
   if (toastId) {
     addToRemoveQueue(toastId)
   } else {
