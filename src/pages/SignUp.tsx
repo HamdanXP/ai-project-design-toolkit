@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Separator } from "@/components/ui/separator";
 import { SocialSignUp } from "@/components/auth/SocialSignUp";
 import { SignUpForm } from "@/components/auth/SignUpForm";
-import { useSignUp } from "@/hooks/use-signup";
+import { useSignUp } from "@/hooks/useSignup";
 
 const SignUp = () => {
   const { isLoading, handleSubmit, handleSocialSignUp, handleSignIn } = useSignUp();

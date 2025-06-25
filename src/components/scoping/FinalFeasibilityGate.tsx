@@ -5,7 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { Check, X, AlertTriangle, Loader2, Users, Clock, Wifi, CheckCircle, Target, Database, BarChart3, Globe, ExternalLink, ArrowRight, RefreshCw } from "lucide-react";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck, ScopingCompletionData } from "@/types/scoping-phase";
 import { StepHeading } from "./common/StepHeading";
-import { scopingApi } from "@/lib/scoping-api";
+import { scopingApi } from "@/lib/scopingApi";
 import { useState } from "react";
 
 type FinalFeasibilityGateProps = {

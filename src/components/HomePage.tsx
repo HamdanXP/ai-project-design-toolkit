@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, Image, Paperclip, File, X, Layers, Loader2} from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Footer } from "@/components/Footer";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { api, Project, ProjectSuggestion } from "@/lib/api";
 
 // Define default suggestions as a constant outside the component

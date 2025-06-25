@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { UseCase, Dataset } from "@/types/scoping-phase";
 import { useProject } from "@/contexts/ProjectContext";
-import { scopingApi, convertApiUseCase, convertApiDataset } from "@/lib/scoping-api";
+import { scopingApi, convertApiUseCase, convertApiDataset } from "@/lib/scopingApi";
 
 export const useScopingPhaseData = () => {
   // State for UI
