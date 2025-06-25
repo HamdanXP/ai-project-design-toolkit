@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,14 +20,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ArrowLeft, ArrowRight, Upload, Check, Star } from "lucide-react";
-import { useProject } from "@/contexts/ProjectContext";
-import { 
-  RiskAssessment,  
-  ImpactGoalCheck, 
-  EvaluationDecision 
-} from "@/types/development-phase";
-import { StakeholderFeedback } from "@/types/evaluation-phase";
+import { EvaluationDecision } from "@/types/development-phase";
 import { useForm } from "react-hook-form";
+import { useEvaluationPhase } from "@/hooks/useEvaluationPhase";
 
 type EvaluationPhaseProps = {
   onUpdateProgress?: (completed: number, total: number) => void;
@@ -37,144 +31,28 @@ type EvaluationPhaseProps = {
 
 export const EvaluationPhase = ({ onUpdateProgress, onCompletePhase }: EvaluationPhaseProps) => {
   const {
-    evaluationTestResults,
-    setEvaluationTestResults,
-    evaluationImpactGoalChecks,
-    setEvaluationImpactGoalChecks,
-    evaluationRiskAssessments,
-    setEvaluationRiskAssessments,
-    evaluationStakeholderFeedback,
-    setEvaluationStakeholderFeedback,
-    evaluationDecision,
-    setEvaluationDecision,
-    evaluationJustification,
-    setEvaluationJustification,
     reflectionAnswers,
-  } = useProject();
-  
-  const [activeTab, setActiveTab] = useState("testing");
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [currentFeedbackItem, setCurrentFeedbackItem] = useState<StakeholderFeedback>({
-    id: "",
-    name: "",
-    role: "",
-    notes: "",
-    rating: 3
-  });
-
-  // Calculate progress
-  const updateProgress = () => {
-    if (!onUpdateProgress) return;
-    
-    // A step is considered complete based on these conditions
-    const testingComplete = !!evaluationTestResults.trim();
-    
-    const impactGoalComplete = evaluationImpactGoalChecks.every(
-      check => check.notes.trim() !== ""
-    );
-    
-    const riskAssessmentComplete = evaluationRiskAssessments.every(
-      risk => risk.level !== "unknown" && risk.notes.trim() !== ""
-    );
-    
-    const stakeholderFeedbackComplete = evaluationStakeholderFeedback.length > 0;
-    
-    const decisionComplete = !!evaluationDecision && !!evaluationJustification.trim();
-    
-    // Count completed steps
-    const completedSteps = [
-      testingComplete,
-      impactGoalComplete,
-      riskAssessmentComplete,
-      stakeholderFeedbackComplete,
-      decisionComplete
-    ].filter(Boolean).length;
-    
-    onUpdateProgress(completedSteps, 5);
-  };
-
-  // Update impact goal check
-  const handleImpactGoalChange = (id: string, field: keyof ImpactGoalCheck, value: any) => {
-    setEvaluationImpactGoalChecks(prev => 
-      prev.map(check => 
-        check.id === id ? { ...check, [field]: value } : check
-      )
-    );
-    updateProgress();
-  };
-
-  // Update risk assessment
-  const handleRiskAssessmentChange = (id: string, field: keyof RiskAssessment, value: any) => {
-    setEvaluationRiskAssessments(prev => 
-      prev.map(risk => 
-        risk.id === id ? { ...risk, [field]: value } : risk
-      )
-    );
-    updateProgress();
-  };
-
-  // Handle adding new feedback
-  const handleAddFeedback = () => {
-    if (!currentFeedbackItem.name || !currentFeedbackItem.role) return;
-    
-    const newFeedback = {
-      ...currentFeedbackItem,
-      id: `feedback-${Date.now()}`
-    };
-    
-    setCurrentFeedbackItem({
-      id: "",
-      name: "",
-      role: "",
-      notes: "",
-      rating: 3
-    });
-    
-    updateProgress();
-  };
-
-  // Handle updating test results
-  const handleTestResultsChange = (value: string) => {
-    setEvaluationTestResults(value);
-    updateProgress();
-  };
-
-  // Handle decision selection
-  const handleDecisionChange = (decision: EvaluationDecision) => {
-    setEvaluationDecision(decision);
-    updateProgress();
-  };
-
-  // Handle justification change
-  const handleJustificationChange = (value: string) => {
-    setEvaluationJustification(value);
-    updateProgress();
-  };
-
-  // Check if all required fields are filled
-  const canCompletePhase = () => {
-    return (
-      !!evaluationTestResults.trim() &&
-      evaluationImpactGoalChecks.every(check => check.notes.trim() !== "") &&
-      evaluationRiskAssessments.every(risk => risk.level !== "unknown" && risk.notes.trim() !== "") &&
-      evaluationStakeholderFeedback.length > 0 &&
-      !!evaluationDecision &&
-      !!evaluationJustification.trim()
-    );
-  };
-
-  // Handle tab change
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    updateProgress();
-  };
-
-  // Handle complete phase
-  const handleCompletePhase = () => {
-    if (onCompletePhase) {
-      onCompletePhase();
-    }
-  };
+    evaluationTestResults,
+    evaluationImpactGoalChecks,
+    evaluationRiskAssessments,
+    evaluationStakeholderFeedback,
+    evaluationDecision,
+    evaluationJustification,
+    activeTab,
+    confirmDialogOpen,
+    currentFeedbackItem,
+    setConfirmDialogOpen,
+    setCurrentFeedbackItem,
+    handleImpactGoalChange,
+    handleRiskAssessmentChange,
+    handleAddFeedback,
+    handleTestResultsChange,
+    handleDecisionChange,
+    handleJustificationChange,
+    handleTabChange,
+    handleCompletePhase,
+    canCompletePhase
+  } = useEvaluationPhase({ onUpdateProgress, onCompletePhase });
 
   return (
     <div className="flex flex-col h-full">

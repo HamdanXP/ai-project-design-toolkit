@@ -1,103 +1,24 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { TopBar } from "@/components/TopBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Mail, Github, Globe } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "@/hooks/useToast";
+import { useSignIn } from "@/hooks/useSignIn";
 
 const SignIn = () => {
-  const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate sign in
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      // Mock successful login
-      if (email && password) {
-        // Create mock user data
-        const userData = {
-          name: email.split('@')[0],
-          email,
-          isLoggedIn: true
-        };
-        
-        // Store user data in localStorage
-        localStorage.setItem("lovableUser", JSON.stringify(userData));
-        
-        // Use the mocked sign in function we exposed on the window object
-        if (typeof window !== 'undefined' && (window as any).mockSignIn) {
-          (window as any).mockSignIn(userData);
-        }
-        
-        toast({
-          title: "Success",
-          description: "You have successfully signed in",
-        });
-        
-        navigate("/");
-      } else {
-        toast({
-          title: "Error",
-          description: "Please fill in all fields",
-          variant: "destructive",
-        });
-      }
-    }, 1500);
-  };
-
-  const handleSocialSignIn = (provider: string) => {
-    // Mock social sign in
-    const mockUserData = {
-      name: `${provider} User`,
-      email: `user@${provider.toLowerCase()}.com`,
-      isLoggedIn: true
-    };
-    
-    // Store in localStorage
-    localStorage.setItem("lovableUser", JSON.stringify(mockUserData));
-    
-    // Use the mocked sign in function
-    if (typeof window !== 'undefined' && (window as any).mockSignIn) {
-      (window as any).mockSignIn(mockUserData);
-    }
-    
-    toast({
-      title: "Social Sign In",
-      description: `Sign in with ${provider} successful!`,
-    });
-    
-    navigate("/");
-  };
-
-  const handleForgotPassword = () => {
-    toast({
-      title: "Forgot Password",
-      description: "Password reset functionality is not implemented in this demo",
-    });
-  };
-
-  const handleSignUp = () => {
-    navigate("/sign-up");
-  };
+  const {
+    email,
+    password,
+    isLoading,
+    handleEmailChange,
+    handlePasswordChange,
+    handleSubmit,
+    handleSocialSignIn,
+    handleForgotPassword,
+    handleSignUp,
+  } = useSignIn();
 
   return (
     <div className="min-h-screen bg-background">
@@ -211,3 +132,4 @@ const SignIn = () => {
 };
 
 export default SignIn;
+
