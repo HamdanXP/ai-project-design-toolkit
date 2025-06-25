@@ -36,7 +36,6 @@ export const PhaseItem = ({
     const isInvalidTransition = renderedPhase.status === "completed" && phase.status === "in-progress";
     
     if (!isInvalidTransition) {
-      console.log(`PhaseItem updated: ${phase.id}, status: ${phase.status}, progress: ${phase.progress}`);
       setRenderedPhase(phase);
     } else {
       console.warn(`Prevented invalid transition for ${phase.id}: completed -> in-progress`);

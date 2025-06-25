@@ -153,7 +153,6 @@ export const SuitabilityChecklist = ({
   };
 
   const handleAnswerUpdate = (questionId: string, answer: 'yes' | 'no' | 'unknown') => {
-    console.log('Updating answer for question:', questionId, 'with answer:', answer);
     
     // Update the context state with new ID format
     setSuitabilityChecks(prevChecks => {
@@ -190,8 +189,7 @@ export const SuitabilityChecklist = ({
   const handleNextStep = () => {
     if (!allQuestionsAnswered) return;
 
-    console.log('All suitability questions answered, proceeding to next step');
-    console.log('Current suitability score:', suitabilityScore);
+
     
     moveToNextStep();
   };

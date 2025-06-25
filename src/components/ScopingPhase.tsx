@@ -89,9 +89,8 @@ export const ScopingPhase = ({
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const projectId = searchParams.get('projectId');
-    
-    // TODO: Extract domain from project description using LLM or keyword matching
-    // For now, default to general_humanitarian
+
+    // Domain is now determined by the backend
     setProjectDomain("general_humanitarian");
   }, []);
 
@@ -110,8 +109,6 @@ export const ScopingPhase = ({
   const handleConstraintUpdate = (id: string, value: string | boolean) => {
     if (effectiveStatus === "completed") return;
     
-    console.log(`Updating constraint ${id} with value:`, value);
-    
     setConstraints(prevConstraints => {
       // Check if constraint exists
       const existingConstraintIndex = prevConstraints.findIndex(constraint => constraint.id === id);
@@ -121,7 +118,6 @@ export const ScopingPhase = ({
         const updatedConstraints = prevConstraints.map(constraint =>
           constraint.id === id ? { ...constraint, value } : constraint
         );
-        console.log('Updated existing constraint, new constraints:', updatedConstraints);
         return updatedConstraints;
       } else {
         // Add new constraint if it doesn't exist
@@ -134,7 +130,6 @@ export const ScopingPhase = ({
         };
         
         const updatedConstraints = [...prevConstraints, newConstraint];
-        console.log('Added new constraint, new constraints:', updatedConstraints);
         return updatedConstraints;
       }
     });
@@ -180,9 +175,6 @@ export const ScopingPhase = ({
   };
 
   // Debug logging to track constraints
-  useEffect(() => {
-    console.log('Current constraints in ScopingPhase:', constraints);
-  }, [constraints]);
 
   return (
     <div className="space-y-6">

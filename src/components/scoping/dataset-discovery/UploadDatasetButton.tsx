@@ -16,7 +16,6 @@ export const UploadDatasetButton = () => {
     const files = event.target.files;
     if (files && files.length > 0) {
       // Handle file upload here
-      console.log("File selected:", files[0].name);
       
       // Reset the input so the same file can be uploaded again
       if (fileInputRef.current) {

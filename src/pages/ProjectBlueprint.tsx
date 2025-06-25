@@ -24,10 +24,6 @@ const ProjectBlueprint = () => {
   const searchParams = new URLSearchParams(location.search);
   const projectId = searchParams.get('projectId') || 'current';
   
-  // Log project ID for debugging
-  useEffect(() => {
-    console.log('ProjectBlueprint loaded with projectId:', projectId);
-  }, [projectId]);
   
   // Get activePhaseId from context
   const { activePhaseId } = useProject();

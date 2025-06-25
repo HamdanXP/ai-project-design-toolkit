@@ -1,5 +1,6 @@
 import { UseCase, Dataset, ScopingCompletionData, mapDatasetToBackend, mapUseCaseToBackend } from '@/types/scoping-phase';
 import { api } from './api';
+import { logger } from './logger';
 
 // API Response Types
 export interface ScopingApiResponse<T> {
@@ -256,22 +257,22 @@ export const scopingApi = {
   // 1. Get Use Cases with enhanced humanitarian-focused educational content
   getUseCases: async (projectId: string): Promise<ApiUseCase[]> => {
     try {
-      console.log(`Fetching AI use cases with humanitarian-focused guidance for project: ${projectId}`);
+      logger.log(`Fetching AI use cases with humanitarian-focused guidance for project: ${projectId}`);
       
       const response = await api.get<ScopingApiResponse<ApiUseCase[]>>(
         `scoping/${projectId}/use-cases`
       );
       
       if (response.success && Array.isArray(response.data)) {
-        console.log(`Successfully fetched ${response.data.length} AI use cases with educational content`);
+        logger.log(`Successfully fetched ${response.data.length} AI use cases with educational content`);
         return response.data;
       } else {
-        console.warn('Invalid API response format:', response);
+        logger.warn('Invalid API response format:', response);
         throw new Error('Invalid response format from API');
       }
       
     } catch (error) {
-      console.error('API failed to get use cases:', error);
+      logger.error('API failed to get use cases:', error);
       return [];
     }
   },
@@ -284,7 +285,7 @@ export const scopingApi = {
     useCaseDescription?: string
   ): Promise<ApiDataset[]> => {
     try {
-      console.log(`Fetching datasets for project: ${projectId}, use case: ${useCaseTitle}`);
+      logger.log(`Fetching datasets for project: ${projectId}, use case: ${useCaseTitle}`);
       
       const response = await api.post<ScopingApiResponse<ApiDataset[]>>(`scoping/${projectId}/datasets`, {
         use_case_id: useCaseId,
@@ -294,18 +295,18 @@ export const scopingApi = {
       
       if (response.success) {
         if (Array.isArray(response.data) && response.data.length > 0) {
-          console.log(`Successfully fetched ${response.data.length} datasets from humanitarian sources`);
+          logger.log(`Successfully fetched ${response.data.length} datasets from humanitarian sources`);
           return response.data;
         } else {
-          console.log('No datasets found from humanitarian sources');
+          logger.log('No datasets found from humanitarian sources');
           return [];
         }
       } else {
-        console.warn('Dataset API returned success=false:', response.message);
+        logger.warn('Dataset API returned success=false:', response.message);
         return [];
       }
     } catch (error) {
-      console.error('API failed to get datasets:', error);
+      logger.error('API failed to get datasets:', error);
       return [];
     }
   },
@@ -316,7 +317,7 @@ export const scopingApi = {
     scopingData: ScopingCompletionData
   ): Promise<ScopingApiResponse<any>> => {
     try {
-      console.log(`Completing scoping phase for project: ${projectId}`);
+      logger.log(`Completing scoping phase for project: ${projectId}`);
       
       // Map frontend data to backend format
       const requestData: FinalFeasibilityRequest = {
@@ -337,15 +338,15 @@ export const scopingApi = {
       );
       
       if (response.success) {
-        console.log('Successfully completed scoping phase');
+        logger.log('Successfully completed scoping phase');
         return response;
       } else {
-        console.error('Scoping completion failed:', response.message);
+        logger.error('Scoping completion failed:', response.message);
         throw new Error(response.message || 'Failed to complete scoping phase');
       }
       
     } catch (error) {
-      console.error('API failed to complete scoping phase:', error);
+      logger.error('API failed to complete scoping phase:', error);
       throw error;
     }
   }
