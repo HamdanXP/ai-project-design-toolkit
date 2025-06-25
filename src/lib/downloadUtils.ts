@@ -1,4 +1,4 @@
-// lib/download-utils.ts
+// lib/downloadUtils.ts
 // Utility functions for handling file downloads in the browser
 
 import type { 

@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/useMobile";
 import { useEffect, useRef } from "react";
 import { ProjectPhase } from "@/types/project";
 import { SidebarToggleButton } from "./SidebarToggleButton";

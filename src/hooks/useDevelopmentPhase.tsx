@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useLocation } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { 
   DevelopmentPhaseData, 
   AISolution, 
@@ -17,7 +17,7 @@ import
   developmentApi,
   createProjectGenerationRequest,
   extractContextSummary,
-} from "@/lib/development-api";
+} from "@/lib/developmentApi";
 
 export interface DevelopmentPhaseStep {
   id: string;

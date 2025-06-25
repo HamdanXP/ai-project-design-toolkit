@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { UseCase } from "@/types/scoping-phase";
 import { UseCaseCard } from "./UseCaseCard";
 import { UseCaseCardSkeleton } from "./UseCaseCardSkeleton";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/useMobile";
 
 interface UseCaseGridProps {
   useCases: UseCase[];

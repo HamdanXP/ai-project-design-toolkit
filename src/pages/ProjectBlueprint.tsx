@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import { TopBar } from "@/components/TopBar";
-import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/useToast";
+import { useIsMobile } from "@/hooks/useMobile";
 import { useProjectPhases } from "@/hooks/useProjectPhases";
 import { ProjectBlueprintSidebar } from "@/components/project-blueprint/ProjectBlueprintSidebar";
 import { ProjectPhaseContent } from "@/components/project-blueprint/ProjectPhaseContent";

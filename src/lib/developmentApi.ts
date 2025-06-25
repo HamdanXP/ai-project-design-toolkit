@@ -1,7 +1,7 @@
-// lib/development-api.ts - Development API with split loading implementation
+// lib/developmentApi.ts - Development API with split loading implementation
 
 import { api } from './api';
-import { downloadFileFromContent, createZipDownload, getDownloadInfo, processDownloadResponse } from './download-utils';
+import { downloadFileFromContent, createZipDownload, getDownloadInfo, processDownloadResponse } from './downloadUtils';
 
 import {
   // Core types

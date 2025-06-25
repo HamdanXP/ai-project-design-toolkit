@@ -7,7 +7,7 @@ import { CheckCircle, Circle, Info, Lightbulb, Download, Play, Shield, Eye, User
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { useDevelopmentPhase } from "@/hooks/useDevelopmentPhase";
-import { formatTechnicalSpecs } from "@/lib/development-api";
+import { formatTechnicalSpecs } from "@/lib/developmentApi";
 import { AISolution } from "@/types/development-phase";
 
 interface DevelopmentPhaseProps {

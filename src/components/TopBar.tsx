@@ -21,9 +21,9 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/useMobile";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/useToast";
 
 interface TopBarProps {
   // In a real app, this would come from authentication

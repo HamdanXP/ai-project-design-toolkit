@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import { UseCase } from "@/types/scoping-phase";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/useMobile";
 
 interface UseCaseCardProps {
   useCase: UseCase;
