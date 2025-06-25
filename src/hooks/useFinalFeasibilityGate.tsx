@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useProject } from "@/contexts/ProjectContext";
 import {
   UseCase,
   Dataset,
@@ -35,8 +36,7 @@ export const useFinalFeasibilityGate = ({
   handleCompletePhase,
   resetPhase
 }: FinalFeasibilityGateParams) => {
-  const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get("projectId") || "current";
+  const { projectId } = useProject();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);

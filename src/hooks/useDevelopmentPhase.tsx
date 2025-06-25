@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useLocation } from "react-router-dom";
+import { useProject } from "@/contexts/ProjectContext";
 import { useToast } from "@/hooks/useToast";
 import { 
   DevelopmentPhaseData, 
@@ -28,9 +28,7 @@ export interface DevelopmentPhaseStep {
 
 export const useDevelopmentPhase = () => {
   const { toast } = useToast();
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get('projectId');
+  const { projectId } = useProject();
 
   // UI State
   const [currentStep, setCurrentStep] = useState(0);

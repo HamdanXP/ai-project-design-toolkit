@@ -63,7 +63,8 @@ export const ScopingPhase = ({
     handleRetryUseCases,
     handleRetryDatasets,
     handleContinueWithoutUseCase,
-    loadUseCases
+    loadUseCases,
+    hasSearchedUseCases
   } = useScopingPhaseData();
 
   // Check if the scoping phase is already completed from the phases array
@@ -82,17 +83,8 @@ export const ScopingPhase = ({
     updatePhaseStatus
   });
 
-  // Track if search has been attempted
-  const [hasSearchedUseCases, setHasSearchedUseCases] = useState(false);
 
-  // Extract domain from project context on mount
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const projectId = searchParams.get('projectId');
-
-    // Domain is now determined by the backend
-    setProjectDomain("general_humanitarian");
-  }, []);
+  // Domain is determined by the backend; keep default
 
   // Handle suitability check update
   const handleSuitabilityUpdate = (id: string, answer: 'yes' | 'no' | 'unknown') => {
@@ -149,15 +141,12 @@ export const ScopingPhase = ({
 
   // Handle manual search trigger
   const handleTriggerSearch = () => {
-    setHasSearchedUseCases(true);
     loadUseCases();
   };
 
   // Handle retry search
   const handleRetrySearch = () => {
-    setHasSearchedUseCases(false);
     handleRetryUseCases();
-    setHasSearchedUseCases(true);
   };
 
   // Handle continue without use case

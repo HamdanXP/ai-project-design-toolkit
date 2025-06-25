@@ -9,7 +9,7 @@ import { ProjectPhaseContent } from "@/components/project-blueprint/ProjectPhase
 import { ProjectPhaseHeader } from "@/components/project-blueprint/ProjectPhaseHeader";
 import { useProject } from "@/contexts/ProjectContext";
 import { api } from "@/lib/api";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const ProjectBlueprint = () => {
   const { toast } = useToast();
@@ -17,12 +17,9 @@ const ProjectBlueprint = () => {
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const toggleBtnRef = useRef<HTMLButtonElement>(null);
-  const location = useLocation();
   const navigate = useNavigate();
-  
-  // Get projectId from URL query params - improved handling
-  const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get('projectId') || 'current';
+
+  const { projectId } = useProject();
   
   
   // Get activePhaseId from context

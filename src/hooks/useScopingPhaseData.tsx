@@ -24,17 +24,15 @@ export const useScopingPhaseData = () => {
   const [feasibilityLevel, setFeasibilityLevel] = useState<'high' | 'medium' | 'low'>('medium'); // Changed from feasibilityRisk
   const [suitabilityScore, setSuitabilityScore] = useState<number>(0);
 
-  const { 
-    constraints, 
-    suitabilityChecks, 
+  const {
+    projectId,
+    constraints,
+    suitabilityChecks,
     selectedUseCase,
     setSelectedUseCase,
     setSelectedDataset,
     scopingActiveStep
   } = useProject();
-
-  const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get('projectId') || 'current';
 
   // Manual function to load use cases
   const loadUseCases = async () => {
@@ -457,6 +455,7 @@ export const useScopingPhaseData = () => {
     setErrorUseCases(null);
     setNoUseCasesFound(false);
     setUseCases([]);
+    setHasSearchedUseCases(true);
     loadUseCases();
   };
 
@@ -478,6 +477,8 @@ export const useScopingPhaseData = () => {
     searchTerm,
     selectedCategory,
     noDatasets,
+    hasSearchedUseCases,
+    hasSearchedDatasets,
     
     // Loading states
     loadingUseCases,

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { useProject } from "@/contexts/ProjectContext";
-import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/useToast";
 import { api } from "@/lib/api";
 
@@ -43,11 +42,9 @@ export const useReflectionPhase = (options: UseReflectionPhaseOptions) => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [ethicalAssessment, setEthicalAssessment] = useState<EthicalAssessment | null>(null);
-  const location = useLocation();
   const { toast } = useToast();
+  const { projectId } = useProject();
 
-  const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get('projectId') || 'current';
 
   const fetchingRef = useRef(false);
   const initializedRef = useRef(false);

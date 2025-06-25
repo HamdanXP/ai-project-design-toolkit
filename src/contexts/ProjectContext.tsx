@@ -21,6 +21,7 @@ import {
 } from "@/types/development-phase";
 
 interface ProjectContextType {
+  projectId: string;
   isLoading: boolean;
   phases: ProjectPhase[];
   setPhases: React.Dispatch<React.SetStateAction<ProjectPhase[]>>;
@@ -412,6 +413,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   return (
     <ProjectContext.Provider value={{
+      projectId,
       isLoading,
       phases, setPhases,
       activePhaseId, setActivePhaseId,
