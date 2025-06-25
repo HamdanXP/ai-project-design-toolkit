@@ -83,7 +83,6 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
           const cachedQuestions = localStorage.getItem(`project-${projectId}-reflection-questions`);
           
           if (cachedQuestions) {
-            console.log('Using cached reflection questions');
             const parsedQuestions = JSON.parse(cachedQuestions);
             setBackendQuestions(parsedQuestions);
             
@@ -95,7 +94,6 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
             setQuestions(convertedQuestions);
             updatePhaseSteps("reflection", convertedQuestions.length);
           } else {
-            console.log('Fetching reflection questions from API');
             const response = await api.backend.reflection.getQuestions(projectId);
             if (response.success) {
               setBackendQuestions(response.data);
@@ -118,7 +116,6 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
           updatePhaseSteps("reflection", FALLBACK_REFLECTION_QUESTIONS.length);
         }
       } catch (error) {
-        console.log('Using fallback questions due to error:', error);
         setQuestions(FALLBACK_REFLECTION_QUESTIONS);
         updatePhaseSteps("reflection", FALLBACK_REFLECTION_QUESTIONS.length);
       } finally {

@@ -61,7 +61,6 @@ export const FinalFeasibilityGate = ({
     setSubmitError(null);
     
     try {
-      console.log("FinalFeasibilityGate: Complete Phase clicked");
       
       // Create placeholder data if selections are missing
       const useCaseData: UseCase = selectedUseCase || {
@@ -187,13 +186,13 @@ export const FinalFeasibilityGate = ({
         )
       };
 
-      console.log('Submitting scoping completion data:', scopingCompletionData);
+
 
       // Submit scoping phase data to backend
       const response = await scopingApi.completeScopingPhase(projectId, scopingCompletionData);
       
       if (response.success) {
-        console.log('Scoping phase completion response:', response);
+        
         handleCompletePhase();
       } else {
         throw new Error(response.message || 'Failed to complete scoping phase');

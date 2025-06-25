@@ -75,7 +75,6 @@ const HomePage = () => {
           return;
         }
       } catch (error) {
-        console.log('Backend API not available, falling back to legacy method');
       }
     }
   };

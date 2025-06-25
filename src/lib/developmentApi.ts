@@ -1,6 +1,7 @@
 // lib/developmentApi.ts - Development API with split loading implementation
 
 import { api } from './api';
+import { logger } from './logger';
 import { downloadFileFromContent, createZipDownload, getDownloadInfo, processDownloadResponse } from './downloadUtils';
 
 import {
@@ -50,7 +51,7 @@ export const developmentApi = {
     const startTime = performance.now();
     
     try {
-      console.log(`Fetching basic development context for project: ${projectId}`);
+      logger.log(`Fetching basic development context for project: ${projectId}`);
       
       const response = await api.get<DevelopmentApiResponse<ProjectContextOnly>>(
         `development/${projectId}/context`
@@ -60,7 +61,7 @@ export const developmentApi = {
         const endTime = performance.now();
         const duration = endTime - startTime;
         
-        console.log(`Successfully fetched basic development context in ${Math.round(duration)}ms`);
+        logger.log(`Successfully fetched basic development context in ${Math.round(duration)}ms`);
         
         // Track performance metrics
         trackDevelopmentMetrics({
@@ -75,7 +76,7 @@ export const developmentApi = {
         
         return response.data;
       } else {
-        console.warn('Invalid API response format:', response);
+        logger.warn('Invalid API response format:', response);
         throw new Error(response.message || 'Invalid response format from API');
       }
       
@@ -83,7 +84,7 @@ export const developmentApi = {
       const endTime = performance.now();
       const duration = endTime - startTime;
       
-      console.error('API failed to get development context:', error);
+      logger.error('API failed to get development context:', error);
       
       // Track error metrics
       trackDevelopmentMetrics({
@@ -108,7 +109,7 @@ export const developmentApi = {
     const startTime = performance.now();
     
     try {
-      console.log(`Generating AI solutions for project: ${projectId}`);
+      logger.log(`Generating AI solutions for project: ${projectId}`);
       
       const response = await api.post<DevelopmentApiResponse<SolutionsData>>(
         `development/${projectId}/solutions`
@@ -118,7 +119,7 @@ export const developmentApi = {
         const endTime = performance.now();
         const duration = endTime - startTime;
         
-        console.log(`Successfully generated ${response.data.available_solutions.length} AI solutions in ${Math.round(duration)}ms`);
+        logger.log(`Successfully generated ${response.data.available_solutions.length} AI solutions in ${Math.round(duration)}ms`);
         
         // Track performance metrics
         trackDevelopmentMetrics({
@@ -134,7 +135,7 @@ export const developmentApi = {
         
         return response.data;
       } else {
-        console.warn('Invalid API response format:', response);
+        logger.warn('Invalid API response format:', response);
         throw new Error(response.message || 'Failed to generate solutions');
       }
       
@@ -142,7 +143,7 @@ export const developmentApi = {
       const endTime = performance.now();
       const duration = endTime - startTime;
       
-      console.error('API failed to generate solutions:', error);
+      logger.error('API failed to generate solutions:', error);
       
       // Track error metrics
       trackDevelopmentMetrics({
@@ -165,7 +166,7 @@ export const developmentApi = {
    */
   getDevelopmentContextLegacy: async (projectId: string): Promise<DevelopmentPhaseData> => {
     try {
-      console.log(`[LEGACY] Fetching full development context for project: ${projectId}`);
+      logger.log(`[LEGACY] Fetching full development context for project: ${projectId}`);
       
       // Get context first (fast)
       const contextData = await developmentApi.getDevelopmentContext(projectId);
@@ -188,7 +189,7 @@ export const developmentApi = {
       };
       
     } catch (error) {
-      console.error('Failed to get legacy development context:', error);
+      logger.error('Failed to get legacy development context:', error);
       throw error;
     }
   },
@@ -203,7 +204,7 @@ export const developmentApi = {
     reasoning?: string
   ): Promise<SolutionSelection> => {
     try {
-      console.log(`Selecting solution ${solutionId} for project: ${projectId}`);
+      logger.log(`Selecting solution ${solutionId} for project: ${projectId}`);
       
       const selectionData = {
         solution_id: solutionId,
@@ -218,14 +219,14 @@ export const developmentApi = {
       );
       
       if (response.success) {
-        console.log('Successfully selected solution');
+        logger.log('Successfully selected solution');
         return response.data.selected_solution;
       } else {
-        console.error('Solution selection failed:', response.message);
+        logger.error('Solution selection failed:', response.message);
         throw new Error(response.message || 'Failed to select solution');
       }
     } catch (error) {
-      console.error('API failed to select solution:', error);
+      logger.error('API failed to select solution:', error);
       throw error;
     }
   },
@@ -240,7 +241,7 @@ export const developmentApi = {
     const startTime = performance.now();
     
     try {
-      console.log(`Generating project for ${projectId} with solution ${generationRequest.solution_id}`);
+      logger.log(`Generating project for ${projectId} with solution ${generationRequest.solution_id}`);
       
       const response = await api.post<DevelopmentApiResponse<ProjectGenerationResponse>>(
         `development/${projectId}/generate`,
@@ -251,7 +252,7 @@ export const developmentApi = {
         const endTime = performance.now();
         const duration = endTime - startTime;
         
-        console.log(`Successfully generated project in ${Math.round(duration)}ms`);
+        logger.log(`Successfully generated project in ${Math.round(duration)}ms`);
         
         // Track performance metrics
         trackDevelopmentMetrics({
@@ -265,7 +266,7 @@ export const developmentApi = {
         
         return response.data;
       } else {
-        console.error('Project generation failed:', response.message);
+        logger.error('Project generation failed:', response.message);
         throw new Error(response.message || 'Failed to generate project');
       }
       
@@ -273,7 +274,7 @@ export const developmentApi = {
       const endTime = performance.now();
       const duration = endTime - startTime;
       
-      console.error('API failed to generate project:', error);
+      logger.error('API failed to generate project:', error);
       
       // Track error metrics
       trackDevelopmentMetrics({
@@ -299,7 +300,7 @@ export const developmentApi = {
     fileType: 'complete' | 'documentation' | 'setup' | 'ethical-report' | 'deployment'
   ): Promise<void> => {
     try {
-      console.log(`Downloading ${fileType} for project: ${projectId}`);
+      logger.log(`Downloading ${fileType} for project: ${projectId}`);
       
       // Get the raw response from your backend
       const response = await api.get<DownloadResponse>(
@@ -315,7 +316,7 @@ export const developmentApi = {
       await processDownloadResponse(response, fileType, projectId);
       
     } catch (error) {
-      console.error(`Failed to download ${fileType}:`, error);
+      logger.error(`Failed to download ${fileType}:`, error);
       
       // Provide more specific error messages
       if (error instanceof Error) {
@@ -342,7 +343,7 @@ export const developmentApi = {
       }
       
     } catch (error) {
-      console.error('API failed to get development status:', error);
+      logger.error('API failed to get development status:', error);
       throw error;
     }
   },
@@ -353,9 +354,9 @@ export const developmentApi = {
   clearProjectCache: async (projectId: string): Promise<void> => {
     try {
       await api.delete(`development/${projectId}/cache`);
-      console.log(`Cleared cache for project: ${projectId}`);
+      logger.log(`Cleared cache for project: ${projectId}`);
     } catch (error) {
-      console.warn('Failed to clear project cache:', error);
+      logger.warn('Failed to clear project cache:', error);
       // Don't throw - cache clearing is not critical
     }
   }
@@ -570,14 +571,14 @@ const trackDevelopmentMetrics = (metrics: Omit<DevelopmentMetrics, 'user_agent' 
     
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('📊 Development Metrics:', enhancedMetrics);
+      logger.log('📊 Development Metrics:', enhancedMetrics);
     }
     
     // Send to analytics service (implement based on your analytics setup)
     // analytics.track('development_phase_performance', enhancedMetrics);
     
   } catch (error) {
-    console.warn('Failed to track development metrics:', error);
+    logger.warn('Failed to track development metrics:', error);
   }
 };
 
