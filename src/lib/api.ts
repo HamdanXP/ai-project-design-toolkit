@@ -1,6 +1,6 @@
 import { env } from './env';
 import { toast } from "sonner";
-import { ProjectPhase } from "@/types/project";
+import { EthicalConsideration, ProjectPhase } from "@/types/project";
 import { 
   DevelopmentPhaseData, 
   ProjectGenerationRequest, 
@@ -27,7 +27,7 @@ export async function apiRequest<T>(
   options: ApiRequestOptions = {}
 ): Promise<T> {
   // Use the backend base URL
-  const baseUrl = 'https://ai-project-design-toolkit-backend-production.up.railway.app/api/v1/';
+  const baseUrl = 'http://localhost:8000/api/v1/';
   const url = new URL(endpoint, baseUrl);
   
   if (options.params) {
@@ -313,8 +313,29 @@ export const api = {
       
       getStatus: async (projectId: string): Promise<BackendApiResponse<DevelopmentStatus>> => {
         return await api.get<BackendApiResponse<DevelopmentStatus>>(`development/${projectId}/status`);
+      }, 
+    },
+    ethicalConsiderations: {
+      get: async (projectId: string): Promise<BackendApiResponse<EthicalConsideration[]>> => {
+        return await api.get<BackendApiResponse<EthicalConsideration[]>>(`ethical-considerations/${projectId}`);
+      },
+      
+      acknowledge: async (
+        projectId: string, 
+        acknowledgedConsiderations?: string[]
+      ): Promise<BackendApiResponse<{ acknowledged: boolean }>> => {
+        return await api.post<BackendApiResponse<{ acknowledged: boolean }>>(
+          `ethical-considerations/${projectId}/acknowledge`,
+          { acknowledged_considerations: acknowledgedConsiderations }
+        );
+      },
+      
+      refresh: async (projectId: string): Promise<BackendApiResponse<EthicalConsideration[]>> => {
+        return await api.post<BackendApiResponse<EthicalConsideration[]>>(
+          `ethical-considerations/${projectId}/refresh`
+        );
       }
-    }
+    },
   },
     
   /**

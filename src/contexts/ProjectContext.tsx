@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { api } from "@/lib/api";
-import { ProjectPhase } from "@/types/project";
+import { ProjectPhase, EthicalConsideration } from "@/types/project";
 import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
 import { 
   // Legacy development types for backward compatibility
@@ -81,6 +81,15 @@ interface ProjectContextType {
   setEvaluationDecision: React.Dispatch<React.SetStateAction<EvaluationDecision>>;
   evaluationJustification: string;
   setEvaluationJustification: React.Dispatch<React.SetStateAction<string>>;
+
+  // NEW: Ethical Considerations
+  ethicalConsiderations: EthicalConsideration[];
+  setEthicalConsiderations: React.Dispatch<React.SetStateAction<EthicalConsideration[]>>;
+  ethicalConsiderationsAcknowledged: boolean;
+  setEthicalConsiderationsAcknowledged: React.Dispatch<React.SetStateAction<boolean>>;
+  loadEthicalConsiderations: (projectId: string) => Promise<void>;
+  acknowledgeEthicalConsiderations: (projectId: string, acknowledgedIds?: string[]) => Promise<void>;
+  refreshEthicalConsiderations: (projectId: string) => Promise<void>;
 }
 
 // Helper functions for localStorage
@@ -182,7 +191,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   
   const [isLoading, setIsLoading] = useState(true);
   
-  // All state
+  // All existing state
   const [phases, setPhases] = useState<ProjectPhase[]>(getDefaultPhases());
   const [activePhaseId, setActivePhaseId] = useState<string>("reflection");
   const [projectPrompt, setProjectPrompt] = useState<string>("");
@@ -215,6 +224,74 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [evaluationStakeholderFeedback, setEvaluationStakeholderFeedback] = useState<StakeholderFeedback[]>([]);
   const [evaluationDecision, setEvaluationDecision] = useState<EvaluationDecision>(null);
   const [evaluationJustification, setEvaluationJustification] = useState<string>("");
+
+  // NEW: Ethical Considerations State
+  const [ethicalConsiderations, setEthicalConsiderations] = useState<EthicalConsideration[]>([]);
+  const [ethicalConsiderationsAcknowledged, setEthicalConsiderationsAcknowledged] = useState<boolean>(false);
+
+  // NEW: Load ethical considerations from API
+  const loadEthicalConsiderations = async (projectId: string) => {
+    if (projectId === 'current') {
+      // Don't try to load for default project
+      setEthicalConsiderations([]);
+      return;
+    }
+
+    try {
+      const response = await api.backend.ethicalConsiderations.get(projectId);
+      if (response.success) {
+        setEthicalConsiderations(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to load ethical considerations:', error);
+      // Don't show error - user prefers to show component even if failed
+      setEthicalConsiderations([]);
+    }
+  };
+
+  // NEW: Acknowledge ethical considerations
+  const acknowledgeEthicalConsiderations = async (projectId: string, acknowledgedIds?: string[]) => {
+    if (projectId === 'current') {
+      setEthicalConsiderationsAcknowledged(true);
+      return;
+    }
+
+    try {
+      const response = await api.backend.ethicalConsiderations.acknowledge(projectId, acknowledgedIds);
+      if (response.success) {
+        setEthicalConsiderationsAcknowledged(true);
+        
+        // Update local state to mark specific considerations as acknowledged
+        if (acknowledgedIds) {
+          setEthicalConsiderations(prev => prev.map(consideration => ({
+            ...consideration,
+            acknowledged: acknowledgedIds.includes(consideration.id) || consideration.acknowledged
+          })));
+        }
+      }
+    } catch (error) {
+      console.error('Failed to acknowledge ethical considerations:', error);
+      throw error;
+    }
+  };
+
+  // NEW: Refresh ethical considerations
+  const refreshEthicalConsiderations = async (projectId: string) => {
+    if (projectId === 'current') {
+      return;
+    }
+
+    try {
+      const response = await api.backend.ethicalConsiderations.refresh(projectId);
+      if (response.success) {
+        setEthicalConsiderations(response.data);
+        setEthicalConsiderationsAcknowledged(false); // Reset acknowledgment
+      }
+    } catch (error) {
+      console.error('Failed to refresh ethical considerations:', error);
+      throw error;
+    }
+  };
 
   // Auto-save to localStorage whenever state changes
   useEffect(() => {
@@ -251,7 +328,11 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         evaluationRiskAssessments,
         evaluationStakeholderFeedback,
         evaluationDecision,
-        evaluationJustification
+        evaluationJustification,
+
+        // NEW: Ethical considerations state
+        ethicalConsiderations,
+        ethicalConsiderationsAcknowledged
       };
       
       const { meta } = getFromStorage(projectId);
@@ -276,7 +357,10 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     
     // Evaluation dependencies
     evaluationTestResults, evaluationImpactGoalChecks, evaluationRiskAssessments,
-    evaluationStakeholderFeedback, evaluationDecision, evaluationJustification
+    evaluationStakeholderFeedback, evaluationDecision, evaluationJustification,
+
+    // NEW: Ethical considerations dependencies
+    ethicalConsiderations, ethicalConsiderationsAcknowledged
   ]);
 
   // Load and sync data on mount
@@ -318,6 +402,10 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
           setEvaluationStakeholderFeedback(localData.evaluationStakeholderFeedback || []);
           setEvaluationDecision(localData.evaluationDecision || null);
           setEvaluationJustification(localData.evaluationJustification || "");
+
+          // NEW: Ethical considerations state
+          setEthicalConsiderations(localData.ethicalConsiderations || []);
+          setEthicalConsiderationsAcknowledged(localData.ethicalConsiderationsAcknowledged || false);
         }
         
         // Then sync with API if not a default project
@@ -349,6 +437,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
                 if (apiData.reflection_data?.answers) {
                   setReflectionAnswers(apiData.reflection_data.answers);
                 }
+                
                 if (apiData.scoping_data) {
                   const sd = apiData.scoping_data;
                   if (sd.activeStep) setScopingActiveStep(sd.activeStep);
@@ -373,6 +462,14 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
                     setDevelopmentSolutionSelection(dd.solution_selection);
                   }
                 }
+
+                // NEW: Sync ethical considerations data
+                if (apiData.ethical_considerations) {
+                  setEthicalConsiderations(apiData.ethical_considerations);
+                }
+                if (typeof apiData.ethical_considerations_acknowledged === 'boolean') {
+                  setEthicalConsiderationsAcknowledged(apiData.ethical_considerations_acknowledged);
+                }
                 
                 // Update metadata
                 const newMetadata: ProjectMetadata = {
@@ -387,6 +484,9 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
           } catch (error) {
             console.warn('Failed to sync with API, using local data:', error);
           }
+
+          // Load ethical considerations from API (separate call)
+          await loadEthicalConsiderations(projectId);
         }
       } finally {
         setIsLoading(false);
@@ -445,7 +545,14 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       evaluationRiskAssessments, setEvaluationRiskAssessments,
       evaluationStakeholderFeedback, setEvaluationStakeholderFeedback,
       evaluationDecision, setEvaluationDecision,
-      evaluationJustification, setEvaluationJustification
+      evaluationJustification, setEvaluationJustification,
+
+      // NEW: Ethical Considerations
+      ethicalConsiderations, setEthicalConsiderations,
+      ethicalConsiderationsAcknowledged, setEthicalConsiderationsAcknowledged,
+      loadEthicalConsiderations,
+      acknowledgeEthicalConsiderations,
+      refreshEthicalConsiderations
     }}>
       {children}
     </ProjectContext.Provider>
