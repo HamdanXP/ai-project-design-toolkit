@@ -4,7 +4,7 @@ import { ScopingPhase } from "@/components/ScopingPhase";
 import { DevelopmentPhase } from "@/components/DevelopmentPhase";
 import { EvaluationPhase } from "@/components/EvaluationPhase";
 import { PhaseLockedMessage } from "@/components/PhaseLockedMessage";
-import { EthicalConsiderationsModal } from "@/components/project-blueprint/EthicalConsiderationsModal";
+import { EthicalConsiderationsModal } from "@/components/reflection/EthicalConsiderationsModal";
 import { ProjectPhase } from "@/types/project";
 import { AIAssistant } from "@/components/AIAssistant";
 import { CompleteProjectButton } from "./CompleteProjectButton";

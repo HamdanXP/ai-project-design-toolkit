@@ -26,8 +26,22 @@ export interface Question {
   guidanceSources?: GuidanceSource[];
 }
 
-export interface EthicalAssessment {
+export interface AlternativeSolutions {
+  digital_alternatives: string[];
+  process_improvements: string[];
+  non_digital_solutions: string[];
+  hybrid_approaches: string[];
+  reasoning: string;
+}
+
+export interface ProjectReadinessAssessment {
   ethical_score: number;
+  ethical_summary: string;  
+  ai_appropriateness_score: number;
+  ai_appropriateness_summary: string;
+  ai_recommendation: 'highly_appropriate' | 'appropriate' | 'questionable' | 'not_appropriate';
+  alternative_solutions?: AlternativeSolutions;
+  overall_readiness_score: number;
   proceed_recommendation: boolean;
   summary: string;
   actionable_recommendations: string[];
@@ -35,7 +49,11 @@ export interface EthicalAssessment {
     question_key: string;
     issue: string;
     severity: 'low' | 'medium' | 'high';
+    category: 'ethical' | 'appropriateness'; // NEW: categorize the type of issue
   }>;
+  
   threshold_met: boolean;
   can_proceed: boolean;
 }
+
+export interface EthicalAssessment extends ProjectReadinessAssessment {}
