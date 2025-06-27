@@ -22,7 +22,7 @@ const ProjectBlueprint = () => {
   
   // Get projectId from URL query params - improved handling
   const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get('projectId') || 'current';
+  const projectId = searchParams.get('projectId');
   
   // Log project ID for debugging
   useEffect(() => {
@@ -110,7 +110,7 @@ const ProjectBlueprint = () => {
     handleCompleteProject();
     
     // Also update via API if we have a project ID
-    if (projectId !== 'current') {
+    if (projectId) {
       try {
         await api.projects.completeProject(projectId);
         navigate(`/project-completion?projectId=${projectId}`);

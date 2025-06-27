@@ -34,7 +34,7 @@ export const useScopingPhaseData = () => {
   } = useProject();
 
   const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get('projectId') || 'current';
+  const projectId = searchParams.get('projectId');
 
   // Manual function to load use cases
   const loadUseCases = async () => {
@@ -402,7 +402,7 @@ export const useScopingPhaseData = () => {
       }))
     );
 
-    if (projectId !== 'current') {
+    if (projectId) {
       const selectionData = {
         selected_use_case: useCase,
         available_use_cases: useCases,
@@ -418,7 +418,7 @@ export const useScopingPhaseData = () => {
   const handleSelectDataset = (dataset: Dataset) => {
     setSelectedDataset(dataset);
 
-    if (projectId !== 'current') {
+    if (projectId) {
       const datasetData = {
         selected_dataset: dataset,
         available_datasets: datasets,
@@ -440,7 +440,7 @@ export const useScopingPhaseData = () => {
       category: "General"
     });
     
-    if (projectId !== 'current') {
+    if (projectId) {
       const selectionData = {
         selected_use_case: null,
         available_use_cases: useCases,

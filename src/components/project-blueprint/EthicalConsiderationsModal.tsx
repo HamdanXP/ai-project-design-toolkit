@@ -100,7 +100,7 @@ export const EthicalConsiderationsModal: React.FC<EthicalConsiderationsModalProp
   const location = useLocation();
   
   const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get('projectId') || 'current';
+  const projectId = searchParams.get('projectId');
   
   const [acknowledgedItems, setAcknowledgedItems] = useState<string[]>([]);
   const [isAcknowledging, setIsAcknowledging] = useState(false);
@@ -145,7 +145,7 @@ export const EthicalConsiderationsModal: React.FC<EthicalConsiderationsModalProp
   };
 
   const handleRefresh = async () => {
-    if (projectId === 'current') {
+    if (!projectId) {
       toast({
         title: "Cannot Refresh",
         description: "Refresh is only available for saved projects.",

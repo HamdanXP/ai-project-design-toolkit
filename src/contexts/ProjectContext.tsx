@@ -187,7 +187,7 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get('projectId') || 'current';
+  const projectId = searchParams.get('projectId');
   
   const [isLoading, setIsLoading] = useState(true);
   
@@ -231,7 +231,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // NEW: Load ethical considerations from API
   const loadEthicalConsiderations = async (projectId: string) => {
-    if (projectId === 'current') {
+    if (!projectId) {
       // Don't try to load for default project
       setEthicalConsiderations([]);
       return;
@@ -251,7 +251,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // NEW: Acknowledge ethical considerations
   const acknowledgeEthicalConsiderations = async (projectId: string, acknowledgedIds?: string[]) => {
-    if (projectId === 'current') {
+    if (!projectId) {
       setEthicalConsiderationsAcknowledged(true);
       return;
     }
@@ -277,7 +277,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // NEW: Refresh ethical considerations
   const refreshEthicalConsiderations = async (projectId: string) => {
-    if (projectId === 'current') {
+    if (!projectId) {
       return;
     }
 
@@ -409,7 +409,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
         
         // Then sync with API if not a default project
-        if (projectId !== 'current') {
+        if (projectId !== null) {
           try {
             const response = await api.backend.projects.getProjectSync(projectId);
             if (response.success) {

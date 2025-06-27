@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, AlertTriangle, CheckCircle, XCircle, Flag, Lightbulb, Target } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft, ArrowRight, AlertTriangle, CheckCircle, XCircle, Flag, Lightbulb, Target, RefreshCw } from "lucide-react";
 import { useProject } from "@/contexts/ProjectContext";
-import { useLocation } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api"; // Remove ReflectionQuestions and ReflectionAnswers imports
+import { Question, EthicalAssessment } from "@/types/reflection-phase";
+import { QuestionGuidance } from "@/components/reflection/QuestionGuidance";
+import { api } from "@/lib/api";
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -19,46 +21,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from "@/components/ui/alert-dialog";
-
-type Question = {
-  id: string;
-  text: string;
-  key: string; // Dynamic keys now
-};
-
-const FALLBACK_REFLECTION_QUESTIONS: Question[] = [
-  { id: "1", text: "What problem are you trying to solve with your project?", key: "problem_definition" },
-  { id: "2", text: "Who are the primary users or beneficiaries of your solution?", key: "target_beneficiaries" },
-  { id: "3", text: "What potential harm could this AI system cause?", key: "potential_harm" },
-  { id: "4", text: "What data do you have access to for this project?", key: "data_availability" },
-];
+import { useLocation } from "react-router-dom";
 
 type ReflectionPhaseProps = {
   onUpdateProgress: (completed: number, total: number) => void;
   onCompletePhase?: () => void;
 };
 
-interface EthicalAssessment {
-  ethical_score: number;
-  proceed_recommendation: boolean;
-  summary: string;
-  actionable_recommendations: string[];
-  question_flags: Array<{
-    question_key: string;
-    issue: string;
-    severity: 'low' | 'medium' | 'high';
-  }>;
-  threshold_met: boolean;
-  can_proceed: boolean;
-}
-
 export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: ReflectionPhaseProps) => {
   const { reflectionAnswers, setReflectionAnswers, updatePhaseSteps } = useProject();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [assessmentDialogOpen, setAssessmentDialogOpen] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [backendQuestions, setBackendQuestions] = useState<Record<string, string> | null>(null); // Changed type
+  const [backendQuestions, setBackendQuestions] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isRetrying, setIsRetrying] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
   const [ethicalAssessment, setEthicalAssessment] = useState<EthicalAssessment | null>(null);
@@ -66,69 +45,90 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   const { toast } = useToast();
   
   const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get('projectId') || 'current';
+  const projectId = searchParams.get('projectId');
   
   const fetchingRef = useRef(false);
   const initializedRef = useRef(false);
 
-  useEffect(() => {
-    if (initializedRef.current || fetchingRef.current) return;
+  const fetchQuestions = async () => {
+    if (fetchingRef.current) return;
     
-    const fetchQuestions = async () => {
-      fetchingRef.current = true;
-      initializedRef.current = true;
-      
-      try {
-        if (projectId !== 'current') {
-          const cachedQuestions = localStorage.getItem(`project-${projectId}-reflection-questions`);
-          
-          if (cachedQuestions) {
-            console.log('Using cached reflection questions');
-            const parsedQuestions = JSON.parse(cachedQuestions);
-            setBackendQuestions(parsedQuestions);
-            
-            const convertedQuestions: Question[] = Object.entries(parsedQuestions).map(([key, text], index) => ({
-              id: (index + 1).toString(),
-              text: text as string,
-              key: key // Fixed: Remove type casting
-            }));
-            setQuestions(convertedQuestions);
-            updatePhaseSteps("reflection", convertedQuestions.length);
-          } else {
-            console.log('Fetching reflection questions from API');
-            const response = await api.backend.reflection.getQuestions(projectId);
-            if (response.success) {
-              setBackendQuestions(response.data);
-              localStorage.setItem(
-                `project-${projectId}-reflection-questions`, 
-                JSON.stringify(response.data)
-              );
-              
-              const convertedQuestions: Question[] = Object.entries(response.data).map(([key, text], index) => ({
-                id: (index + 1).toString(),
-                text: text,
-                key: key // Fixed: Remove type casting
-              }));
-              setQuestions(convertedQuestions);
-              updatePhaseSteps("reflection", convertedQuestions.length);
-            }
-          }
-        } else {
-          setQuestions(FALLBACK_REFLECTION_QUESTIONS);
-          updatePhaseSteps("reflection", FALLBACK_REFLECTION_QUESTIONS.length);
-        }
-      } catch (error) {
-        console.log('Using fallback questions due to error:', error);
-        setQuestions(FALLBACK_REFLECTION_QUESTIONS);
-        updatePhaseSteps("reflection", FALLBACK_REFLECTION_QUESTIONS.length);
-      } finally {
-        setIsLoading(false);
-        fetchingRef.current = false;
+    fetchingRef.current = true;
+    setIsLoading(true);
+    setHasError(false);
+    setErrorMessage('');
+    
+    try {
+      if (!projectId) {
+        throw new Error('Project ID is required');
       }
-    };
-    
+
+      // Try to get cached enhanced questions first
+      const cachedQuestions = localStorage.getItem(`project-${projectId}-reflection-questions`);
+      
+      if (cachedQuestions) {
+        console.log('Using cached enhanced reflection questions');
+        const parsedQuestions = JSON.parse(cachedQuestions);
+        setBackendQuestions(parsedQuestions);
+        
+        const convertedQuestions: Question[] = Object.entries(parsedQuestions.questions).map(([key, data]: [string, any], index) => ({
+          id: (index + 1).toString(),
+          text: data.question,
+          key: key,
+          guidanceSources: data.guidance_sources || []
+        }));
+        setQuestions(convertedQuestions);
+        updatePhaseSteps("reflection", convertedQuestions.length);
+        return;
+      }
+
+      console.log('Fetching enhanced reflection questions from API');
+      const response = await api.backend.reflection.getQuestions(projectId); // Include guidance
+      
+      if (response.success) {
+        setBackendQuestions(response.data);
+        localStorage.setItem(
+          `project-${projectId}-reflection-questions`, 
+          JSON.stringify(response.data)
+        );
+        
+        const convertedQuestions: Question[] = Object.entries(response.data.questions).map(([key, data]: [string, any], index) => ({
+          id: (index + 1).toString(),
+          text: data.question,
+          key: key,
+          guidanceSources: data.guidance_sources || []
+        }));
+        setQuestions(convertedQuestions);
+        updatePhaseSteps("reflection", convertedQuestions.length);
+      } else {
+        throw new Error(response.message || 'Failed to fetch questions');
+      }
+    } catch (error) {
+      console.error('Failed to fetch reflection questions:', error);
+      setHasError(true);
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to load reflection questions from server');
+      setQuestions([]);
+    } finally {
+      setIsLoading(false);
+      fetchingRef.current = false;
+    }
+  };
+
+  useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
     fetchQuestions();
   }, [projectId]);
+
+  const handleRetry = async () => {
+    setIsRetrying(true);
+    // Clear cache to force fresh fetch
+    if (projectId) {
+      localStorage.removeItem(`project-${projectId}-reflection-questions`);
+    }
+    await fetchQuestions();
+    setIsRetrying(false);
+  };
 
   const totalQuestions = questions.length;
 
@@ -158,6 +158,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   }, [reflectionAnswers, totalQuestions]);
 
   const handleAnswerChange = (value: string) => {
+    if (!questions[currentQuestionIndex]) return;
     const currentQuestion = questions[currentQuestionIndex];
     setReflectionAnswers(prev => ({
       ...prev,
@@ -166,14 +167,8 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   };
 
   const handleCompletePhase = async () => {
-    if (projectId === 'current') {
-      if (onCompletePhase) {
-        updateProgress();
-        onCompletePhase();
-      }
-      return;
-    }
-
+    if (!projectId) return;
+    
     setIsAnalyzing(true);
     try {
       // Build dynamic answers object based on current questions
@@ -201,6 +196,8 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   };
 
   const handleProceedToNextPhase = async () => {
+    if (!projectId) return;
+    
     setIsAdvancing(true);
     try {
       const response = await api.backend.reflection.advancePhase(projectId);
@@ -232,7 +229,6 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
 
   const handleReviseAnswers = () => {
     setAssessmentDialogOpen(false);
-    // User can now revise their answers and submit again
   };
 
   // Helper to get question title from key
@@ -251,6 +247,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
     }
   };
 
+  // Loading state
   if (isLoading) {
     return (
       <div className="flex flex-col h-full">
@@ -260,6 +257,79 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
         </div>
         <div className="flex-1 flex items-center justify-center">
           <div className="h-8 w-8 rounded-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (hasError) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-2">Reflection Phase</h2>
+          <p className="text-muted-foreground">
+            Answer reflection questions to help clarify your project goals and requirements.
+          </p>
+        </div>
+        
+        <div className="flex-1 flex items-center justify-center">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-6 space-y-4">
+              <div className="text-center">
+                <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Unable to Load Questions</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  We couldn't retrieve your reflection questions from the server. 
+                  Please check your connection and try again.
+                </p>
+              </div>
+              
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>{errorMessage}</AlertDescription>
+              </Alert>
+              
+              <Button 
+                onClick={handleRetry} 
+                disabled={isRetrying}
+                className="w-full"
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} />
+                {isRetrying ? 'Retrying...' : 'Retry'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // No questions available
+  if (questions.length === 0) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-2">Reflection Phase</h2>
+          <p className="text-muted-foreground">
+            Answer reflection questions to help clarify your project goals and requirements.
+          </p>
+        </div>
+        
+        <div className="flex-1 flex items-center justify-center">
+          <Card className="w-full max-w-md">
+            <CardContent className="p-6 text-center space-y-4">
+              <AlertTriangle className="h-12 w-12 text-muted-foreground mx-auto" />
+              <h3 className="text-lg font-semibold">No Questions Available</h3>
+              <p className="text-sm text-muted-foreground">
+                No reflection questions could be generated for this project.
+              </p>
+              <Button onClick={handleRetry} variant="outline" className="w-full">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -420,6 +490,12 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
             placeholder="Enter your answer here..."
             value={currentAnswer}
             onChange={(e) => handleAnswerChange(e.target.value)}
+          />
+          
+          {/* QuestionGuidance component */}
+          <QuestionGuidance
+            questionKey={currentQuestion.key}
+            guidanceSources={currentQuestion.guidanceSources || []}
           />
         </CardContent>
       </Card>
