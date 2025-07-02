@@ -27,7 +27,7 @@ export async function apiRequest<T>(
   options: ApiRequestOptions = {}
 ): Promise<T> {
   // Use the backend base URL
-  const baseUrl = "http://localhost:8000/api/v1/";
+  const baseUrl = 'https://ai-project-design-toolkit-backend-production.up.railway.app/api/v1/';
   const url = new URL(endpoint, baseUrl);
 
   if (options.params) {
