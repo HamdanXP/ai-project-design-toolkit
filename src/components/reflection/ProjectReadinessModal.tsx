@@ -235,39 +235,41 @@ export const ProjectReadinessModal: React.FC<ProjectReadinessModalProps> = ({
         </div>
         <div class="score-box ${getScoreClass(assessment.ai_appropriateness_score)}">
           <strong>AI Appropriateness: ${Math.round(assessment.ai_appropriateness_score * 100)}%</strong><br>
-          <strong>AI Recommendation:</strong> ${assessment.ai_recommendation.replace('_', ' ').toUpperCase()}<br>
+          <strong>AI Recommendation:</strong> ${getAIRecommendationText(assessment.ai_recommendation)}<br>
           ${assessment.ai_appropriateness_summary}
         </div>
       </div>
       
-      ${assessment.alternative_solutions && (
-        assessment.alternative_solutions.digital_alternatives.length > 0 ||
-        assessment.alternative_solutions.process_improvements.length > 0 ||
-        assessment.alternative_solutions.non_digital_solutions.length > 0
-      ) ? `
+      ${assessment.alternative_solutions && 
+        assessment.ai_recommendation && 
+        ["questionable", "not_appropriate"].includes(assessment.ai_recommendation) ? `
       <div class="section">
         <h2>Recommended Alternatives</h2>
         <div class="alternatives">
-          ${assessment.alternative_solutions.digital_alternatives.length > 0 ? `
+          <p><strong>Why alternatives are recommended:</strong> ${assessment.alternative_solutions.reasoning || 'AI may not be the most appropriate solution for this context.'}</p>
+          ${assessment.alternative_solutions.digital_alternatives?.length > 0 ? `
             <h3>Digital Solutions:</h3>
             <ul>
               ${assessment.alternative_solutions.digital_alternatives.map(alt => `<li>${alt}</li>`).join('')}
             </ul>
           ` : ''}
-          ${assessment.alternative_solutions.process_improvements.length > 0 ? `
+          ${assessment.alternative_solutions.process_improvements?.length > 0 ? `
             <h3>Process Improvements:</h3>
             <ul>
               ${assessment.alternative_solutions.process_improvements.map(alt => `<li>${alt}</li>`).join('')}
             </ul>
           ` : ''}
-          ${assessment.alternative_solutions.non_digital_solutions.length > 0 ? `
+          ${assessment.alternative_solutions.non_digital_solutions?.length > 0 ? `
             <h3>Non-Digital Solutions:</h3>
             <ul>
               ${assessment.alternative_solutions.non_digital_solutions.map(alt => `<li>${alt}</li>`).join('')}
             </ul>
           ` : ''}
-          ${assessment.alternative_solutions.reasoning ? `
-            <p><strong>Reasoning:</strong> ${assessment.alternative_solutions.reasoning}</p>
+          ${assessment.alternative_solutions.hybrid_approaches?.length > 0 ? `
+            <h3>Hybrid Approaches:</h3>
+            <ul>
+              ${assessment.alternative_solutions.hybrid_approaches.map(alt => `<li>${alt}</li>`).join('')}
+            </ul>
           ` : ''}
         </div>
       </div>
@@ -316,10 +318,22 @@ export const ProjectReadinessModal: React.FC<ProjectReadinessModalProps> = ({
     `;
   };
   
+  // Updated score class with higher thresholds for humanitarian context
   const getScoreClass = (score: number) => {
-    if (score >= 0.7) return 'score-high';
-    if (score >= 0.5) return 'score-medium';
-    return 'score-low';
+    if (score >= 0.7) return 'score-high';     // Green - meets humanitarian threshold
+    if (score >= 0.6) return 'score-medium';   // Amber - close but not quite there
+    return 'score-low';                        // Red - needs significant work
+  };
+
+  // Helper to get AI recommendation text for PDF
+  const getAIRecommendationText = (recommendation: string) => {
+    switch (recommendation) {
+      case 'highly_appropriate': return 'HIGHLY APPROPRIATE';
+      case 'appropriate': return 'APPROPRIATE';
+      case 'questionable': return 'QUESTIONABLE - Consider Alternatives';
+      case 'not_appropriate': return 'NOT APPROPRIATE - Use Alternatives';
+      default: return 'UNKNOWN';
+    }
   };
   
   const downloadAsText = () => {
@@ -352,7 +366,7 @@ export const ProjectReadinessModal: React.FC<ProjectReadinessModalProps> = ({
     content += `Ethical Readiness: ${Math.round(assessment.ethical_score * 100)}%\n`;
     content += `${assessment.ethical_summary}\n\n`;
     content += `AI Appropriateness: ${Math.round(assessment.ai_appropriateness_score * 100)}%\n`;
-    content += `AI Recommendation: ${assessment.ai_recommendation.replace('_', ' ').toUpperCase()}\n`;
+    content += `AI Recommendation: ${getAIRecommendationText(assessment.ai_recommendation)}\n`;
     content += `${assessment.ai_appropriateness_summary}\n\n`;
     
     if (assessment.actionable_recommendations.length > 0) {
@@ -387,38 +401,43 @@ export const ProjectReadinessModal: React.FC<ProjectReadinessModalProps> = ({
     }
   };
 
-  // Helper to get AI recommendation color and icon with dark mode support
+  // Updated AI recommendation styling with clearer text
   const getAIRecommendationStyle = (recommendation: string) => {
     switch (recommendation) {
       case 'highly_appropriate':
         return { 
           color: 'text-green-700 dark:text-green-300', 
           bg: 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800', 
-          icon: CheckCircle 
+          icon: CheckCircle,
+          text: 'HIGHLY APPROPRIATE'
         };
       case 'appropriate':
         return { 
           color: 'text-blue-700 dark:text-blue-300', 
           bg: 'bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800', 
-          icon: CheckCircle 
+          icon: CheckCircle,
+          text: 'APPROPRIATE'
         };
       case 'questionable':
         return { 
           color: 'text-amber-700 dark:text-amber-300', 
           bg: 'bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800', 
-          icon: AlertTriangle 
+          icon: AlertTriangle,
+          text: 'QUESTIONABLE - Consider Alternatives'
         };
       case 'not_appropriate':
         return { 
           color: 'text-red-700 dark:text-red-300', 
           bg: 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800', 
-          icon: XCircle 
+          icon: XCircle,
+          text: 'NOT APPROPRIATE - Use Alternatives'
         };
       default:
         return { 
           color: 'text-gray-700 dark:text-gray-300', 
           bg: 'bg-gray-50 dark:bg-gray-950 border-gray-200 dark:border-gray-800', 
-          icon: AlertTriangle 
+          icon: AlertTriangle,
+          text: 'UNKNOWN'
         };
     }
   };
@@ -498,7 +517,7 @@ export const ProjectReadinessModal: React.FC<ProjectReadinessModalProps> = ({
                   <div className="flex items-center gap-2 mb-2">
                     <AIIcon className={`h-4 w-4 ${aiStyle.color}`} />
                     <span className={`text-sm font-medium ${aiStyle.color}`}>
-                      AI Recommendation: {assessment.ai_recommendation.replace('_', ' ').toUpperCase()}
+                      AI Recommendation: {aiStyle.text}
                     </span>
                   </div>
                   <p className={`text-xs ${aiStyle.color}`}>
@@ -506,15 +525,17 @@ export const ProjectReadinessModal: React.FC<ProjectReadinessModalProps> = ({
                   </p>
                 </div>
 
-                {/* Alternative Solutions (if AI not appropriate) */}
-                {assessment.alternative_solutions && (
+                {/* Alternative Solutions (only show when AI is questionable/not appropriate) */}
+                {assessment.alternative_solutions && 
+                 assessment.ai_recommendation && 
+                 ["questionable", "not_appropriate"].includes(assessment.ai_recommendation) && (
                   <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-3 rounded-lg">
                     <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
                       <Settings className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       <span className="text-blue-700 dark:text-blue-300">Recommended Alternatives</span>
                     </h5>
                     <div className="space-y-2 text-xs">
-                      {assessment.alternative_solutions.digital_alternatives.length > 0 && (
+                      {assessment.alternative_solutions.digital_alternatives?.length > 0 && (
                         <div>
                           <span className="font-medium text-blue-800 dark:text-blue-200">Digital Solutions:</span>
                           <ul className="ml-2 mt-1">
@@ -524,7 +545,7 @@ export const ProjectReadinessModal: React.FC<ProjectReadinessModalProps> = ({
                           </ul>
                         </div>
                       )}
-                      {assessment.alternative_solutions.process_improvements.length > 0 && (
+                      {assessment.alternative_solutions.process_improvements?.length > 0 && (
                         <div>
                           <span className="font-medium text-blue-800 dark:text-blue-200">Process Improvements:</span>
                           <ul className="ml-2 mt-1">
@@ -534,7 +555,31 @@ export const ProjectReadinessModal: React.FC<ProjectReadinessModalProps> = ({
                           </ul>
                         </div>
                       )}
-                      <p className="text-blue-600 dark:text-blue-400 italic mt-2">{assessment.alternative_solutions.reasoning}</p>
+                      {assessment.alternative_solutions.non_digital_solutions?.length > 0 && (
+                        <div>
+                          <span className="font-medium text-blue-800 dark:text-blue-200">Non-Digital Solutions:</span>
+                          <ul className="ml-2 mt-1">
+                            {assessment.alternative_solutions.non_digital_solutions.map((alt, i) => (
+                              <li key={i} className="text-blue-700 dark:text-blue-300">• {alt}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {assessment.alternative_solutions.hybrid_approaches?.length > 0 && (
+                        <div>
+                          <span className="font-medium text-blue-800 dark:text-blue-200">Hybrid Approaches:</span>
+                          <ul className="ml-2 mt-1">
+                            {assessment.alternative_solutions.hybrid_approaches.map((alt, i) => (
+                              <li key={i} className="text-blue-700 dark:text-blue-300">• {alt}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {assessment.alternative_solutions.reasoning && (
+                        <p className="text-blue-600 dark:text-blue-400 italic mt-2">
+                          {assessment.alternative_solutions.reasoning}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )}
@@ -657,16 +702,22 @@ export const ProjectReadinessModal: React.FC<ProjectReadinessModalProps> = ({
         </div>
 
         <AlertDialogFooter className="flex gap-2">
-          <AlertDialogCancel onClick={onRevise} disabled={isAdvancing}>
+          <AlertDialogCancel 
+            onClick={onRevise} 
+            disabled={isAdvancing}
+            className={assessment.proceed_recommendation ? "" : "bg-blue-600 hover:bg-blue-700 text-white"}
+          >
             Revise Answers
           </AlertDialogCancel>
-          <AlertDialogAction 
-            onClick={onProceed}
-            disabled={isAdvancing}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            {isAdvancing ? 'Proceeding...' : 'Proceed to Scoping'}
-          </AlertDialogAction>
+          {assessment.proceed_recommendation && (
+            <AlertDialogAction 
+              onClick={onProceed}
+              disabled={isAdvancing}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isAdvancing ? 'Proceeding...' : 'Proceed to Scoping'}
+            </AlertDialogAction>
+          )}
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

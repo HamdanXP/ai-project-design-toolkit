@@ -11,6 +11,7 @@ import { Question, ProjectReadinessAssessment } from "@/types/reflection-phase";
 import { QuestionGuidance } from "@/components/reflection/QuestionGuidance";
 import { ProjectReadinessModal } from "@/components/reflection/ProjectReadinessModal";
 import { api } from "@/lib/api";
+import { REFLECTION_MAX_CHARS, REFLECTION_MIN_CHARS } from "@/config";
 import { useLocation } from "react-router-dom";
 
 type ReflectionPhaseProps = {
@@ -33,12 +34,29 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   const [projectReadinessAssessment, setProjectReadinessAssessment] = useState<ProjectReadinessAssessment | null>(null);
   const location = useLocation();
   const { toast } = useToast();
+
+  const MIN_CHARACTERS = REFLECTION_MIN_CHARS;
+  const MAX_CHARACTERS = REFLECTION_MAX_CHARS;
   
   const searchParams = new URLSearchParams(location.search);
   const projectId = searchParams.get('projectId');
   
   const fetchingRef = useRef(false);
   const initializedRef = useRef(false);
+
+  // FIXED: Character count status now uses trimmed text
+  const getCharacterCountStatus = (text: string) => {
+    const trimmedLength = text.trim().length; // Use trimmed length
+    if (trimmedLength < MIN_CHARACTERS) {
+      return { status: 'below-min', color: 'text-amber-600' };
+    } else if (trimmedLength >= MAX_CHARACTERS) {
+      return { status: 'at-max', color: 'text-red-600' };
+    } else if (trimmedLength >= MAX_CHARACTERS - 100) { // Warning zone (last 100 chars)
+      return { status: 'approaching-max', color: 'text-orange-600' };
+    } else {
+      return { status: 'valid', color: 'text-green-600' };
+    }
+  };
 
   const fetchQuestions = async () => {
     if (fetchingRef.current) return;
@@ -136,10 +154,12 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
     updateProgress();
   };
 
+  // FIXED: Progress calculation uses trimmed length consistently
   const updateProgress = () => {
-    const completedCount = Object.keys(reflectionAnswers).filter(key => 
-      reflectionAnswers[key] && reflectionAnswers[key].trim() !== ""
-    ).length;
+    const completedCount = Object.keys(reflectionAnswers).filter(key => {
+      const answer = reflectionAnswers[key]?.trim() || "";
+      return answer.length >= MIN_CHARACTERS; // This already uses trimmed length
+    }).length;
     onUpdateProgress(completedCount, totalQuestions);
   };
 
@@ -147,8 +167,26 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
     updateProgress();
   }, [reflectionAnswers, totalQuestions]);
 
+  // IMPROVED: Handle character limit based on trimmed length
   const handleAnswerChange = (value: string) => {
     if (!questions[currentQuestionIndex]) return;
+    
+    // Allow typing but enforce max limit on trimmed content
+    const trimmedValue = value.trim();
+    
+    // If trimmed content exceeds max, don't allow the change
+    if (trimmedValue.length > MAX_CHARACTERS) {
+      // Find the last valid position by trimming to max length
+      const truncated = trimmedValue.slice(0, MAX_CHARACTERS);
+      setReflectionAnswers(prev => ({
+        ...prev,
+        [questions[currentQuestionIndex].key]: truncated
+      }));
+      return;
+    }
+    
+    // Allow the change (including trailing spaces for user experience)
+    // but the validation will be based on trimmed content
     const currentQuestion = questions[currentQuestionIndex];
     setReflectionAnswers(prev => ({
       ...prev,
@@ -161,10 +199,11 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
     
     setIsAnalyzing(true);
     try {
-      // Build dynamic answers object based on current questions
+      // FIXED: Build answers object with trimmed values
       const answers: Record<string, string> = {};
       questions.forEach(q => {
-        answers[q.key] = reflectionAnswers[q.key] || '';
+        const answer = reflectionAnswers[q.key] || '';
+        answers[q.key] = answer.trim(); // Send trimmed answers to backend
       });
       
       const response = await api.backend.reflection.completePhase(projectId, answers);
@@ -174,7 +213,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
         const assessment: ProjectReadinessAssessment = {
           ethical_score: response.data.ethical_score,
           ethical_summary: response.data.summary,
-          ai_appropriateness_score: response.data.ai_appropriateness_score || 0.5, // Default if not provided
+          ai_appropriateness_score: response.data.ai_appropriateness_score || 0.5,
           ai_appropriateness_summary: response.data.ai_appropriateness_summary || "AI appropriateness not fully evaluated",
           ai_recommendation: response.data.ai_recommendation || 'appropriate',
           alternative_solutions: response.data.alternative_solutions,
@@ -336,10 +375,18 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
   const currentAnswer = reflectionAnswers[currentQuestion.key] || "";
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
-  const answeredQuestionsCount = Object.keys(reflectionAnswers).filter(key => 
-    reflectionAnswers[key] && reflectionAnswers[key].trim() !== ""
-  ).length;
+  
+  // FIXED: Use trimmed length for all validations
+  const answeredQuestionsCount = Object.keys(reflectionAnswers).filter(key => {
+    const answer = reflectionAnswers[key]?.trim() || "";
+    return answer.length >= MIN_CHARACTERS;
+  }).length;
   const isPhaseComplete = answeredQuestionsCount === totalQuestions;
+  
+  // FIXED: Character status and remaining chars based on trimmed content
+  const trimmedAnswer = currentAnswer.trim();
+  const charStatus = getCharacterCountStatus(currentAnswer);
+  const remainingChars = MAX_CHARACTERS - trimmedAnswer.length;
 
   return (
     <div className="flex flex-col h-full">
@@ -382,11 +429,26 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
             onChange={(e) => handleAnswerChange(e.target.value)}
           />
           
-          {/* QuestionGuidance component */}
-          <QuestionGuidance
-            questionKey={currentQuestion.key}
-            guidanceSources={currentQuestion.guidanceSources || []}
-          />
+          <div className="flex justify-between items-center">
+            <QuestionGuidance
+              questionKey={currentQuestion.key}
+              guidanceSources={currentQuestion.guidanceSources || []}
+            />
+            
+            {/* FIXED: Character counter shows trimmed length */}
+            <div className={`text-sm ${charStatus.color}`}>
+              {trimmedAnswer.length}/{MAX_CHARACTERS}
+              {trimmedAnswer.length < MIN_CHARACTERS && (
+                <span className="ml-2 text-amber-600">(Need {MIN_CHARACTERS - trimmedAnswer.length} more)</span>
+              )}
+              {remainingChars <= 100 && remainingChars > 0 && trimmedAnswer.length >= MIN_CHARACTERS && (
+                <span className="ml-2 text-orange-600">({remainingChars} remaining)</span>
+              )}
+              {remainingChars === 0 && (
+                <span className="ml-2 text-red-600">(Limit reached)</span>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
 

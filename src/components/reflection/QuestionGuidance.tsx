@@ -63,7 +63,7 @@ const generateSourceUrl = (source: GuidanceSource): string => {
   if (!source.filename || !source.source_location) {
     return "";
   }
-  return `https://storage.googleapis.com/${source.source_location}/${source.filename}`;
+  return `https://storage.googleapis.com/${source.source_location}${source.filename}`;
 };
 
 export const QuestionGuidance: React.FC<QuestionGuidanceProps> = ({
@@ -74,7 +74,7 @@ export const QuestionGuidance: React.FC<QuestionGuidanceProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   if (!guidanceSources || guidanceSources.length === 0) {
-    return null;
+    return <div></div>;
   }
 
   return (

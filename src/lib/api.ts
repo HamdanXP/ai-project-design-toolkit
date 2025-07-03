@@ -1,6 +1,8 @@
 import { env } from "./env";
 import { toast } from "sonner";
 import { EthicalConsideration, ProjectPhase } from "@/types/project";
+import { API_BASE_URL } from "@/config";
+
 import {
   DevelopmentPhaseData,
   ProjectGenerationRequest,
@@ -27,7 +29,7 @@ export async function apiRequest<T>(
   options: ApiRequestOptions = {}
 ): Promise<T> {
   // Use the backend base URL
-  const baseUrl = 'https://ai-project-design-toolkit-backend-production.up.railway.app/api/v1/';
+  const baseUrl = API_BASE_URL;
   const url = new URL(endpoint, baseUrl);
 
   if (options.params) {
