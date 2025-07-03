@@ -106,7 +106,7 @@ export const useDevelopmentPhase = () => {
       setError(null);
       
       // Check if we have a valid project ID
-      if (!projectId || projectId === 'current') {
+      if (!projectId) {
         // Handle default/demo project case
         console.log('No specific project ID provided, loading demo data...');
         setLoading(false);
@@ -161,7 +161,7 @@ export const useDevelopmentPhase = () => {
   };
 
   const loadSolutions = async () => {
-    if (!projectId || projectId === 'current') {
+    if (!projectId) {
       // Handle demo case
       return;
     }
@@ -207,7 +207,7 @@ export const useDevelopmentPhase = () => {
       setSelectedSolution(solution);
       
       // Only save to backend if we have a real project ID
-      if (projectId && projectId !== 'current') {
+      if (projectId) {
         const selection = await developmentApi.selectSolution(
           projectId, 
           solution.id, 
@@ -241,7 +241,7 @@ export const useDevelopmentPhase = () => {
       setGenerationInProgress(true);
       
       // For demo projects, simulate generation
-      if (!projectId || projectId === 'current') {        
+      if (!projectId) {        
         return;
       }
       
@@ -279,7 +279,7 @@ export const useDevelopmentPhase = () => {
   const downloadFile = async (fileType: 'complete' | 'documentation' | 'setup' | 'ethical-report' | 'deployment') => {
     try {
       // For demo projects, simulate download
-      if (!projectId || projectId === 'current') {
+      if (!projectId) {
         toast({
           title: "Demo Download",
           description: `This would download the ${fileType} in a real project`,

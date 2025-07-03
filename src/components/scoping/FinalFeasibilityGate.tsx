@@ -41,7 +41,7 @@ export const FinalFeasibilityGate = ({
 }: FinalFeasibilityGateProps) => {
 
   const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get('projectId') || 'current';
+  const projectId = searchParams.get('projectId');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
