@@ -104,21 +104,6 @@ export const DatasetList = ({
                 {formatDescription(dataset.description)}
               </p>
 
-              {dataset.columns && dataset.columns.length > 0 && (
-                <div className="flex flex-wrap gap-1 mb-3">
-                  {dataset.columns.slice(0, 4).map((type, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs px-2 py-0.5">
-                      {type}
-                    </Badge>
-                  ))}
-                  {dataset.columns.length > 4 && (
-                    <Badge variant="outline" className="text-xs px-2 py-0.5">
-                      +{dataset.columns.length - 4} more
-                    </Badge>
-                  )}
-                </div>
-              )}
-
               <div className="flex justify-between items-center pt-2">
                 <div className="text-xs text-gray-500">
                   Source: {getDatasetSource(dataset)}

@@ -58,10 +58,6 @@ export type Dataset = {
   size?: string; // Maps to size_estimate
   license?: string; // Default value
   
-  // Legacy fields (no longer used)
-  columns?: string[];
-  sampleRows?: any[][];
-  
   // Additional fields for enhanced dataset information
   last_modified?: string;
   num_resources?: number;
@@ -157,7 +153,7 @@ export function mapDatasetToBackend(dataset: Dataset) {
     url: dataset.url || dataset.source || '',
     description: dataset.description || '',
     size_estimate: dataset.size_estimate || dataset.size || 'Unknown',
-    data_types: dataset.data_types || dataset.columns || [],
+    data_types: dataset.data_types || [],
     ethical_concerns: dataset.ethical_concerns || [],
     suitability_score: dataset.suitability_score
   };
