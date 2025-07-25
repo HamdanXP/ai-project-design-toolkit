@@ -4,7 +4,6 @@ import { useProject } from "@/contexts/ProjectContext";
 import { scopingApi, convertApiUseCase, convertApiDataset } from "@/lib/scoping-api";
 
 export const useScopingPhaseData = () => {
-  // State for UI
   const [useCases, setUseCases] = useState<UseCase[]>([]);
   const [loadingUseCases, setLoadingUseCases] = useState(false);
   const [errorUseCases, setErrorUseCases] = useState<string | null>(null);
@@ -19,24 +18,21 @@ export const useScopingPhaseData = () => {
   const [noDatasets, setNoDatasets] = useState(false);
   const [hasSearchedDatasets, setHasSearchedDatasets] = useState(false);
   
-  // Derived state
-  const [feasibilityScore, setFeasibilityScore] = useState<number>(0);
-  const [feasibilityLevel, setFeasibilityLevel] = useState<'high' | 'medium' | 'low'>('medium'); // Changed from feasibilityRisk
   const [suitabilityScore, setSuitabilityScore] = useState<number>(0);
 
   const { 
-    constraints, 
     suitabilityChecks, 
     selectedUseCase,
     setSelectedUseCase,
     setSelectedDataset,
-    scopingActiveStep
+    scopingActiveStep,
+    technicalInfrastructure, // Get from context
+    infrastructureAssessment // Get from context
   } = useProject();
 
   const searchParams = new URLSearchParams(location.search);
   const projectId = searchParams.get('projectId');
 
-  // Manual function to load use cases
   const loadUseCases = async () => {
     setLoadingUseCases(true);
     setErrorUseCases(null);
@@ -44,8 +40,10 @@ export const useScopingPhaseData = () => {
     setHasSearchedUseCases(true);
     
     try {
-      console.log('Loading AI-focused use cases...');
-      const apiUseCases = await scopingApi.getUseCases(projectId);
+      console.log('Loading AI-focused use cases with infrastructure context...');
+      
+      // Use the technical infrastructure from context
+      const apiUseCases = await scopingApi.getUseCases(projectId, technicalInfrastructure);
       
       if (!Array.isArray(apiUseCases)) {
         throw new Error('Invalid use cases data format');
@@ -98,7 +96,6 @@ export const useScopingPhaseData = () => {
     }
   };
 
-  // Manual function to load datasets
   const loadDatasets = async () => {
     if (!selectedUseCase) {
       setDatasets([]);
@@ -145,7 +142,6 @@ export const useScopingPhaseData = () => {
     }
   };
 
-  // Load datasets when use case is selected AND we're on step 3
   useEffect(() => {
     if (selectedUseCase && scopingActiveStep === 3) {
       loadDatasets();
@@ -157,173 +153,40 @@ export const useScopingPhaseData = () => {
     }
   }, [selectedUseCase, scopingActiveStep, projectId]);
 
-  // Enhanced feasibility calculation with debugging
-  useEffect(() => {
-    console.log('=== FEASIBILITY CALCULATION START ===');
-    console.log('Current constraints:', constraints);
-    
-    let score = 0;
-    
-    // Helper function to find constraint value
-    const getConstraintValue = (id: string): string | boolean | undefined => {
-      const constraint = constraints.find(c => c.id === id);
-      const value = constraint?.value;
-      console.log(`Constraint ${id}:`, value);
-      return value;
-    };
-    
-    // ORGANIZATIONAL FACTORS (50% total)
-    
-    // Stakeholder Support (25%) - Most critical factor
-    const stakeholderSupport = getConstraintValue("stakeholder-support");
-    let stakeholderScore = 0;
-    if (stakeholderSupport === "champion") stakeholderScore = 25;
-    else if (stakeholderSupport === "high") stakeholderScore = 22;
-    else if (stakeholderSupport === "moderate") stakeholderScore = 15;
-    else stakeholderScore = 8; // Even low support gets some points
-    score += stakeholderScore;
-    console.log(`Stakeholder support score: ${stakeholderScore}`);
-    
-    // Budget (20%) - Important but not everything
-    const budget = getConstraintValue("budget");
-    let budgetScore = 0;
-    if (budget === "unlimited") budgetScore = 20;
-    else if (budget === "substantial") budgetScore = 18;
-    else if (budget === "moderate") budgetScore = 14;
-    else budgetScore = 10; // Limited budget can work with smart planning
-    score += budgetScore;
-    console.log(`Budget score: ${budgetScore}`);
-    
-    // Sustainability Planning (5%)
-    const sustainability = getConstraintValue("sustainability");
-    let sustainabilityScore = 0;
-    if (sustainability === true) sustainabilityScore = 5;
-    else sustainabilityScore = 2;
-    score += sustainabilityScore;
-    console.log(`Sustainability score: ${sustainabilityScore}`);
-    
-    // PRACTICAL CONSTRAINTS (30% total)
-    
-    // Infrastructure & Connectivity (15%) - Critical in humanitarian contexts
-    const internet = getConstraintValue("internet");
-    const infrastructure = getConstraintValue("infrastructure");
-    const compute = getConstraintValue("compute");
-    
-    let infraScore = 0;
-    if (internet === true && infrastructure === true && (compute === "cloud" || compute === "hybrid" || compute === "enterprise")) {
-      infraScore = 15; // Excellent setup
-    } else if (internet === true && (infrastructure === true || compute === "cloud" || compute === "enterprise")) {
-      infraScore = 12; // Good enough for most projects
-    } else if (internet === true || infrastructure === true) {
-      infraScore = 9;  // Workable with planning
-    } else {
-      infraScore = 5;  // Major constraint but not impossible
-    }
-    score += infraScore;
-    console.log(`Infrastructure score: ${infraScore}`);
-    
-    // Timeline (10%) - More flexible than previously thought
-    const time = getConstraintValue("time");
-    let timeScore = 0;
-    if (time === "ongoing" || time === "long-term") timeScore = 10;
-    else if (time === "medium-term") timeScore = 8;
-    else timeScore = 6; // Short timeline just means smaller scope
-    score += timeScore;
-    console.log(`Time score: ${timeScore}`);
-    
-    // Regulatory Compliance (5%)
-    const regulatory = getConstraintValue("regulatory-compliance");
-    let regulatoryScore = 0;
-    if (regulatory === "minimal") regulatoryScore = 5;
-    else if (regulatory === "moderate") regulatoryScore = 4;
-    else regulatoryScore = 2;
-    score += regulatoryScore;
-    console.log(`Regulatory score: ${regulatoryScore}`);
-    
-    // CAPABILITY FACTORS (20% total)
-    
-    // Learning Willingness (10%) - More important than current skills
-    const learningCapacity = getConstraintValue("learning-capacity");
-    let learningScore = 0;
-    if (learningCapacity === true) learningScore = 10;
-    else learningScore = 5; // Everyone can learn
-    score += learningScore;
-    console.log(`Learning score: ${learningScore}`);
-    
-    // Team Size & Support (5%)
-    const teamSize = getConstraintValue("team-size");
-    let teamScore = 0;
-    if (teamSize === "large" || teamSize === "medium") teamScore = 5;
-    else if (teamSize === "small") teamScore = 4;
-    else teamScore = 3; // Individual projects can work too
-    score += teamScore;
-    console.log(`Team size score: ${teamScore}`);
-    
-    // Current Experience (5%) - Lowest weight since toolkit helps with this
-    const aiExp = getConstraintValue("ai-experience");
-    const techSkills = getConstraintValue("technical-skills");
-    
-    let experienceScore = 0;
-    if (aiExp === "advanced" || techSkills === "excellent") experienceScore = 5;
-    else if (aiExp === "intermediate" || techSkills === "good") experienceScore = 4;
-    else if (aiExp === "beginner" || techSkills === "moderate") experienceScore = 3;
-    else experienceScore = 2; // Base score - everyone starts somewhere!
-    score += experienceScore;
-    console.log(`Experience score: ${experienceScore}`);
-    
-    const finalScore = Math.min(Math.round(score), 100);
-    console.log(`Total calculated score: ${score}, final score: ${finalScore}`);
-    
-    // More encouraging feasibility levels
-    let level: 'high' | 'medium' | 'low' = 'medium';
-    if (finalScore >= 70) level = 'high';    // High feasibility
-    else if (finalScore >= 50) level = 'medium'; // Medium feasibility
-    else level = 'low'; // Low feasibility
-    
-    console.log(`Feasibility level: ${level}`);
-    console.log('=== FEASIBILITY CALCULATION END ===');
-    
-    setFeasibilityScore(finalScore);
-    setFeasibilityLevel(level); // Changed from setFeasibilityRisk
-  }, [constraints]);
-
-  // Humanitarian-focused suitability calculation
   useEffect(() => {
     const calculateHumanitarianSuitabilityScore = () => {
-      // Humanitarian-focused weights
       const weights = {
-        privacy_ethics: 0.35,           // 35% - Safety and ethics first
-        population_representativeness: 0.30,  // 30% - Core to humanitarian impact  
-        data_completeness: 0.20,        // 20% - Important but manageable
-        quality_sufficiency: 0.15       // 15% - Often workable
+        privacy_ethics: 0.35,
+        population_representativeness: 0.30,
+        data_completeness: 0.20,
+        quality_sufficiency: 0.15
       };
       
-      // Context-aware scoring
       const calculateQuestionScore = (questionId: string, answer: string): number => {
         switch (questionId) {
           case 'privacy_ethics':
           case 'privacy':
-            if (answer === 'yes') return 1.0;    // Privacy Safe
-            if (answer === 'unknown') return 0.4; // Need Review - concerning
-            return 0.0;                           // High Risk - unacceptable
+            if (answer === 'yes') return 1.0;
+            if (answer === 'unknown') return 0.4;
+            return 0.0;
             
           case 'population_representativeness':
           case 'representativeness':
-            if (answer === 'yes') return 1.0;    // Representative
-            if (answer === 'unknown') return 0.6; // Partially - workable
-            return 0.2;                           // Limited Coverage - major issue
+            if (answer === 'yes') return 1.0;
+            if (answer === 'unknown') return 0.6;
+            return 0.2;
             
           case 'data_completeness':
           case 'completeness':
-            if (answer === 'yes') return 1.0;    // Looks Clean
-            if (answer === 'unknown') return 0.7; // Some Issues - common and fixable
-            return 0.3;                           // Many Problems - significant work
+            if (answer === 'yes') return 1.0;
+            if (answer === 'unknown') return 0.7;
+            return 0.3;
             
           case 'quality_sufficiency':
           case 'sufficiency':
-            if (answer === 'yes') return 1.0;    // Sufficient
-            if (answer === 'unknown') return 0.6; // Borderline - might work
-            return 0.2;                           // Insufficient - need alternatives
+            if (answer === 'yes') return 1.0;
+            if (answer === 'unknown') return 0.6;
+            return 0.2;
             
           default:
             if (answer === 'yes') return 1.0;
@@ -335,7 +198,6 @@ export const useScopingPhaseData = () => {
       let weightedScore = 0;
       let totalWeight = 0;
       
-      // Map old IDs to new IDs for backwards compatibility
       const idMapping = {
         'completeness': 'data_completeness',
         'representativeness': 'population_representativeness', 
@@ -343,9 +205,7 @@ export const useScopingPhaseData = () => {
         'sufficiency': 'quality_sufficiency'
       };
       
-      // Calculate weighted score for each component
       Object.entries(weights).forEach(([newId, weight]) => {
-        // Find check by new ID or old ID
         const oldId = Object.keys(idMapping).find(key => idMapping[key] === newId);
         const check = suitabilityChecks.find(c => c.id === newId || c.id === oldId);
         
@@ -356,7 +216,6 @@ export const useScopingPhaseData = () => {
         }
       });
       
-      // Convert to percentage
       return totalWeight > 0 ? Math.round((weightedScore / totalWeight) * 100) : 0;
     };
     
@@ -364,7 +223,6 @@ export const useScopingPhaseData = () => {
     setSuitabilityScore(newScore);
   }, [suitabilityChecks]);
 
-  // Dataset filtering functions
   const filterDatasets = (term: string, category: string) => {
     let filtered = datasets;
     
@@ -392,7 +250,6 @@ export const useScopingPhaseData = () => {
     filterDatasets(searchTerm, category);
   };
 
-  // Enhanced use case selection with storage and unselection support
   const handleSelectUseCase = (useCase: UseCase | null, setSelectedUseCaseFunc: (useCase: UseCase | null) => void) => {
     setSelectedUseCaseFunc(useCase);
     setUseCases(prevUseCases => 
@@ -414,7 +271,6 @@ export const useScopingPhaseData = () => {
     }
   };
 
-  // Enhanced dataset selection with storage
   const handleSelectDataset = (dataset: Dataset) => {
     setSelectedDataset(dataset);
 
@@ -428,7 +284,6 @@ export const useScopingPhaseData = () => {
     }
   };
 
-  // Continue without use case
   const handleContinueWithoutUseCase = () => {
     setSelectedUseCase({
       id: "no_use_case_selected",
@@ -452,7 +307,6 @@ export const useScopingPhaseData = () => {
     }
   };
 
-  // Fixed retry function for use cases
   const handleRetryUseCases = () => {
     setErrorUseCases(null);
     setNoUseCasesFound(false);
@@ -460,7 +314,6 @@ export const useScopingPhaseData = () => {
     loadUseCases();
   };
 
-  // Retry function for datasets
   const handleRetryDatasets = () => {
     setNoDatasets(false);
     setDatasets([]);
@@ -469,7 +322,6 @@ export const useScopingPhaseData = () => {
   };
 
   return {
-    // Data
     useCases,
     errorUseCases,
     noUseCasesFound,
@@ -479,16 +331,11 @@ export const useScopingPhaseData = () => {
     selectedCategory,
     noDatasets,
     
-    // Loading states
     loadingUseCases,
     loadingDatasets,
     
-    // Derived data
-    feasibilityScore,
-    feasibilityLevel, // Changed from feasibilityRisk
     suitabilityScore,
     
-    // Handler functions
     handleSearch,
     handleCategorySelect,
     handleSelectUseCase,
@@ -498,7 +345,6 @@ export const useScopingPhaseData = () => {
     handleRetryDatasets,
     filterDatasets,
     
-    // Manual trigger functions
     loadUseCases,
     loadDatasets
   };

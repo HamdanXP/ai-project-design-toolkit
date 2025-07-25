@@ -1,6 +1,7 @@
 import { env } from "./env";
 import { toast } from "sonner";
 import { EthicalConsideration, ProjectPhase } from "@/types/project";
+import { TechnicalInfrastructure, InfrastructureAssessment } from "@/types/scoping-phase";
 import { API_BASE_URL } from "@/config";
 
 import {
@@ -11,24 +12,14 @@ import {
   DevelopmentStatus,
 } from "@/types/development-phase";
 
-/**
- * API request options
- */
 interface ApiRequestOptions extends RequestInit {
   params?: Record<string, string>;
 }
 
-/**
- * Make an API request
- * @param endpoint The API endpoint
- * @param options Request options
- * @returns The API response
- */
 export async function apiRequest<T>(
   endpoint: string,
   options: ApiRequestOptions = {}
 ): Promise<T> {
-  // Use the backend base URL
   const baseUrl = API_BASE_URL;
   const url = new URL(endpoint, baseUrl);
 
@@ -38,25 +29,21 @@ export async function apiRequest<T>(
     });
   }
 
-  // Default headers
   const headers = new Headers(options.headers);
   if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
 
   try {
-    // Make the request
     const response = await fetch(url.toString(), {
       ...options,
       headers,
     });
 
-    // Handle non-JSON responses
     const contentType = response.headers.get("Content-Type");
     if (contentType && contentType.includes("application/json")) {
       const data = await response.json();
 
-      // Check for API errors
       if (!response.ok) {
         const errorMsg = data.message || "API Error";
         toast.error(errorMsg);
@@ -66,7 +53,6 @@ export async function apiRequest<T>(
       return data as T;
     }
 
-    // Handle success for non-JSON responses
     if (!response.ok) {
       const errorMsg = "API Error";
       toast.error(errorMsg);
@@ -75,7 +61,6 @@ export async function apiRequest<T>(
 
     return undefined as unknown as T;
   } catch (error) {
-    // If API server is not available, use localStorage as fallback
     if (error instanceof TypeError && error.message.includes("fetch")) {
       console.warn("API server not available. Using localStorage fallback.");
       return handleLocalStorageFallback<T>(endpoint, options);
@@ -84,29 +69,22 @@ export async function apiRequest<T>(
   }
 }
 
-/**
- * Fallback to localStorage when API is not available
- */
 function handleLocalStorageFallback<T>(
   endpoint: string,
   options: ApiRequestOptions
 ): T {
   const method = options.method?.toUpperCase() || "GET";
 
-  // Extract collection name from the endpoint (e.g., '/projects' -> 'projects')
   const collection = endpoint.split("/").filter(Boolean)[0] || "default";
   const id = endpoint.split("/").filter(Boolean)[1];
 
-  // Handle different HTTP methods
   switch (method) {
     case "GET": {
       if (id) {
-        // Get a single item
         const items = JSON.parse(localStorage.getItem(collection) || "[]");
         const item = items.find((item: any) => item.id === id);
         return item as unknown as T;
       } else {
-        // Get all items
         return JSON.parse(
           localStorage.getItem(collection) || "[]"
         ) as unknown as T;
@@ -114,7 +92,6 @@ function handleLocalStorageFallback<T>(
     }
 
     case "POST": {
-      // Create a new item
       const items = JSON.parse(localStorage.getItem(collection) || "[]");
       const body = options.body ? JSON.parse(options.body as string) : {};
       const newItem = {
@@ -128,7 +105,6 @@ function handleLocalStorageFallback<T>(
     }
 
     case "PUT": {
-      // Update an item
       if (!id) throw new Error("ID is required for PUT requests");
 
       const items = JSON.parse(localStorage.getItem(collection) || "[]");
@@ -148,7 +124,6 @@ function handleLocalStorageFallback<T>(
     }
 
     case "DELETE": {
-      // Delete an item
       if (!id) throw new Error("ID is required for DELETE requests");
 
       const items = JSON.parse(localStorage.getItem(collection) || "[]");
@@ -162,9 +137,6 @@ function handleLocalStorageFallback<T>(
   }
 }
 
-/**
- * Backend API response types
- */
 export interface BackendProject {
   id: string;
   title: string;
@@ -182,7 +154,7 @@ export interface BackendApiResponse<T> {
 }
 
 export interface ReflectionQuestions {
-  [key: string]: string; // Dynamic questions
+  [key: string]: string;
 }
 
 export interface ReflectionAnswers {
@@ -196,9 +168,6 @@ export interface ReflectionAnalysis {
   concerns: string[];
 }
 
-/**
- * Type definitions for legacy API responses (for fallback compatibility)
- */
 export interface Project {
   id: string;
   name: string;
@@ -218,9 +187,6 @@ export interface ProjectSuggestion {
   prompt: string;
 }
 
-/**
- * API client with convenience methods for CRUD operations
- */
 export const api = {
   get: <T>(endpoint: string, options?: ApiRequestOptions) =>
     apiRequest<T>(endpoint, { method: "GET", ...options }),
@@ -242,9 +208,6 @@ export const api = {
   delete: <T>(endpoint: string, options?: ApiRequestOptions) =>
     apiRequest<T>(endpoint, { method: "DELETE", ...options }),
 
-  /**
-   * Backend API methods
-   */
   backend: {
     projects: {
       create: async (
@@ -319,9 +282,49 @@ export const api = {
       },
     },
 
-    /**
-     * NEW: Development API methods
-     */
+    scoping: {
+      assessInfrastructure: async (
+        projectId: string,
+        infrastructure: TechnicalInfrastructure
+      ): Promise<BackendApiResponse<InfrastructureAssessment>> => {
+        return await api.post<BackendApiResponse<InfrastructureAssessment>>(
+          `scoping/${projectId}/assess-infrastructure`,
+          infrastructure
+        );
+      },
+
+      getUseCases: async (
+        projectId: string,
+        technicalInfrastructure?: TechnicalInfrastructure
+      ): Promise<BackendApiResponse<any[]>> => {
+        const requestBody = technicalInfrastructure ? { technical_infrastructure: technicalInfrastructure } : {};
+        return await api.post<BackendApiResponse<any[]>>(
+          `scoping/${projectId}/use-cases`,
+          requestBody
+        );
+      },
+
+      getDatasets: async (
+        projectId: string,
+        useCaseData: any
+      ): Promise<BackendApiResponse<any[]>> => {
+        return await api.post<BackendApiResponse<any[]>>(
+          `scoping/${projectId}/datasets`,
+          useCaseData
+        );
+      },
+
+      complete: async (
+        projectId: string,
+        scopingData: any
+      ): Promise<BackendApiResponse<any>> => {
+        return await api.post<BackendApiResponse<any>>(
+          `scoping/${projectId}/complete`,
+          scopingData
+        );
+      },
+    },
+
     development: {
       getContext: async (
         projectId: string
@@ -396,9 +399,6 @@ export const api = {
     },
   },
 
-  /**
-   * Legacy project methods (for fallback compatibility)
-   */
   projects: {
     getAll: async (): Promise<Project[]> => {
       return await api.get<Project[]>("projects");

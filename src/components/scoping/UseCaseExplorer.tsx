@@ -1,6 +1,6 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, RefreshCw } from "lucide-react";
+import { ArrowRight, ArrowLeft, RefreshCw } from "lucide-react";
 import { UseCase } from "@/types/scoping-phase";
 import { StepHeading } from "./common/StepHeading";
 import { UseCaseGrid } from "./use-case/UseCaseGrid";
@@ -12,8 +12,9 @@ type UseCaseExplorerProps = {
   errorUseCases: string | null;
   noUseCasesFound: boolean;
   selectedUseCase: UseCase | null;
-  handleSelectUseCase: (useCase: UseCase | null) => void; // Modified to handle null
+  handleSelectUseCase: (useCase: UseCase | null) => void;
   moveToNextStep: () => void;
+  moveToPreviousStep: () => void;
   onRetrySearch?: () => void;
   onContinueWithoutUseCase?: () => void;
   domain?: string;
@@ -29,6 +30,7 @@ export const UseCaseExplorer = ({
   selectedUseCase,
   handleSelectUseCase,
   moveToNextStep,
+  moveToPreviousStep,
   onRetrySearch,
   onContinueWithoutUseCase,
   domain = "your domain",
@@ -36,13 +38,12 @@ export const UseCaseExplorer = ({
   hasSearchedUseCases = false
 }: UseCaseExplorerProps) => {
   
-  // Show search trigger if search hasn't been initiated yet
   const showSearchTrigger = !hasSearchedUseCases && !loadingUseCases && useCases.length === 0 && !errorUseCases;
   
   return (
     <Card className="mb-6">
       <CardHeader>
-        <StepHeading stepNumber={1} title="AI Use Case Explorer" />
+        <StepHeading stepNumber={2} title="AI Use Case Explorer" />
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground mb-6">
@@ -50,7 +51,6 @@ export const UseCaseExplorer = ({
           Select one that best aligns with your project goals, or proceed without one.
         </p>
         
-        {/* Show search trigger button */}
         {showSearchTrigger && onTriggerSearch && (
           <div className="text-center py-12">
             <div className="mb-4">
@@ -66,7 +66,6 @@ export const UseCaseExplorer = ({
           </div>
         )}
         
-        {/* Show loading state - same as NoUseCasesFound when retrying */}
         {loadingUseCases && (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -74,29 +73,26 @@ export const UseCaseExplorer = ({
           </div>
         )}
         
-        {/* Show error state */}
         {errorUseCases && !loadingUseCases && (
           <NoUseCasesFound 
             domain={domain}
             onRetry={onRetrySearch}
             onContinueWithoutUseCase={onContinueWithoutUseCase}
             isRetrying={loadingUseCases}
-            hasError={true} // Pass error state
+            hasError={true}
           />
         )}
         
-        {/* Show no results found - consistent with error handling */}
         {noUseCasesFound && !loadingUseCases && !errorUseCases && (
           <NoUseCasesFound 
             domain={domain}
             onRetry={onRetrySearch}
             onContinueWithoutUseCase={onContinueWithoutUseCase}
             isRetrying={loadingUseCases}
-            hasError={false} // No error, just no results
+            hasError={false}
           />
         )}
         
-        {/* Show use cases grid */}
         {!loadingUseCases && !errorUseCases && !noUseCasesFound && useCases.length > 0 && (
           <UseCaseGrid 
             useCases={useCases} 
@@ -108,6 +104,11 @@ export const UseCaseExplorer = ({
       </CardContent>
       
       <CardFooter className="flex justify-between">
+        <Button variant="outline" onClick={moveToPreviousStep}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Previous
+        </Button>
+        
         <div className="text-sm text-muted-foreground">
           {!loadingUseCases && !errorUseCases && hasSearchedUseCases && (
             <>
@@ -125,11 +126,11 @@ export const UseCaseExplorer = ({
         
         <Button 
           onClick={moveToNextStep} 
-          disabled={false} // Always enabled - can proceed with or without selection
+          disabled={false}
           variant={noUseCasesFound || showSearchTrigger || errorUseCases ? "outline" : "default"}
         >
           {noUseCasesFound || errorUseCases ? "Continue Without Use Case" : 
-           showSearchTrigger ? "Skip to Feasibility" : "Next Step"}
+           showSearchTrigger ? "Skip to Dataset Discovery" : "Next Step"}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </CardFooter>

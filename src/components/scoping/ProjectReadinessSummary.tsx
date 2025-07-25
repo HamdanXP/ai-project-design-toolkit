@@ -2,18 +2,32 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Check, X, AlertTriangle, Loader2, Users, Clock, Wifi, CheckCircle, Target, Database, BarChart3, Globe, ExternalLink, ArrowRight, RefreshCw } from "lucide-react";
-import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck, ScopingCompletionData } from "@/types/scoping-phase";
+import { 
+  Check, 
+  X, 
+  AlertTriangle, 
+  Loader2, 
+  CheckCircle, 
+  Target, 
+  Database, 
+  BarChart3, 
+  Globe, 
+  ExternalLink, 
+  ArrowRight, 
+  ArrowLeft,
+  RefreshCw,
+  Server
+} from "lucide-react";
+import { UseCase, Dataset, DataSuitabilityCheck, ScopingCompletionData, TechnicalInfrastructure, InfrastructureAssessment } from "@/types/scoping-phase";
 import { StepHeading } from "./common/StepHeading";
 import { scopingApi } from "@/lib/scoping-api";
 import { useState } from "react";
 
-type FinalFeasibilityGateProps = {
+type ProjectReadinessSummaryProps = {
   selectedUseCase: UseCase | null;
   selectedDataset: Dataset | null;
-  constraints: FeasibilityConstraint[];
-  feasibilityScore: number;
-  feasibilityLevel: 'high' | 'medium' | 'low'; // Changed from feasibilityRisk
+  technicalInfrastructure: TechnicalInfrastructure;
+  infrastructureAssessment: InfrastructureAssessment | null;
   suitabilityChecks: DataSuitabilityCheck[];
   suitabilityScore: number;
   readyToAdvance: boolean;
@@ -24,12 +38,11 @@ type FinalFeasibilityGateProps = {
   resetPhase: () => void;
 };
 
-export const FinalFeasibilityGate = ({
+export const ProjectReadinessSummary = ({
   selectedUseCase,
   selectedDataset,
-  constraints,
-  feasibilityScore,
-  feasibilityLevel,
+  technicalInfrastructure,
+  infrastructureAssessment,
   suitabilityChecks,
   suitabilityScore,
   readyToAdvance,
@@ -38,7 +51,7 @@ export const FinalFeasibilityGate = ({
   handleCompletePhase,
   updatePhaseStatus,
   resetPhase,
-}: FinalFeasibilityGateProps) => {
+}: ProjectReadinessSummaryProps) => {
 
   const searchParams = new URLSearchParams(location.search);
   const projectId = searchParams.get('projectId');
@@ -61,9 +74,6 @@ export const FinalFeasibilityGate = ({
     setSubmitError(null);
     
     try {
-      console.log("FinalFeasibilityGate: Complete Phase clicked");
-      
-      // Create placeholder data if selections are missing
       const useCaseData: UseCase = selectedUseCase || {
         id: "no_use_case_selected",
         title: "Custom AI Solution",
@@ -94,7 +104,6 @@ export const FinalFeasibilityGate = ({
         license: "Various"
       };
       
-      // Helper functions aligned with humanitarian focus
       const getSuitabilityLevel = (score: number): 'excellent' | 'good' | 'moderate' | 'poor' => {
         if (score >= 80) return 'excellent';
         if (score >= 60) return 'good';
@@ -102,75 +111,19 @@ export const FinalFeasibilityGate = ({
         return 'poor';
       };
 
-      const extractHumanitarianConstraints = (constraints: FeasibilityConstraint[]): string[] => {
-        const constraintMap: {
-          [key: string]: { values: (string | boolean)[]; label: string }
-        } = {
-          'budget': { values: ['limited'], label: 'Limited Budget' },
-          'stakeholder-support': { values: ['low'], label: 'Low Stakeholder Support' },
-          'ai-experience': { values: ['none'], label: 'No AI Experience' },
-          'time': { values: ['short-term'], label: 'Tight Timeline' },
-          'internet': { values: [false], label: 'Connectivity Issues' },
-          'technical-skills': { values: ['limited'], label: 'Technical Skills Gap' }
-        };
-
-        return constraints
-          .filter(c => {
-            const mapping = constraintMap[c.id as keyof typeof constraintMap];
-            return mapping && mapping.values.includes(c.value);
-          })
-          .map(c => constraintMap[c.id as keyof typeof constraintMap].label)
-          .slice(0, 3); // Top 3 constraints
-      };
-
-      const generateSimpleReasoning = (
-        readyToProceed: boolean,
-        feasibilityScore: number,
-        suitabilityScore: number,
-        constraints: FeasibilityConstraint[]
-      ): string => {
-        if (readyToProceed) {
-          const strengths = [];
-          if (feasibilityScore >= 70) strengths.push("strong project foundations");
-          if (suitabilityScore >= 60) strengths.push("suitable data available");
-          
-          const constraintIssues = extractHumanitarianConstraints(constraints);
-          if (constraintIssues.length === 0) strengths.push("no major barriers identified");
-          
-          return `Project is ready to proceed with ${strengths.join(", ")}. ${
-            constraintIssues.length > 0 ? `Areas to monitor: ${constraintIssues.join(", ")}.` : ""
-          }`;
-        } else {
-          const issues = [];
-          if (feasibilityScore < 50) issues.push("needs stronger foundations");
-          if (suitabilityScore < 40) issues.push("data concerns need addressing");
-          
-          const constraintIssues = extractHumanitarianConstraints(constraints);
-          if (constraintIssues.length > 0) issues.push("resource limitations");
-          
-          return `Recommend strengthening project setup: ${issues.join(", ")}. Consider revisiting earlier steps.`;
-        }
-      };
+      if (!infrastructureAssessment) {
+        throw new Error('Infrastructure assessment is required');
+      }
       
-      // Prepare scoping completion data
       const scopingCompletionData: ScopingCompletionData = {
         selected_use_case: useCaseData,
         selected_dataset: datasetData,
-        feasibility_summary: {
-          overall_percentage: feasibilityScore,
-          feasibility_level: feasibilityLevel,
-          key_constraints: extractHumanitarianConstraints(constraints)
-        },
+        infrastructure_assessment: infrastructureAssessment,
         data_suitability: {
           percentage: suitabilityScore,
           suitability_level: getSuitabilityLevel(suitabilityScore)
         },
-        constraints: constraints.map(c => ({
-          id: c.id,
-          label: c.label,
-          value: c.value,
-          type: c.type
-        })),
+        technical_infrastructure: technicalInfrastructure,
         suitability_checks: suitabilityChecks.map(c => ({
           id: c.id,
           question: c.question,
@@ -179,21 +132,12 @@ export const FinalFeasibilityGate = ({
         })),
         active_step: 5,
         ready_to_proceed: readyToAdvance,
-        reasoning: generateSimpleReasoning(
-          readyToAdvance, 
-          feasibilityScore, 
-          suitabilityScore, 
-          constraints
-        )
+        reasoning: `Project assessed with ${infrastructureAssessment.score}% infrastructure readiness and ${suitabilityScore}% data suitability.`
       };
 
-      console.log('Submitting scoping completion data:', scopingCompletionData);
-
-      // Submit scoping phase data to backend
       const response = await scopingApi.completeScopingPhase(projectId, scopingCompletionData);
       
       if (response.success) {
-        console.log('Scoping phase completion response:', response);
         handleCompletePhase();
       } else {
         throw new Error(response.message || 'Failed to complete scoping phase');
@@ -211,69 +155,10 @@ export const FinalFeasibilityGate = ({
     resetPhase();
   };
 
-  const getProjectStrengths = () => {
-    const strengths = [];
-    
-    // Check for organizational strengths
-    const stakeholderSupport = constraints.find(c => c.id === "stakeholder-support")?.value;
-    if (stakeholderSupport === "high" || stakeholderSupport === "champion") {
-      strengths.push("Strong organizational support");
-    }
-    
-    // Check for resource strengths
-    const budget = constraints.find(c => c.id === "budget")?.value;
-    if (budget === "substantial" || budget === "unlimited") {
-      strengths.push("Good budget allocation");
-    }
-    
-    // Check for infrastructure strengths
-    const internet = constraints.find(c => c.id === "internet")?.value;
-    const infrastructure = constraints.find(c => c.id === "infrastructure")?.value;
-    if (internet && infrastructure) {
-      strengths.push("Solid technical setup");
-    }
-    
-    return strengths;
-  };
+  const overallReadiness = infrastructureAssessment ? 
+    Math.round((infrastructureAssessment.score * 0.7) + (suitabilityScore * 0.3)) : 
+    Math.round(suitabilityScore);
 
-  const getAreasToImprove = () => {
-    const constraintMap: {
-      [key: string]: { values: (string | boolean)[]; label: string }
-    } = {
-      'budget': { values: ['limited'], label: 'Limited Budget' },
-      'stakeholder-support': { values: ['low'], label: 'Low Stakeholder Support' },
-      'ai-experience': { values: ['none'], label: 'No AI Experience' },
-      'time': { values: ['short-term'], label: 'Tight Timeline' },
-      'internet': { values: [false], label: 'Connectivity Issues' },
-      'technical-skills': { values: ['limited'], label: 'Technical Skills Gap' }
-    };
-
-    const constraintIssues = constraints
-      .filter(c => {
-        const mapping = constraintMap[c.id as keyof typeof constraintMap];
-        return mapping && mapping.values.includes(c.value);
-      })
-      .map(c => constraintMap[c.id as keyof typeof constraintMap].label)
-      .slice(0, 3);
-
-    return constraintIssues.map(issue => ({
-      area: issue,
-      icon: getConstraintIcon(issue)
-    }));
-  };
-
-  const getConstraintIcon = (constraint: string) => {
-    if (constraint.includes('Support')) return <Users className="h-4 w-4" />;
-    if (constraint.includes('Timeline')) return <Clock className="h-4 w-4" />;
-    if (constraint.includes('Connectivity')) return <Wifi className="h-4 w-4" />;
-    return <AlertTriangle className="h-4 w-4" />;
-  };
-
-  const overallReadiness = Math.round((feasibilityScore * 0.6) + (suitabilityScore * 0.4));
-  const projectStrengths = getProjectStrengths();
-  const areasToImprove = getAreasToImprove();
-
-  // Component for displaying phase completion status
   const PhaseCompletionStatus = ({ title, completed, score }: { title: string, completed: boolean, score?: number }) => (
     <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 dark:bg-muted/20">
       <div className="flex items-center gap-2">
@@ -312,7 +197,6 @@ export const FinalFeasibilityGate = ({
           </div>
         )}
 
-        {/* Overall Readiness Score */}
         <Card className="border-2 border-border shadow-sm">
           <CardContent className="p-6">
             <div className="text-center mb-6">
@@ -320,69 +204,61 @@ export const FinalFeasibilityGate = ({
               <div className="text-4xl font-bold text-primary mb-2">{overallReadiness}%</div>
               <div className="flex items-center justify-center gap-2">
                 <Badge 
-                  variant={feasibilityLevel === 'high' ? 'default' : feasibilityLevel === 'medium' ? 'secondary' : 'destructive'}
+                  variant={overallReadiness >= 70 ? 'default' : overallReadiness >= 50 ? 'secondary' : 'destructive'}
                   className="text-xs"
                 >
-                  {feasibilityLevel === 'high' ? 'HIGH FEASIBILITY' : 
-                   feasibilityLevel === 'medium' ? 'MEDIUM FEASIBILITY' : 'LOW FEASIBILITY'}
+                  {overallReadiness >= 70 ? 'HIGH READINESS' : 
+                   overallReadiness >= 50 ? 'MEDIUM READINESS' : 'LOW READINESS'}
                 </Badge>
                 <span className="text-sm text-muted-foreground">
-                  {feasibilityLevel === 'high' ? 'Ready to proceed' : 
-                   feasibilityLevel === 'medium' ? 'Good with some planning' : 
+                  {overallReadiness >= 70 ? 'Ready to proceed' : 
+                   overallReadiness >= 50 ? 'Good with some planning' : 
                    'Needs strengthening'}
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-medium mb-3 text-green-800 dark:text-green-400">Your Strengths</h4>
-                {projectStrengths.length > 0 ? (
+            {infrastructureAssessment && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium mb-3 text-green-800 dark:text-green-400">Infrastructure Strengths</h4>
                   <ul className="space-y-2">
-                    {projectStrengths.map((strength, index) => (
-                      <li key={index} className="flex items-center text-sm text-green-700 dark:text-green-300">
-                        <Check className="h-4 w-4 mr-2 text-green-600 dark:text-green-400" />
-                        {strength}
+                    {infrastructureAssessment.recommendations.slice(0, 3).map((rec, index) => (
+                      <li key={index} className="flex items-start text-sm text-green-700 dark:text-green-300">
+                        <Check className="h-4 w-4 mr-2 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                        {rec}
                       </li>
                     ))}
                   </ul>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Focus on building stronger foundations</p>
-                )}
-              </div>
+                </div>
 
-              <div>
-                <h4 className="font-medium mb-3 text-orange-800 dark:text-orange-400">Areas to Monitor</h4>
-                {areasToImprove.length > 0 ? (
-                  <ul className="space-y-2">
-                    {areasToImprove.map((area, index) => (
-                      <li key={index} className="flex items-center text-sm text-orange-700 dark:text-orange-300">
-                        <span className="text-orange-600 dark:text-orange-400 mr-2">{area.icon}</span>
-                        {area.area}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-green-700 dark:text-green-300">No major concerns identified</p>
-                )}
+                <div>
+                  <h4 className="font-medium mb-3 text-orange-800 dark:text-orange-400">Infrastructure Assessment</h4>
+                  <div className="space-y-2">
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Score:</span>
+                      <span className="text-foreground ml-2 font-medium">{infrastructureAssessment.score}%</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{infrastructureAssessment.reasoning}</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Phase Completion Overview */}
         <Card className="border-border shadow-sm">
           <CardContent className="p-6">
             <h3 className="font-medium mb-4 text-foreground">Scoping Phase Overview</h3>
             <div className="space-y-3">
               <PhaseCompletionStatus 
-                title="AI Use Case Selection" 
-                completed={!!selectedUseCase}
+                title="Technical Infrastructure Assessment" 
+                completed={!!infrastructureAssessment}
+                score={infrastructureAssessment?.score}
               />
               <PhaseCompletionStatus 
-                title="Project Feasibility Assessment" 
-                completed={feasibilityScore > 0}
-                score={feasibilityScore}
+                title="AI Use Case Selection" 
+                completed={!!selectedUseCase}
               />
               <PhaseCompletionStatus 
                 title="Dataset Discovery" 
@@ -397,7 +273,6 @@ export const FinalFeasibilityGate = ({
           </CardContent>
         </Card>
         
-        {/* Project Components Summary */}
         <Card className="border-border shadow-sm">
           <CardContent className="p-6">
             <h3 className="font-medium mb-4 text-foreground">Selected Project Components</h3>
@@ -492,12 +367,38 @@ export const FinalFeasibilityGate = ({
                 )}
               </div>
             </div>
+
+            {infrastructureAssessment && (
+              <div className="mt-6">
+                <h4 className="font-medium mb-3 text-foreground flex items-center gap-2">
+                  <Server className="h-4 w-4" />
+                  Technical Infrastructure
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Computing:</span>
+                    <span className="text-foreground ml-2">{technicalInfrastructure.computing_resources}</span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Storage:</span>
+                    <span className="text-foreground ml-2">{technicalInfrastructure.storage_data}</span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Connectivity:</span>
+                    <span className="text-foreground ml-2">{technicalInfrastructure.internet_connectivity}</span>
+                  </div>
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Deployment:</span>
+                    <span className="text-foreground ml-2">{technicalInfrastructure.deployment_environment}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
         
         <Separator />
         
-        {/* Decision Section */}
         <div className="text-center p-6 bg-muted/50 dark:bg-muted/20 rounded-lg">
           <h3 className="font-medium text-lg mb-3 text-foreground">Ready to Begin Development?</h3>
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
@@ -536,6 +437,7 @@ export const FinalFeasibilityGate = ({
       
       <CardFooter className="flex justify-between">
         <Button variant="outline" onClick={moveToPreviousStep} disabled={isSubmitting}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Previous
         </Button>
         {readyToAdvance ? (

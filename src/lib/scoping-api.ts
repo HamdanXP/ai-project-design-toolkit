@@ -1,14 +1,12 @@
-import { UseCase, Dataset, ScopingCompletionData, mapDatasetToBackend, mapUseCaseToBackend } from '@/types/scoping-phase';
+import { UseCase, Dataset, ScopingCompletionData, TechnicalInfrastructure, InfrastructureAssessment, mapDatasetToBackend, mapUseCaseToBackend } from '@/types/scoping-phase';
 import { api } from './api';
 
-// API Response Types
 export interface ScopingApiResponse<T> {
   success: boolean;
   message: string;
   data: T;
 }
 
-// Enhanced API types to match new humanitarian-focused backend response
 export interface ApiUseCase {
   id: string;
   title: string;
@@ -18,22 +16,18 @@ export interface ApiUseCase {
   type: 'academic_paper' | 'humanitarian_report' | 'case_study' | 'ai_application' | 'use_case_repository' | 'curated_template';
   category: string;
   
-  // Core educational content
   how_it_works: string;
   real_world_impact: string;
   
-  // NEW: Humanitarian-focused educational content
   similarity_to_project?: string;
   real_world_examples?: string;
   implementation_approach?: string;
   decision_guidance?: string;
   
-  // Enhanced practical information
   key_success_factors?: string[];
   resource_requirements?: string[];
   challenges?: string[];
   
-  // Optional metadata based on source type
   authors?: string[];
   published_date?: string;
   organization?: string;
@@ -56,66 +50,34 @@ export interface ApiDataset {
   num_resources?: number;
 }
 
-export interface DataSuitabilityRequest {
-  data_completeness: 'looks_clean' | 'some_issues' | 'many_problems';
-  population_representativeness: 'representative' | 'partially' | 'limited_coverage';
-  privacy_ethics: 'privacy_safe' | 'need_review' | 'high_risk';
-  quality_sufficiency: 'sufficient' | 'borderline' | 'insufficient';
-}
-
-// Updated final feasibility request structure with correct terminology
-export interface FinalFeasibilityRequest {
-  selected_use_case?: {
-    id: string;
-    title: string;
-    description: string;
-    category: string;
-    complexity: string;
-    source_url?: string;
-    similarity_score?: number;
-    tags: string[];
-  };
-  selected_dataset?: {
-    name: string;
-    source: string;
-    url?: string;
-    description: string;
-    size_estimate?: string;
-    data_types: string[];
-    ethical_concerns: string[];
-    suitability_score?: number;
-  };
-  feasibility_summary: {
-    overall_percentage: number;
-    feasibility_level: 'high' | 'medium' | 'low';
-    key_constraints: string[];
-  };
+export interface ScopingCompletionRequest {
+  selected_use_case?: UseCase;
+  selected_dataset?: Dataset;
+  
+  infrastructure_assessment: InfrastructureAssessment;
   data_suitability: {
     percentage: number;
     suitability_level: string;
   };
-  constraints: Array<{id: string; label: string; value: string | boolean; type: string}>;
+  
+  technical_infrastructure: TechnicalInfrastructure;
   suitability_checks: Array<{id: string; question: string; answer: string; description: string}>;
+  
   active_step: number;
   ready_to_proceed: boolean;
   reasoning?: string;
 }
 
-// Enhanced conversion function with new humanitarian-focused fields
 export const convertApiUseCase = (apiUseCase: ApiUseCase): UseCase => {
   try {
-    // Create more meaningful tags from available metadata
     const tags = [];
     
-    // Add category if available
     if (apiUseCase.category && apiUseCase.category !== 'General') {
       tags.push(apiUseCase.category);
     }
     
-    // Add meaningful domain tags based on description/title content
     const contentText = `${apiUseCase.title} ${apiUseCase.description}`.toLowerCase();
     
-    // Domain-specific tags
     if (contentText.includes('health') || contentText.includes('medical') || contentText.includes('disease')) {
       tags.push('Health');
     }
@@ -132,7 +94,6 @@ export const convertApiUseCase = (apiUseCase: ApiUseCase): UseCase => {
       tags.push('Education');
     }
     
-    // AI technique tags
     if (contentText.includes('prediction') || contentText.includes('forecast')) {
       tags.push('Prediction');
     }
@@ -146,10 +107,8 @@ export const convertApiUseCase = (apiUseCase: ApiUseCase): UseCase => {
       tags.push('Monitoring');
     }
 
-    // Format source URL properly
     let formattedSourceUrl = apiUseCase.source_url || '';
     
-    // Handle different URL formats
     if (formattedSourceUrl) {
       if (formattedSourceUrl.startsWith('gs://')) {
         formattedSourceUrl = `https://storage.googleapis.com/${formattedSourceUrl.slice(5)}`;
@@ -167,31 +126,25 @@ export const convertApiUseCase = (apiUseCase: ApiUseCase): UseCase => {
       tags: [...new Set(tags)].filter(Boolean).slice(0, 4),
       selected: false,
       
-      // Backend aligned fields
       category: apiUseCase.category || 'General',
-      complexity: 'medium', // Default complexity
+      complexity: 'medium',
       source_url: formattedSourceUrl,
       
-      // Pass through all additional fields
       source: apiUseCase.source,
       type: apiUseCase.type,
       
-      // Core educational content
       how_it_works: apiUseCase.how_it_works,
       real_world_impact: apiUseCase.real_world_impact,
       
-      // NEW: Humanitarian-focused educational content
       similarity_to_project: apiUseCase.similarity_to_project,
       real_world_examples: apiUseCase.real_world_examples,
       implementation_approach: apiUseCase.implementation_approach,
       decision_guidance: apiUseCase.decision_guidance,
       
-      // Enhanced practical information
       key_success_factors: apiUseCase.key_success_factors,
       resource_requirements: apiUseCase.resource_requirements,
       challenges: apiUseCase.challenges,
       
-      // Optional metadata
       authors: apiUseCase.authors,
       published_date: apiUseCase.published_date,
       organization: apiUseCase.organization,
@@ -201,7 +154,6 @@ export const convertApiUseCase = (apiUseCase: ApiUseCase): UseCase => {
     };
   } catch (error) {
     console.error('Error converting API use case:', error);
-    // Return a safe fallback
     return {
       id: apiUseCase.id || `fallback_${Date.now()}`,
       title: apiUseCase.title || 'Use Case',
@@ -212,7 +164,6 @@ export const convertApiUseCase = (apiUseCase: ApiUseCase): UseCase => {
       source_url: apiUseCase.source_url || '',
       source: apiUseCase.source || 'Unknown',
       
-      // Provide fallback values for required fields
       how_it_works: apiUseCase.how_it_works || 'Technical details not available',
       real_world_impact: apiUseCase.real_world_impact || 'Impact details not available',
       key_success_factors: apiUseCase.key_success_factors || ['Details not available'],
@@ -222,12 +173,10 @@ export const convertApiUseCase = (apiUseCase: ApiUseCase): UseCase => {
   }
 };
 
-// Convert API dataset with enhanced information
 export const convertApiDataset = (apiDataset: ApiDataset): Dataset => {
   return {
-    // Backend aligned fields
     name: apiDataset.name,
-    source: apiDataset.url || apiDataset.source, // Use URL as source for the "View Source" functionality
+    source: apiDataset.url || apiDataset.source,
     url: apiDataset.url,
     description: apiDataset.description,
     size_estimate: apiDataset.size || "Unknown",
@@ -235,48 +184,38 @@ export const convertApiDataset = (apiDataset: ApiDataset): Dataset => {
     ethical_concerns: apiDataset.ethical_concerns || [],
     suitability_score: apiDataset.suitability_score,
     
-    // Frontend convenience fields
     id: apiDataset.name.toLowerCase().replace(/\s+/g, '_'),
     title: apiDataset.name,
     format: "Various", 
     size: apiDataset.size || "Unknown",
     license: apiDataset.license || "Various",
     
-    // Additional fields
     last_modified: apiDataset.last_modified,
     num_resources: apiDataset.num_resources,
-    
-    // Legacy fields (empty for backwards compatibility)
-    columns: [],
-    sampleRows: []
   };
 };
 
 export const scopingApi = {
-  // 1. Get Use Cases with enhanced humanitarian-focused educational content
-  getUseCases: async (projectId: string): Promise<ApiUseCase[]> => {
+  getUseCases: async (projectId: string, technicalInfrastructure?: TechnicalInfrastructure): Promise<ApiUseCase[]> => {
     try {
-      console.log(`Fetching AI use cases with humanitarian-focused guidance for project: ${projectId}`);
+      const requestBody = technicalInfrastructure ? { technical_infrastructure: technicalInfrastructure } : {};
       
-      const response = await api.get<ScopingApiResponse<ApiUseCase[]>>(
-        `scoping/${projectId}/use-cases`
+      const response = await api.post<ScopingApiResponse<ApiUseCase[]>>(
+        `scoping/${projectId}/use-cases`,
+        requestBody
       );
       
       if (response.success && Array.isArray(response.data)) {
-        console.log(`Successfully fetched ${response.data.length} AI use cases with educational content`);
         return response.data;
       } else {
-        console.warn('Invalid API response format:', response);
         throw new Error('Invalid response format from API');
       }
       
     } catch (error) {
-      console.error('API failed to get use cases:', error);
       return [];
     }
   },
 
-  // 2. Get Recommended Datasets - Enhanced with better error handling
   getRecommendedDatasets: async (
     projectId: string, 
     useCaseId: string, 
@@ -284,8 +223,6 @@ export const scopingApi = {
     useCaseDescription?: string
   ): Promise<ApiDataset[]> => {
     try {
-      console.log(`Fetching datasets for project: ${projectId}, use case: ${useCaseTitle}`);
-      
       const response = await api.post<ScopingApiResponse<ApiDataset[]>>(`scoping/${projectId}/datasets`, {
         use_case_id: useCaseId,
         use_case_title: useCaseTitle,
@@ -294,59 +231,94 @@ export const scopingApi = {
       
       if (response.success) {
         if (Array.isArray(response.data) && response.data.length > 0) {
-          console.log(`Successfully fetched ${response.data.length} datasets from humanitarian sources`);
           return response.data;
         } else {
-          console.log('No datasets found from humanitarian sources');
           return [];
         }
       } else {
-        console.warn('Dataset API returned success=false:', response.message);
         return [];
       }
     } catch (error) {
-      console.error('API failed to get datasets:', error);
       return [];
     }
   },
 
-  // 3. NEW: Complete Scoping Phase
+  assessInfrastructure: async (
+    projectId: string,
+    infrastructure: TechnicalInfrastructure
+  ): Promise<InfrastructureAssessment> => {
+    if (!projectId) {
+      throw new Error('Project ID is required for infrastructure assessment');
+    }
+
+    // Normalize infrastructure data - handle legacy field names
+    const normalizedInfrastructure: TechnicalInfrastructure = {
+      computing_resources: infrastructure.computing_resources || '',
+      storage_data: infrastructure.storage_data || (infrastructure as any).storage_infrastructure || '',
+      internet_connectivity: infrastructure.internet_connectivity || '',
+      deployment_environment: infrastructure.deployment_environment || ''
+    };
+
+    const validOptions = {
+      computing_resources: [
+        'cloud_platforms', 'organizational_computers', 'partner_shared', 
+        'community_shared', 'mobile_devices', 'basic_hardware', 'no_computing'
+      ],
+      storage_data: [
+        'secure_cloud', 'organizational_servers', 'partner_systems', 
+        'government_systems', 'basic_digital', 'paper_based', 'local_storage' // Added local_storage
+      ],
+      internet_connectivity: [
+        'stable_broadband', 'satellite_internet', 'intermittent_connection', 
+        'mobile_data_primary', 'shared_community', 'limited_connectivity', 'no_internet'
+      ],
+      deployment_environment: [
+        'cloud_deployment', 'hybrid_approach', 'organizational_infrastructure', 
+        'partner_infrastructure', 'field_mobile', 'offline_systems', 'no_deployment'
+      ]
+    };
+    
+    // Validate the normalized infrastructure
+    for (const [key, value] of Object.entries(normalizedInfrastructure)) {
+      if (value && !validOptions[key as keyof typeof validOptions]?.includes(value)) {
+        throw new Error(`Invalid infrastructure option: ${key} = ${value}. Valid options are: ${validOptions[key as keyof typeof validOptions]?.join(', ')}`);
+      }
+    }
+    
+    const response = await api.backend.scoping.assessInfrastructure(projectId, normalizedInfrastructure);
+    
+    if (response.success) {
+      return response.data;
+    } else {
+      throw new Error(response.message || 'Failed to assess infrastructure');
+    }
+  },
+
   completeScopingPhase: async (
     projectId: string,
     scopingData: ScopingCompletionData
   ): Promise<ScopingApiResponse<any>> => {
-    try {
-      console.log(`Completing scoping phase for project: ${projectId}`);
-      
-      // Map frontend data to backend format
-      const requestData: FinalFeasibilityRequest = {
-        selected_use_case: scopingData.selected_use_case ? mapUseCaseToBackend(scopingData.selected_use_case) : undefined,
-        selected_dataset: scopingData.selected_dataset ? mapDatasetToBackend(scopingData.selected_dataset) : undefined,
-        feasibility_summary: scopingData.feasibility_summary,
-        data_suitability: scopingData.data_suitability,
-        constraints: scopingData.constraints,
-        suitability_checks: scopingData.suitability_checks,
-        active_step: scopingData.active_step,
-        ready_to_proceed: scopingData.ready_to_proceed,
-        reasoning: scopingData.reasoning
-      };
-      
-      const response = await api.post<ScopingApiResponse<any>>(
-        `scoping/${projectId}/complete`,
-        requestData
-      );
-      
-      if (response.success) {
-        console.log('Successfully completed scoping phase');
-        return response;
-      } else {
-        console.error('Scoping completion failed:', response.message);
-        throw new Error(response.message || 'Failed to complete scoping phase');
-      }
-      
-    } catch (error) {
-      console.error('API failed to complete scoping phase:', error);
-      throw error;
+    const requestData = {
+      selected_use_case: scopingData.selected_use_case ? mapUseCaseToBackend(scopingData.selected_use_case) : undefined,
+      selected_dataset: scopingData.selected_dataset ? mapDatasetToBackend(scopingData.selected_dataset) : undefined,
+      infrastructure_assessment: scopingData.infrastructure_assessment,
+      data_suitability: scopingData.data_suitability,
+      technical_infrastructure: scopingData.technical_infrastructure,
+      suitability_checks: scopingData.suitability_checks,
+      active_step: scopingData.active_step,
+      ready_to_proceed: scopingData.ready_to_proceed,
+      reasoning: scopingData.reasoning
+    };
+    
+    const response = await api.post<ScopingApiResponse<any>>(
+      `scoping/${projectId}/complete`,
+      requestData
+    );
+    
+    if (response.success) {
+      return response;
+    } else {
+      throw new Error(response.message || 'Failed to complete scoping phase');
     }
   }
 };

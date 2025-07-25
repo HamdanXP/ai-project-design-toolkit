@@ -5,32 +5,26 @@ export interface UseCase {
   tags: string[];
   selected: boolean;
   
-  // Backend aligned fields
   category: string;
-  complexity?: string; // 'low', 'medium', 'high'
+  complexity?: string;
   source_url?: string;
   similarity_score?: number;
   
-  // Source information
   source?: string;
   type?: string;
   
-  // Core educational content (simplified for humanitarian professionals)
   how_it_works?: string;
   real_world_impact?: string;
   
-  // NEW: Humanitarian-focused educational content
-  similarity_to_project?: string;        // How this relates to user's specific project
-  real_world_examples?: string;          // Concrete examples of humanitarian implementation
-  implementation_approach?: string;      // Practical steps for implementation
-  decision_guidance?: string;            // Help users decide if this is right for them
+  similarity_to_project?: string;
+  real_world_examples?: string;
+  implementation_approach?: string;
+  decision_guidance?: string;
   
-  // Practical implementation information
-  key_success_factors?: string[];        // What makes this approach work well
-  resource_requirements?: string[];      // Data, infrastructure, and organizational needs
-  challenges?: string[];                 // Implementation considerations (non-technical)
+  key_success_factors?: string[];
+  resource_requirements?: string[];
+  challenges?: string[];
   
-  // Optional metadata from different sources
   authors?: string[];
   published_date?: string;
   organization?: string;
@@ -39,9 +33,7 @@ export interface UseCase {
   citation_count?: number;
 }
 
-// Updated Dataset type to align with backend model
 export type Dataset = {
-  // Backend aligned fields
   name: string;
   source: string;
   url?: string;
@@ -51,29 +43,14 @@ export type Dataset = {
   ethical_concerns?: string[];
   suitability_score?: number;
   
-  // Frontend convenience fields (computed from backend fields)
-  id?: string; // Computed from name
-  title?: string; // Maps to name
-  format?: string; // Derived from data_types
-  size?: string; // Maps to size_estimate
-  license?: string; // Default value
+  id?: string;
+  title?: string;
+  format?: string;
+  size?: string;
+  license?: string;
   
-  // Additional fields for enhanced dataset information
   last_modified?: string;
   num_resources?: number;
-};
-
-export type FeasibilityConstraint = {
-  id: string;
-  label: string;
-  value: string | boolean;
-  options?: string[];
-  type: 'toggle' | 'select' | 'input';
-  category?: string;
-  helpText?: string;
-  examples?: string[];
-  feasibilityLevel?: 'high' | 'medium' | 'low'; // Changed from riskLevel
-  importance?: 'critical' | 'important' | 'moderate';
 };
 
 export type DataSuitabilityCheck = {
@@ -83,19 +60,25 @@ export type DataSuitabilityCheck = {
   description: string;
 };
 
-export type FeasibilityCategory = {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  constraints: FeasibilityConstraint[];
+export type TechnicalInfrastructure = {
+  computing_resources: string;
+  storage_data: string;
+  internet_connectivity: string;
+  deployment_environment: string;
 };
 
-export type RiskMitigation = {
-  risk: string;
-  impact: 'low' | 'medium' | 'high';
-  mitigation: string;
-  examples: string[];
+export type InfrastructureAssessment = {
+  score: number;
+  can_proceed: boolean;
+  reasoning: string;
+  scoring_breakdown: {
+    computing: { score: number; max_score: number; reasoning: string };
+    storage: { score: number; max_score: number; reasoning: string };
+    connectivity: { score: number; max_score: number; reasoning: string };
+    deployment: { score: number; max_score: number; reasoning: string };
+  };
+  recommendations: string[];
+  non_ai_alternatives?: string[];
 };
 
 export type SuitabilityResponseOption = {
@@ -119,13 +102,6 @@ export type EnhancedSuitabilityQuestion = {
   responseOptions: SuitabilityResponseOption[];
 };
 
-// New types for scoping completion
-export interface FeasibilitySummary {
-  overall_percentage: number;
-  feasibility_level: 'high' | 'medium' | 'low';
-  key_constraints: string[];
-}
-
 export interface DataSuitabilitySummary {
   percentage: number;
   suitability_level: 'excellent' | 'good' | 'moderate' | 'poor';
@@ -136,16 +112,53 @@ export type SuitabilityLevel = 'excellent' | 'good' | 'moderate' | 'poor';
 export interface ScopingCompletionData {
   selected_use_case?: UseCase;
   selected_dataset?: Dataset;
-  feasibility_summary: FeasibilitySummary;
+  infrastructure_assessment: InfrastructureAssessment;
   data_suitability: DataSuitabilitySummary;
-  constraints: Array<{id: string; label: string; value: string | boolean; type: string}>;
+  technical_infrastructure: TechnicalInfrastructure;
   suitability_checks: Array<{id: string; question: string; answer: string; description: string}>;
   active_step: number;
   ready_to_proceed: boolean;
   reasoning?: string;
 }
 
-// Helper function to convert frontend Dataset to backend Dataset
+export const INFRASTRUCTURE_OPTIONS = {
+  computing_resources: [
+    'cloud_platforms',
+    'organizational_computers', 
+    'partner_shared',
+    'community_shared',
+    'mobile_devices',
+    'basic_hardware',
+    'no_computing'
+  ],
+  storage_data: [
+    'secure_cloud',
+    'organizational_servers',
+    'partner_systems',
+    'government_systems',
+    'basic_digital',
+    'paper_based'
+  ],
+  internet_connectivity: [
+    'stable_broadband',
+    'satellite_internet',
+    'intermittent_connection',
+    'mobile_data_primary',
+    'shared_community',
+    'limited_connectivity',
+    'no_internet'
+  ],
+  deployment_environment: [
+    'cloud_deployment',
+    'hybrid_approach',
+    'organizational_infrastructure',
+    'partner_infrastructure',
+    'field_mobile',
+    'offline_systems',
+    'no_deployment'
+  ]
+} as const;
+
 export function mapDatasetToBackend(dataset: Dataset) {
   return {
     name: dataset.name || dataset.title || '',
@@ -159,7 +172,6 @@ export function mapDatasetToBackend(dataset: Dataset) {
   };
 }
 
-// Helper function to convert frontend UseCase to backend UseCase
 export function mapUseCaseToBackend(useCase: UseCase) {
   return {
     id: useCase.id,

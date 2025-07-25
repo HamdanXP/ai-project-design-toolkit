@@ -2,9 +2,8 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import { useLocation } from "react-router-dom";
 import { api } from "@/lib/api";
 import { ProjectPhase, EthicalConsideration } from "@/types/project";
-import { UseCase, Dataset, FeasibilityConstraint, DataSuitabilityCheck } from "@/types/scoping-phase";
+import { UseCase, Dataset, DataSuitabilityCheck, TechnicalInfrastructure, InfrastructureAssessment } from "@/types/scoping-phase";
 import { 
-  // Legacy development types for backward compatibility
   EthicalGuardrail, 
   PrototypeMilestone, 
   TestResult, 
@@ -14,7 +13,6 @@ import {
   StakeholderFeedback,
   ImpactGoalCheck,
   EvaluationDecision,
-  // New development types
   AISolution,
   ProjectGenerationResponse,
   SolutionSelection
@@ -37,8 +35,6 @@ interface ProjectContextType {
   setScopingActiveStep: React.Dispatch<React.SetStateAction<number>>;
   selectedUseCase: UseCase | null;
   setSelectedUseCase: React.Dispatch<React.SetStateAction<UseCase | null>>;
-  constraints: FeasibilityConstraint[];
-  setConstraints: React.Dispatch<React.SetStateAction<FeasibilityConstraint[]>>;
   selectedDataset: Dataset | null;
   setSelectedDataset: React.Dispatch<React.SetStateAction<Dataset | null>>;
   suitabilityChecks: DataSuitabilityCheck[];
@@ -46,7 +42,11 @@ interface ProjectContextType {
   scopingFinalDecision: 'proceed' | 'revise' | null;
   setScopingFinalDecision: React.Dispatch<React.SetStateAction<'proceed' | 'revise' | null>>;
   
-  // NEW: Enhanced Development Phase State
+  technicalInfrastructure: TechnicalInfrastructure;
+  setTechnicalInfrastructure: React.Dispatch<React.SetStateAction<TechnicalInfrastructure>>;
+  infrastructureAssessment: InfrastructureAssessment | null;
+  setInfrastructureAssessment: React.Dispatch<React.SetStateAction<InfrastructureAssessment | null>>;
+  
   developmentSelectedSolution: AISolution | null;
   setDevelopmentSelectedSolution: React.Dispatch<React.SetStateAction<AISolution | null>>;
   developmentGeneratedProject: ProjectGenerationResponse | null;
@@ -54,7 +54,6 @@ interface ProjectContextType {
   developmentSolutionSelection: SolutionSelection | null;
   setDevelopmentSolutionSelection: React.Dispatch<React.SetStateAction<SolutionSelection | null>>;
   
-  // Legacy development fields for backward compatibility
   developmentSelectedPipeline: string;
   setDevelopmentSelectedPipeline: React.Dispatch<React.SetStateAction<string>>;
   developmentGuardrails: EthicalGuardrail[];
@@ -68,7 +67,6 @@ interface ProjectContextType {
   developmentDecision: DevelopmentDecision;
   setDevelopmentDecision: React.Dispatch<React.SetStateAction<DevelopmentDecision>>;
   
-  // Evaluation phase state
   evaluationTestResults: string;
   setEvaluationTestResults: React.Dispatch<React.SetStateAction<string>>;
   evaluationImpactGoalChecks: ImpactGoalCheck[];
@@ -82,7 +80,6 @@ interface ProjectContextType {
   evaluationJustification: string;
   setEvaluationJustification: React.Dispatch<React.SetStateAction<string>>;
 
-  // NEW: Ethical Considerations
   ethicalConsiderations: EthicalConsideration[];
   setEthicalConsiderations: React.Dispatch<React.SetStateAction<EthicalConsideration[]>>;
   ethicalConsiderationsAcknowledged: boolean;
@@ -92,13 +89,12 @@ interface ProjectContextType {
   refreshEthicalConsiderations: (projectId: string) => Promise<void>;
 }
 
-// Helper functions for localStorage
 const getStorageKey = (projectId: string) => `project-${projectId}`;
 const getMetaKey = (projectId: string) => `project-${projectId}-meta`;
 
 interface ProjectMetadata {
-  lastSync: string; // ISO timestamp when we last synced with API
-  version: number;  // Version from API
+  lastSync: string;
+  version: number;
 }
 
 const getFromStorage = (projectId: string) => {
@@ -125,42 +121,11 @@ const saveToStorage = (projectId: string, data: any, metadata: ProjectMetadata) 
   }
 };
 
-// Default values
 const getDefaultPhases = (): ProjectPhase[] => [
   { id: "reflection", name: "Reflection", status: "in-progress", progress: 0, totalSteps: 8, completedSteps: 0 },
   { id: "scoping", name: "Scoping", status: "not-started", progress: 0, totalSteps: 5, completedSteps: 0 },
-  { id: "development", name: "Development", status: "not-started", progress: 0, totalSteps: 3, completedSteps: 0 }, // Updated to 3 steps
+  { id: "development", name: "Development", status: "not-started", progress: 0, totalSteps: 3, completedSteps: 0 },
   { id: "evaluation", name: "Evaluation", status: "not-started", progress: 0, totalSteps: 5, completedSteps: 0 }
-];
-
-// Updated to include ALL constraints used in the feasibility assessment
-const getDefaultConstraints = (): FeasibilityConstraint[] => [
-  // Legacy constraints (keep for backward compatibility)
-  { id: "time", label: "Time Available", value: "medium-term", options: ["short-term", "medium-term", "long-term", "ongoing"], type: "select" },
-  { id: "tech", label: "Technical Capacity", value: "moderate", options: ["limited", "moderate", "extensive"], type: "select" },
-  { id: "compute", label: "Computing Resources", value: "cloud", options: ["local", "cloud", "hybrid", "enterprise"], type: "select" },
-  { id: "internet", label: "Internet Access", value: true, type: "toggle" },
-  { id: "infrastructure", label: "Local Infrastructure", value: true, type: "toggle" },
-  
-  // Complete feasibility assessment constraints
-  // Resources & Budget
-  { id: "budget", label: "Project Budget", value: "limited", options: ["limited", "moderate", "substantial", "unlimited"], type: "select" },
-  { id: "team-size", label: "Team Size", value: "small", options: ["individual", "small", "medium", "large"], type: "select" },
-  
-  // Team Expertise
-  { id: "ai-experience", label: "AI/ML Experience", value: "beginner", options: ["none", "beginner", "intermediate", "advanced"], type: "select" },
-  { id: "technical-skills", label: "Technical Skills", value: "moderate", options: ["limited", "moderate", "good", "excellent"], type: "select" },
-  { id: "learning-capacity", label: "Learning & Training Capacity", value: true, type: "toggle" },
-  
-  // Organizational Readiness
-  { id: "stakeholder-support", label: "Stakeholder Buy-in", value: "moderate", options: ["low", "moderate", "high", "champion"], type: "select" },
-  { id: "change-management", label: "Change Management Readiness", value: false, type: "toggle" },
-  { id: "data-governance", label: "Data Governance", value: "developing", options: ["none", "developing", "established", "mature"], type: "select" },
-  
-  // External Factors
-  { id: "regulatory-compliance", label: "Regulatory Requirements", value: "moderate", options: ["minimal", "moderate", "strict", "complex"], type: "select" },
-  { id: "partnerships", label: "External Partnerships", value: false, type: "toggle" },
-  { id: "sustainability", label: "Long-term Sustainability Plan", value: false, type: "toggle" }
 ];
 
 const getDefaultSuitabilityChecks = (): DataSuitabilityCheck[] => [
@@ -182,6 +147,13 @@ const getDefaultRiskAssessments = (): RiskAssessment[] => [
   { id: "risk3", category: "Safety concerns", level: "unknown", notes: "" }
 ];
 
+const getDefaultTechnicalInfrastructure = (): TechnicalInfrastructure => ({
+  computing_resources: "",
+  storage_data: "",
+  internet_connectivity: "",
+  deployment_environment: ""
+});
+
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -191,7 +163,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   
   const [isLoading, setIsLoading] = useState(true);
   
-  // All existing state
   const [phases, setPhases] = useState<ProjectPhase[]>(getDefaultPhases());
   const [activePhaseId, setActivePhaseId] = useState<string>("reflection");
   const [projectPrompt, setProjectPrompt] = useState<string>("");
@@ -199,17 +170,17 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [reflectionAnswers, setReflectionAnswers] = useState<Record<string, string>>({});
   const [scopingActiveStep, setScopingActiveStep] = useState<number>(1);
   const [selectedUseCase, setSelectedUseCase] = useState<UseCase | null>(null);
-  const [constraints, setConstraints] = useState<FeasibilityConstraint[]>(getDefaultConstraints());
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [suitabilityChecks, setSuitabilityChecks] = useState<DataSuitabilityCheck[]>(getDefaultSuitabilityChecks());
   const [scopingFinalDecision, setScopingFinalDecision] = useState<'proceed' | 'revise' | null>(null);
   
-  // NEW: Enhanced Development Phase State
+  const [technicalInfrastructure, setTechnicalInfrastructure] = useState<TechnicalInfrastructure>(getDefaultTechnicalInfrastructure());
+  const [infrastructureAssessment, setInfrastructureAssessment] = useState<InfrastructureAssessment | null>(null);
+  
   const [developmentSelectedSolution, setDevelopmentSelectedSolution] = useState<AISolution | null>(null);
   const [developmentGeneratedProject, setDevelopmentGeneratedProject] = useState<ProjectGenerationResponse | null>(null);
   const [developmentSolutionSelection, setDevelopmentSolutionSelection] = useState<SolutionSelection | null>(null);
   
-  // Legacy development state (for backward compatibility)
   const [developmentSelectedPipeline, setDevelopmentSelectedPipeline] = useState<string>("");
   const [developmentGuardrails, setDevelopmentGuardrails] = useState<EthicalGuardrail[]>([]);
   const [developmentMilestones, setDevelopmentMilestones] = useState<PrototypeMilestone[]>([]);
@@ -217,7 +188,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [developmentEvaluationCriteria, setDevelopmentEvaluationCriteria] = useState<EvaluationCriteria[]>([]);
   const [developmentDecision, setDevelopmentDecision] = useState<DevelopmentDecision>(null);
   
-  // Evaluation state
   const [evaluationTestResults, setEvaluationTestResults] = useState<string>("");
   const [evaluationImpactGoalChecks, setEvaluationImpactGoalChecks] = useState<ImpactGoalCheck[]>(getDefaultImpactGoalChecks());
   const [evaluationRiskAssessments, setEvaluationRiskAssessments] = useState<RiskAssessment[]>(getDefaultRiskAssessments());
@@ -225,14 +195,11 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [evaluationDecision, setEvaluationDecision] = useState<EvaluationDecision>(null);
   const [evaluationJustification, setEvaluationJustification] = useState<string>("");
 
-  // NEW: Ethical Considerations State
   const [ethicalConsiderations, setEthicalConsiderations] = useState<EthicalConsideration[]>([]);
   const [ethicalConsiderationsAcknowledged, setEthicalConsiderationsAcknowledged] = useState<boolean>(false);
 
-  // NEW: Load ethical considerations from API
   const loadEthicalConsiderations = async (projectId: string) => {
     if (!projectId) {
-      // Don't try to load for default project
       setEthicalConsiderations([]);
       return;
     }
@@ -244,12 +211,10 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       }
     } catch (error) {
       console.error('Failed to load ethical considerations:', error);
-      // Don't show error - user prefers to show component even if failed
       setEthicalConsiderations([]);
     }
   };
 
-  // NEW: Acknowledge ethical considerations
   const acknowledgeEthicalConsiderations = async (projectId: string, acknowledgedIds?: string[]) => {
     if (!projectId) {
       setEthicalConsiderationsAcknowledged(true);
@@ -261,7 +226,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       if (response.success) {
         setEthicalConsiderationsAcknowledged(true);
         
-        // Update local state to mark specific considerations as acknowledged
         if (acknowledgedIds) {
           setEthicalConsiderations(prev => prev.map(consideration => ({
             ...consideration,
@@ -275,7 +239,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  // NEW: Refresh ethical considerations
   const refreshEthicalConsiderations = async (projectId: string) => {
     if (!projectId) {
       return;
@@ -285,7 +248,7 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       const response = await api.backend.ethicalConsiderations.refresh(projectId);
       if (response.success) {
         setEthicalConsiderations(response.data);
-        setEthicalConsiderationsAcknowledged(false); // Reset acknowledgment
+        setEthicalConsiderationsAcknowledged(false);
       }
     } catch (error) {
       console.error('Failed to refresh ethical considerations:', error);
@@ -293,7 +256,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
-  // Auto-save to localStorage whenever state changes
   useEffect(() => {
     if (!isLoading) {
       const allData = {
@@ -304,17 +266,17 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         reflectionAnswers,
         scopingActiveStep,
         selectedUseCase,
-        constraints,
         selectedDataset,
         suitabilityChecks,
         scopingFinalDecision,
         
-        // NEW: Enhanced development state
+        technicalInfrastructure,
+        infrastructureAssessment,
+        
         developmentSelectedSolution,
         developmentGeneratedProject,
         developmentSolutionSelection,
         
-        // Legacy development state
         developmentSelectedPipeline,
         developmentGuardrails,
         developmentMilestones,
@@ -322,7 +284,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         developmentEvaluationCriteria,
         developmentDecision,
         
-        // Evaluation state
         evaluationTestResults,
         evaluationImpactGoalChecks,
         evaluationRiskAssessments,
@@ -330,7 +291,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         evaluationDecision,
         evaluationJustification,
 
-        // NEW: Ethical considerations state
         ethicalConsiderations,
         ethicalConsiderationsAcknowledged
       };
@@ -345,29 +305,25 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   }, [
     isLoading, projectId, phases, activePhaseId, projectPrompt, projectFiles,
-    reflectionAnswers, scopingActiveStep, selectedUseCase, constraints,
-    selectedDataset, suitabilityChecks, scopingFinalDecision,
+    reflectionAnswers, scopingActiveStep, selectedUseCase, selectedDataset, 
+    suitabilityChecks, scopingFinalDecision,
     
-    // NEW: Enhanced development dependencies
+    technicalInfrastructure, infrastructureAssessment,
+    
     developmentSelectedSolution, developmentGeneratedProject, developmentSolutionSelection,
     
-    // Legacy development dependencies
     developmentSelectedPipeline, developmentGuardrails, developmentMilestones,
     developmentTestResults, developmentEvaluationCriteria, developmentDecision,
     
-    // Evaluation dependencies
     evaluationTestResults, evaluationImpactGoalChecks, evaluationRiskAssessments,
     evaluationStakeholderFeedback, evaluationDecision, evaluationJustification,
 
-    // NEW: Ethical considerations dependencies
     ethicalConsiderations, ethicalConsiderationsAcknowledged
   ]);
 
-  // Load and sync data on mount
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Load from localStorage first (instant)
         const { data: localData } = getFromStorage(projectId);
         if (localData) {
           setPhases(localData.phases || getDefaultPhases());
@@ -377,17 +333,17 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
           setReflectionAnswers(localData.reflectionAnswers || {});
           setScopingActiveStep(localData.scopingActiveStep || 1);
           setSelectedUseCase(localData.selectedUseCase || null);
-          setConstraints(localData.constraints || getDefaultConstraints());
           setSelectedDataset(localData.selectedDataset || null);
           setSuitabilityChecks(localData.suitabilityChecks || getDefaultSuitabilityChecks());
           setScopingFinalDecision(localData.scopingFinalDecision || null);
           
-          // NEW: Enhanced development state
+          setTechnicalInfrastructure(localData.technicalInfrastructure || getDefaultTechnicalInfrastructure());
+          setInfrastructureAssessment(localData.infrastructureAssessment || null);
+          
           setDevelopmentSelectedSolution(localData.developmentSelectedSolution || null);
           setDevelopmentGeneratedProject(localData.developmentGeneratedProject || null);
           setDevelopmentSolutionSelection(localData.developmentSolutionSelection || null);
           
-          // Legacy development state
           setDevelopmentSelectedPipeline(localData.developmentSelectedPipeline || "");
           setDevelopmentGuardrails(localData.developmentGuardrails || []);
           setDevelopmentMilestones(localData.developmentMilestones || []);
@@ -395,7 +351,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
           setDevelopmentEvaluationCriteria(localData.developmentEvaluationCriteria || []);
           setDevelopmentDecision(localData.developmentDecision || null);
           
-          // Evaluation state
           setEvaluationTestResults(localData.evaluationTestResults || "");
           setEvaluationImpactGoalChecks(localData.evaluationImpactGoalChecks || getDefaultImpactGoalChecks());
           setEvaluationRiskAssessments(localData.evaluationRiskAssessments || getDefaultRiskAssessments());
@@ -403,12 +358,10 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
           setEvaluationDecision(localData.evaluationDecision || null);
           setEvaluationJustification(localData.evaluationJustification || "");
 
-          // NEW: Ethical considerations state
           setEthicalConsiderations(localData.ethicalConsiderations || []);
           setEthicalConsiderationsAcknowledged(localData.ethicalConsiderationsAcknowledged || false);
         }
         
-        // Then sync with API if not a default project
         if (projectId !== null) {
           try {
             const response = await api.backend.projects.getProjectSync(projectId);
@@ -416,15 +369,12 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
               const apiData = response.data;
               const { meta: localMeta } = getFromStorage(projectId);
               
-              // Simple timestamp comparison
               const apiUpdated = new Date(apiData.updated_at).getTime();
               const localUpdated = localMeta?.lastSync ? new Date(localMeta.lastSync).getTime() : 0;
               
-              // If API data is newer, use it
               if (apiUpdated > localUpdated) {
                 console.log('API data is newer, syncing...');
                 
-                // Map API data to local state
                 if (apiData.phases) setPhases(apiData.phases);
 
                 if (apiData.reflection_questions) {
@@ -442,17 +392,16 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
                   const sd = apiData.scoping_data;
                   if (sd.activeStep) setScopingActiveStep(sd.activeStep);
                   if (sd.selectedUseCase) setSelectedUseCase(sd.selectedUseCase);
-                  if (sd.constraints) setConstraints(sd.constraints);
                   if (sd.selectedDataset) setSelectedDataset(sd.selectedDataset);
                   if (sd.suitabilityChecks) setSuitabilityChecks(sd.suitabilityChecks);
                   if (sd.finalDecision) setScopingFinalDecision(sd.finalDecision);
+                  if (sd.technicalInfrastructure) setTechnicalInfrastructure(sd.technicalInfrastructure);
+                  if (sd.infrastructureAssessment) setInfrastructureAssessment(sd.infrastructureAssessment);
                 }
                 
-                // NEW: Sync development data
                 if (apiData.development_data) {
                   const dd = apiData.development_data;
                   if (dd.selected_solution) {
-                    // Convert backend solution format to frontend format if needed
                     setDevelopmentSelectedSolution(dd.selected_solution);
                   }
                   if (dd.generated_project) {
@@ -463,7 +412,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
                   }
                 }
 
-                // NEW: Sync ethical considerations data
                 if (apiData.ethical_considerations) {
                   setEthicalConsiderations(apiData.ethical_considerations);
                 }
@@ -471,7 +419,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
                   setEthicalConsiderationsAcknowledged(apiData.ethical_considerations_acknowledged);
                 }
                 
-                // Update metadata
                 const newMetadata: ProjectMetadata = {
                   lastSync: apiData.updated_at,
                   version: apiData.version || 1
@@ -485,7 +432,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
             console.warn('Failed to sync with API, using local data:', error);
           }
 
-          // Load ethical considerations from API (separate call)
           await loadEthicalConsiderations(projectId);
         }
       } finally {
@@ -521,17 +467,17 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       reflectionAnswers, setReflectionAnswers,
       scopingActiveStep, setScopingActiveStep,
       selectedUseCase, setSelectedUseCase,
-      constraints, setConstraints,
       selectedDataset, setSelectedDataset,
       suitabilityChecks, setSuitabilityChecks,
       scopingFinalDecision, setScopingFinalDecision,
       
-      // NEW: Enhanced Development Phase State
+      technicalInfrastructure, setTechnicalInfrastructure,
+      infrastructureAssessment, setInfrastructureAssessment,
+      
       developmentSelectedSolution, setDevelopmentSelectedSolution,
       developmentGeneratedProject, setDevelopmentGeneratedProject,
       developmentSolutionSelection, setDevelopmentSolutionSelection,
       
-      // Legacy development state
       developmentSelectedPipeline, setDevelopmentSelectedPipeline,
       developmentGuardrails, setDevelopmentGuardrails,
       developmentMilestones, setDevelopmentMilestones,
@@ -539,7 +485,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       developmentEvaluationCriteria, setDevelopmentEvaluationCriteria,
       developmentDecision, setDevelopmentDecision,
       
-      // Evaluation state
       evaluationTestResults, setEvaluationTestResults,
       evaluationImpactGoalChecks, setEvaluationImpactGoalChecks,
       evaluationRiskAssessments, setEvaluationRiskAssessments,
@@ -547,7 +492,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       evaluationDecision, setEvaluationDecision,
       evaluationJustification, setEvaluationJustification,
 
-      // NEW: Ethical Considerations
       ethicalConsiderations, setEthicalConsiderations,
       ethicalConsiderationsAcknowledged, setEthicalConsiderationsAcknowledged,
       loadEthicalConsiderations,

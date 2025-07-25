@@ -1,13 +1,13 @@
 import { useProject } from "@/contexts/ProjectContext";
+import { TechnicalInfrastructureAssessment } from "@/components/scoping/TechnicalInfrastructureAssessment";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
-import { FeasibilityForm } from "@/components/scoping/FeasibilityForm";
 import { DatasetDiscovery } from "@/components/scoping/dataset-discovery/DatasetDiscovery";
 import { SuitabilityChecklist } from "@/components/scoping/SuitabilityChecklist";
-import { FinalFeasibilityGate } from "@/components/scoping/FinalFeasibilityGate";
+import { ProjectReadinessSummary } from "@/components/scoping/ProjectReadinessSummary";
 import { ScopingPhaseHeader } from "@/components/scoping/ScopingPhaseHeader";
 import { useScopingPhaseData } from "@/hooks/useScopingPhaseData";
 import { useScopingPhaseNavigation } from "@/hooks/useScopingPhaseNavigation";
-import { UseCase, Dataset, FeasibilityConstraint } from "@/types/scoping-phase";
+import { UseCase, Dataset } from "@/types/scoping-phase";
 import { useEffect, useState } from "react";
 
 interface ScopingPhaseProps {
@@ -22,26 +22,23 @@ export const ScopingPhase = ({
   updatePhaseStatus,
   currentPhaseStatus = "in-progress"
 }: ScopingPhaseProps) => {
-  // Get state from context
   const {
     scopingActiveStep,
     selectedUseCase,
     setSelectedUseCase,
-    constraints,
-    setConstraints,
     selectedDataset,
     setSelectedDataset,
     suitabilityChecks,
     setSuitabilityChecks,
     scopingFinalDecision,
     setScopingFinalDecision,
-    phases
+    phases,
+    technicalInfrastructure,
+    infrastructureAssessment
   } = useProject();
 
-  // State for tracking project domain
   const [projectDomain, setProjectDomain] = useState<string>("general_humanitarian");
   
-  // Use custom hooks for cleaner component
   const {
     useCases,
     datasets,
@@ -50,8 +47,6 @@ export const ScopingPhase = ({
     selectedCategory,
     loadingUseCases,
     loadingDatasets,
-    feasibilityScore,
-    feasibilityLevel, // Changed from feasibilityRisk
     suitabilityScore,
     errorUseCases,
     noUseCasesFound,
@@ -66,7 +61,6 @@ export const ScopingPhase = ({
     loadUseCases
   } = useScopingPhaseData();
 
-  // Check if the scoping phase is already completed from the phases array
   const scopingPhase = phases.find(p => p.id === "scoping");
   const effectiveStatus = scopingPhase?.status || currentPhaseStatus;
   
@@ -82,20 +76,14 @@ export const ScopingPhase = ({
     updatePhaseStatus
   });
 
-  // Track if search has been attempted
   const [hasSearchedUseCases, setHasSearchedUseCases] = useState(false);
 
-  // Extract domain from project context on mount
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const projectId = searchParams.get('projectId');
-    
-    // TODO: Extract domain from project description using LLM or keyword matching
-    // For now, default to general_humanitarian
     setProjectDomain("general_humanitarian");
   }, []);
 
-  // Handle suitability check update
   const handleSuitabilityUpdate = (id: string, answer: 'yes' | 'no' | 'unknown') => {
     if (effectiveStatus === "completed") return;
     
@@ -106,83 +94,37 @@ export const ScopingPhase = ({
     );
   };
 
-  // Enhanced constraint update logic to handle adding new constraints
-  const handleConstraintUpdate = (id: string, value: string | boolean) => {
-    if (effectiveStatus === "completed") return;
-    
-    console.log(`Updating constraint ${id} with value:`, value);
-    
-    setConstraints(prevConstraints => {
-      // Check if constraint exists
-      const existingConstraintIndex = prevConstraints.findIndex(constraint => constraint.id === id);
-      
-      if (existingConstraintIndex !== -1) {
-        // Update existing constraint
-        const updatedConstraints = prevConstraints.map(constraint =>
-          constraint.id === id ? { ...constraint, value } : constraint
-        );
-        console.log('Updated existing constraint, new constraints:', updatedConstraints);
-        return updatedConstraints;
-      } else {
-        // Add new constraint if it doesn't exist
-        const newConstraint: FeasibilityConstraint = {
-          id,
-          label: id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-          value,
-          type: typeof value === 'boolean' ? 'toggle' : 'select',
-          options: typeof value === 'string' ? [] : undefined
-        };
-        
-        const updatedConstraints = [...prevConstraints, newConstraint];
-        console.log('Added new constraint, new constraints:', updatedConstraints);
-        return updatedConstraints;
-      }
-    });
-  };
-
-  // Handle dataset selection
   const handleSelectDatasetWrapper = (dataset: Dataset) => {
     if (effectiveStatus === "completed") return;
     handleSelectDataset(dataset);
   };
 
-  // Handle use case selection/unselection wrapper
   const handleSelectUseCaseWrapper = (useCase: UseCase | null) => {
     if (effectiveStatus === "completed") return;
     handleSelectUseCase(useCase, setSelectedUseCase);
   };
 
-  // Handle manual search trigger
   const handleTriggerSearch = () => {
     setHasSearchedUseCases(true);
     loadUseCases();
   };
 
-  // Handle retry search
   const handleRetrySearch = () => {
     setHasSearchedUseCases(false);
     handleRetryUseCases();
     setHasSearchedUseCases(true);
   };
 
-  // Handle continue without use case
   const handleContinueWithoutUseCaseWrapper = () => {
     handleContinueWithoutUseCase();
     moveToNextStep();
   };
 
-  // Enhanced navigation with step access
   const handleStepNavigation = (step: number) => {
-    // Allow navigation to any completed step or current step
     if (step <= scopingActiveStep || effectiveStatus === "completed") {
       moveToStep(step);
     }
   };
-
-  // Debug logging to track constraints
-  useEffect(() => {
-    console.log('Current constraints in ScopingPhase:', constraints);
-  }, [constraints]);
 
   return (
     <div className="space-y-6">
@@ -193,6 +135,13 @@ export const ScopingPhase = ({
       />
       
       {scopingActiveStep === 1 && (
+        <TechnicalInfrastructureAssessment
+          moveToNextStep={moveToNextStep}
+          updatePhaseStatus={updatePhaseStatus}
+        />
+      )}
+      
+      {scopingActiveStep === 2 && (
         <UseCaseExplorer
           useCases={useCases}
           loadingUseCases={loadingUseCases}
@@ -201,22 +150,12 @@ export const ScopingPhase = ({
           selectedUseCase={selectedUseCase}
           handleSelectUseCase={handleSelectUseCaseWrapper}
           moveToNextStep={moveToNextStep}
+          moveToPreviousStep={moveToPreviousStep}
           onRetrySearch={handleRetrySearch}
           onContinueWithoutUseCase={handleContinueWithoutUseCaseWrapper}
           domain={projectDomain}
           onTriggerSearch={handleTriggerSearch}
           hasSearchedUseCases={hasSearchedUseCases}
-        />
-      )}
-      
-      {scopingActiveStep === 2 && (
-        <FeasibilityForm
-          constraints={constraints}
-          handleConstraintUpdate={handleConstraintUpdate}
-          feasibilityScore={feasibilityScore}
-          feasibilityLevel={feasibilityLevel} // Changed from feasibilityRisk
-          moveToPreviousStep={moveToPreviousStep}
-          moveToNextStep={moveToNextStep}
         />
       )}
       
@@ -249,12 +188,11 @@ export const ScopingPhase = ({
       )}
       
       {scopingActiveStep === 5 && (
-        <FinalFeasibilityGate
+        <ProjectReadinessSummary
           selectedUseCase={selectedUseCase}
           selectedDataset={selectedDataset}
-          constraints={constraints}
-          feasibilityScore={feasibilityScore}
-          feasibilityLevel={feasibilityLevel} // Changed from feasibilityRisk
+          technicalInfrastructure={technicalInfrastructure}
+          infrastructureAssessment={infrastructureAssessment}
           suitabilityChecks={suitabilityChecks}
           suitabilityScore={suitabilityScore}
           readyToAdvance={scopingFinalDecision === 'proceed'}
