@@ -1,7 +1,7 @@
 import { useProject } from "@/contexts/ProjectContext";
 import { TechnicalInfrastructureAssessment } from "@/components/scoping/TechnicalInfrastructureAssessment";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
-import { DatasetDiscovery } from "@/components/scoping/dataset-discovery/DatasetDiscovery";
+import { DatasetDiscovery } from "@/components/scoping/DatasetDiscovery";
 import { SuitabilityChecklist } from "@/components/scoping/SuitabilityChecklist";
 import { ProjectReadinessSummary } from "@/components/scoping/ProjectReadinessSummary";
 import { ScopingPhaseHeader } from "@/components/scoping/ScopingPhaseHeader";
@@ -51,6 +51,8 @@ export const ScopingPhase = ({
     errorUseCases,
     noUseCasesFound,
     noDatasets,
+    errorDatasets,
+    hasSearchedDatasets,
     handleSearch,
     handleCategorySelect,
     handleSelectUseCase,
@@ -58,7 +60,8 @@ export const ScopingPhase = ({
     handleRetryUseCases,
     handleRetryDatasets,
     handleContinueWithoutUseCase,
-    loadUseCases
+    loadUseCases,
+    loadDatasets
   } = useScopingPhaseData();
 
   const scopingPhase = phases.find(p => p.id === "scoping");
@@ -77,12 +80,19 @@ export const ScopingPhase = ({
   });
 
   const [hasSearchedUseCases, setHasSearchedUseCases] = useState(false);
+  const [hasSearchedDatasetsState, setHasSearchedDatasetsState] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const projectId = searchParams.get('projectId');
     setProjectDomain("general_humanitarian");
   }, []);
+
+  useEffect(() => {
+    if (scopingActiveStep !== 3) {
+      setHasSearchedDatasetsState(false);
+    }
+  }, [scopingActiveStep]);
 
   const handleSuitabilityUpdate = (id: string, answer: 'yes' | 'no' | 'unknown') => {
     if (effectiveStatus === "completed") return;
@@ -94,7 +104,7 @@ export const ScopingPhase = ({
     );
   };
 
-  const handleSelectDatasetWrapper = (dataset: Dataset) => {
+  const handleSelectDatasetWrapper = (dataset: Dataset | null) => {
     if (effectiveStatus === "completed") return;
     handleSelectDataset(dataset);
   };
@@ -115,6 +125,17 @@ export const ScopingPhase = ({
     setHasSearchedUseCases(true);
   };
 
+  const handleTriggerDatasetSearch = () => {
+    setHasSearchedDatasetsState(true);
+    loadDatasets();
+  };
+
+  const handleRetryDatasetSearch = () => {
+    setHasSearchedDatasetsState(false);
+    handleRetryDatasets();
+    setHasSearchedDatasetsState(true);
+  };
+
   const handleContinueWithoutUseCaseWrapper = () => {
     handleContinueWithoutUseCase();
     moveToNextStep();
@@ -125,6 +146,8 @@ export const ScopingPhase = ({
       moveToStep(step);
     }
   };
+
+  const effectiveHasSearchedDatasets = hasSearchedDatasets || hasSearchedDatasetsState;
 
   return (
     <div className="space-y-6">
@@ -173,7 +196,9 @@ export const ScopingPhase = ({
           handleSelectDataset={handleSelectDatasetWrapper}
           moveToPreviousStep={moveToPreviousStep}
           moveToNextStep={moveToNextStep}
-          onRetryDatasetSearch={handleRetryDatasets}
+          onRetryDatasetSearch={handleRetryDatasetSearch}
+          onTriggerSearch={handleTriggerDatasetSearch}
+          hasSearchedDatasets={effectiveHasSearchedDatasets}
         />
       )}
       

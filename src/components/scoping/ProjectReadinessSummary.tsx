@@ -16,7 +16,8 @@ import {
   ArrowRight, 
   ArrowLeft,
   RefreshCw,
-  Server
+  Server,
+  Shield
 } from "lucide-react";
 import { UseCase, Dataset, DataSuitabilityCheck, ScopingCompletionData, TechnicalInfrastructure, InfrastructureAssessment } from "@/types/scoping-phase";
 import { StepHeading } from "./common/StepHeading";
@@ -159,6 +160,9 @@ export const ProjectReadinessSummary = ({
     Math.round((infrastructureAssessment.score * 0.7) + (suitabilityScore * 0.3)) : 
     Math.round(suitabilityScore);
 
+  const titleCase = (s) =>
+  s.replace(/^_*(.)|_+(.)/g, (s, c, d) => c ? c.toUpperCase() : ' ' + d.toUpperCase())
+
   const PhaseCompletionStatus = ({ title, completed, score }: { title: string, completed: boolean, score?: number }) => (
     <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 dark:bg-muted/20">
       <div className="flex items-center gap-2">
@@ -202,7 +206,7 @@ export const ProjectReadinessSummary = ({
             <div className="text-center mb-6">
               <h3 className="text-lg font-semibold mb-2 text-foreground">Overall Project Readiness</h3>
               <div className="text-4xl font-bold text-primary mb-2">{overallReadiness}%</div>
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2 mb-4">
                 <Badge 
                   variant={overallReadiness >= 70 ? 'default' : overallReadiness >= 50 ? 'secondary' : 'destructive'}
                   className="text-xs"
@@ -216,34 +220,64 @@ export const ProjectReadinessSummary = ({
                    'Needs strengthening'}
                 </span>
               </div>
+              
+              <div className="text-sm text-muted-foreground bg-muted/30 dark:bg-muted/10 rounded-lg p-3">
+                <div className="mb-2 font-medium">Readiness Calculation:</div>
+                {infrastructureAssessment ? (
+                  <div className="space-y-1">
+                    <div>Technical Infrastructure: {infrastructureAssessment.score}% (70% weight)</div>
+                    <div>Data Suitability: {suitabilityScore}% (30% weight)</div>
+                  </div>
+                ) : (
+                  <div>Based on Data Suitability: {suitabilityScore}%</div>
+                )}
+              </div>
             </div>
 
-            {infrastructureAssessment && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {infrastructureAssessment && (
                 <div>
-                  <h4 className="font-medium mb-3 text-green-800 dark:text-green-400">Infrastructure Strengths</h4>
-                  <ul className="space-y-2">
-                    {infrastructureAssessment.recommendations.slice(0, 3).map((rec, index) => (
-                      <li key={index} className="flex items-start text-sm text-green-700 dark:text-green-300">
-                        <Check className="h-4 w-4 mr-2 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                        {rec}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="font-medium mb-3 text-orange-800 dark:text-orange-400">Infrastructure Assessment</h4>
+                  <h4 className="font-medium mb-3 text-blue-800 dark:text-blue-400 flex items-center gap-2">
+                    <Server className="h-4 w-4" />
+                    Technical Infrastructure
+                  </h4>
                   <div className="space-y-2">
                     <div className="text-sm">
-                      <span className="text-muted-foreground">Score:</span>
+                      <span className="text-muted-foreground">Assessment Score:</span>
                       <span className="text-foreground ml-2 font-medium">{infrastructureAssessment.score}%</span>
                     </div>
                     <p className="text-sm text-muted-foreground">{infrastructureAssessment.reasoning}</p>
                   </div>
                 </div>
+              )}
+
+              <div>
+                <h4 className="font-medium mb-3 text-green-800 dark:text-green-400 flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  Data Suitability
+                </h4>
+                <div className="space-y-2">
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Suitability Score:</span>
+                    <span className="text-foreground ml-2 font-medium">{suitabilityScore}%</span>
+                  </div>
+                  <div className="space-y-1">
+                    {suitabilityChecks.filter(check => check.answer !== 'unknown').map((check, index) => (
+                      <div key={index} className="flex items-start text-sm">
+                        {check.answer === 'yes' ? (
+                          <Check className="h-3 w-3 mr-2 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                        ) : (
+                          <X className="h-3 w-3 mr-2 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                        )}
+                        <span className={check.answer === 'yes' ? 'text-green-700 dark:text-green-300' : 'text-red-700 dark:text-red-300'}>
+                          {check.question}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            )}
+            </div>
           </CardContent>
         </Card>
 
@@ -289,13 +323,6 @@ export const ProjectReadinessSummary = ({
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {selectedUseCase.description}
                     </p>
-                    <div className="flex flex-wrap gap-1">
-                      {selectedUseCase.tags.slice(0, 3).map(tag => (
-                        <Badge key={tag} variant="outline" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
                     {selectedUseCase.source_url && (
                       <a 
                         href={selectedUseCase.source_url}
@@ -332,16 +359,6 @@ export const ProjectReadinessSummary = ({
                     <p className="text-sm text-muted-foreground line-clamp-2">
                       {selectedDataset.description}
                     </p>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <span className="text-muted-foreground">Size:</span> 
-                        <span className="text-foreground ml-1">{selectedDataset.size || selectedDataset.size_estimate}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Format:</span> 
-                        <span className="text-foreground ml-1">{selectedDataset.format || "Various"}</span>
-                      </div>
-                    </div>
                     {selectedDataset.url && (
                       <a 
                         href={selectedDataset.url}
@@ -376,20 +393,20 @@ export const ProjectReadinessSummary = ({
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-sm">
-                    <span className="text-muted-foreground">Computing:</span>
-                    <span className="text-foreground ml-2">{technicalInfrastructure.computing_resources}</span>
+                    <span className="text-muted-foreground">Computing Resources:</span>
+                    <span className="text-foreground ml-2">{titleCase(technicalInfrastructure.computing_resources)}</span>
                   </div>
                   <div className="text-sm">
                     <span className="text-muted-foreground">Storage:</span>
-                    <span className="text-foreground ml-2">{technicalInfrastructure.storage_data}</span>
+                    <span className="text-foreground ml-2">{titleCase(technicalInfrastructure.storage_data)}</span>
                   </div>
                   <div className="text-sm">
                     <span className="text-muted-foreground">Connectivity:</span>
-                    <span className="text-foreground ml-2">{technicalInfrastructure.internet_connectivity}</span>
+                    <span className="text-foreground ml-2">{titleCase(technicalInfrastructure.internet_connectivity)}</span>
                   </div>
                   <div className="text-sm">
-                    <span className="text-muted-foreground">Deployment:</span>
-                    <span className="text-foreground ml-2">{technicalInfrastructure.deployment_environment}</span>
+                    <span className="text-muted-foreground">Deployment Environment:</span>
+                    <span className="text-foreground ml-2">{titleCase(technicalInfrastructure.deployment_environment) }</span>
                   </div>
                 </div>
               </div>

@@ -15,6 +15,7 @@ export const useScopingPhaseData = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [loadingDatasets, setLoadingDatasets] = useState(false);
+  const [errorDatasets, setErrorDatasets] = useState<string | null>(null);
   const [noDatasets, setNoDatasets] = useState(false);
   const [hasSearchedDatasets, setHasSearchedDatasets] = useState(false);
   
@@ -24,10 +25,11 @@ export const useScopingPhaseData = () => {
     suitabilityChecks, 
     selectedUseCase,
     setSelectedUseCase,
+    selectedDataset,
     setSelectedDataset,
     scopingActiveStep,
-    technicalInfrastructure, // Get from context
-    infrastructureAssessment // Get from context
+    technicalInfrastructure,
+    infrastructureAssessment
   } = useProject();
 
   const searchParams = new URLSearchParams(location.search);
@@ -42,7 +44,6 @@ export const useScopingPhaseData = () => {
     try {
       console.log('Loading AI-focused use cases with infrastructure context...');
       
-      // Use the technical infrastructure from context
       const apiUseCases = await scopingApi.getUseCases(projectId, technicalInfrastructure);
       
       if (!Array.isArray(apiUseCases)) {
@@ -101,10 +102,13 @@ export const useScopingPhaseData = () => {
       setDatasets([]);
       setFilteredDatasets([]);
       setNoDatasets(false);
+      setSelectedDataset(null);
       return;
     }
     
+    setSelectedDataset(null);
     setLoadingDatasets(true);
+    setErrorDatasets(null);
     setNoDatasets(false);
     setHasSearchedDatasets(true);
     
@@ -123,6 +127,7 @@ export const useScopingPhaseData = () => {
         setDatasets([]);
         setFilteredDatasets([]);
         setNoDatasets(true);
+        setSelectedDataset(null);
         return;
       }
       
@@ -132,26 +137,25 @@ export const useScopingPhaseData = () => {
       setNoDatasets(false);
       console.log(`Loaded ${convertedDatasets.length} datasets from humanitarian sources`);
       
+      if (selectedDataset && !convertedDatasets.find(d => d.id === selectedDataset.id)) {
+        setSelectedDataset(null);
+      }
+      
     } catch (error) {
       console.error('Failed to load datasets:', error);
       setDatasets([]);
       setFilteredDatasets([]);
       setNoDatasets(true);
+      setSelectedDataset(null);
+      setErrorDatasets(error instanceof Error ? error.message : 'Unknown error occurred while searching for datasets');
     } finally {
       setLoadingDatasets(false);
     }
   };
 
-  useEffect(() => {
-    if (selectedUseCase && scopingActiveStep === 3) {
-      loadDatasets();
-    } else {
-      setDatasets([]);
-      setFilteredDatasets([]);
-      setNoDatasets(false);
-      setHasSearchedDatasets(false);
-    }
-  }, [selectedUseCase, scopingActiveStep, projectId]);
+
+
+
 
   useEffect(() => {
     const calculateHumanitarianSuitabilityScore = () => {
@@ -271,8 +275,12 @@ export const useScopingPhaseData = () => {
     }
   };
 
-  const handleSelectDataset = (dataset: Dataset) => {
-    setSelectedDataset(dataset);
+  const handleSelectDataset = (dataset: Dataset | null) => {
+    if (selectedDataset && dataset && selectedDataset.id === dataset.id) {
+      setSelectedDataset(null);
+    } else {
+      setSelectedDataset(dataset);
+    }
 
     if (projectId) {
       const datasetData = {
@@ -315,9 +323,11 @@ export const useScopingPhaseData = () => {
   };
 
   const handleRetryDatasets = () => {
+    setErrorDatasets(null);
     setNoDatasets(false);
     setDatasets([]);
     setFilteredDatasets([]);
+    setSelectedDataset(null);
     loadDatasets();
   };
 
@@ -330,6 +340,8 @@ export const useScopingPhaseData = () => {
     searchTerm,
     selectedCategory,
     noDatasets,
+    errorDatasets,
+    hasSearchedDatasets,
     
     loadingUseCases,
     loadingDatasets,
