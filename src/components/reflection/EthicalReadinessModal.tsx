@@ -25,20 +25,20 @@ import {
   Settings,
   Download
 } from "lucide-react";
-import { ProjectReadinessAssessment } from "@/types/reflection-phase";
+import { EthicalReadinessAssessment } from "@/types/reflection-phase";
 import { useProject } from "@/contexts/ProjectContext";
 
-interface ProjectReadinessModalProps {
+interface EthicalReadinessModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  assessment: ProjectReadinessAssessment | null;
+  assessment: EthicalReadinessAssessment | null;
   onProceed: () => void;
   onRevise: () => void;
   isAdvancing: boolean;
   getQuestionTitle: (key: string) => string;
 }
 
-export const ProjectReadinessModal: React.FC<ProjectReadinessModalProps> = ({
+export const EthicalReadinessModal: React.FC<EthicalReadinessModalProps> = ({
   isOpen,
   onOpenChange,
   assessment,

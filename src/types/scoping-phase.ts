@@ -121,6 +121,176 @@ export interface ScopingCompletionData {
   reasoning?: string;
 }
 
+export interface FileInfo {
+  name: string;
+  size: number;
+  type: string;
+  lastModified: number;
+}
+
+export interface FormatDetection {
+  detectedFormat: string;
+  confidence: 'high' | 'medium' | 'low';
+  supportLevel: 'full' | 'partial' | 'manual' | 'unsupported';
+  suggestions?: string[];
+}
+
+export interface ColumnAnalysis {
+  name: string;
+  type: 'numeric' | 'categorical' | 'datetime' | 'text' | 'boolean';
+  nullCount: number;
+  uniqueCount: number;
+  potentialIdentifier?: boolean;
+  totalRows?: number;
+}
+
+export interface DatasetStatistics {
+  basicMetrics: {
+    totalRows: number;
+    totalColumns: number;
+    columnTypes: Record<string, number>;
+    missingValues: Record<string, number>;
+    duplicateRows: number;
+    fileSize: number;
+  };
+  columnAnalysis: ColumnAnalysis[];
+  distributionStats: {
+    numericalSummary: Record<string, any>;
+    categoricalSummary: Record<string, any>;
+    outlierCount: number;
+  };
+  qualityAssessment: {
+    completenessScore: number;
+    consistencyScore: number;
+    uniquenessRatio: number;
+  };
+  biasIndicators: {
+    demographicBalance: Record<string, any>;
+    smallGroupSizes: string[];
+    representationConcerns: string[];
+  };
+  privacyRisks: {
+    potentialIdentifiers: string[];
+    quasiIdentifiers: string[];
+    uniquenessRatio: number;
+  };
+}
+
+export interface EthicalAnalysis {
+  overallRiskLevel: 'low' | 'medium' | 'high';
+  biasAssessment: {
+    level: 'low' | 'medium' | 'high';
+    concerns: string[];
+    recommendations: string[];
+  };
+  fairnessEvaluation: {
+    representationIssues: string[];
+    recommendations: string[];
+  };
+  privacyEvaluation: {
+    riskLevel: 'low' | 'medium' | 'high';
+    concerns: string[];
+    recommendations: string[];
+    assessmentReasoning: string;
+  };
+  overallRecommendation: string;
+  suitabilityScore: number;
+  scoringBreakdown?: ScoringBreakdown;
+}
+
+export interface ScoringDetail {
+  score: number;
+  weight: number;
+  points: number;
+  reasoning: string;
+}
+
+export interface ScoringBreakdown {
+  privacy_score: ScoringDetail;
+  fairness_score: ScoringDetail;
+  quality_score: ScoringDetail;
+  humanitarian_alignment: ScoringDetail;
+}
+
+export interface AnalysisState {
+  stage: 'upload' | 'analyzing' | 'ethicalAnalysis' | 'complete' | 'error' | 'unsupported' | 'manual';
+  fileInfo?: FileInfo;
+  formatDetection?: FormatDetection;
+  statistics?: DatasetStatistics;
+  ethicalAnalysis?: EthicalAnalysis;
+  error?: string;
+  analysisStartTime?: number;
+}
+
+export interface EthicalAnalysisRequest {
+  basicMetrics: DatasetStatistics['basicMetrics'];
+  qualityAssessment: DatasetStatistics['qualityAssessment'];
+  privacyRisks: DatasetStatistics['privacyRisks'];
+  biasIndicators: DatasetStatistics['biasIndicators'];
+  columnSummary: Array<{
+    name: string;
+    type: string;
+    nullPercentage: number;
+    uniquenessRatio: number;
+    potentialIdentifier: boolean;
+  }>;
+}
+
+export interface ManualAssessmentQuestion {
+  id: string;
+  title: string;
+  question: string;
+  description: string;
+  helpContent: {
+    lookFor: string[];
+    warningsSigns: string[];
+    whyMatters: string;
+  };
+  responseOptions: Array<{
+    value: 'yes' | 'unknown' | 'no';
+    label: string;
+    description: string;
+  }>;
+}
+
+export interface TargetLabelQuestion {
+  id: string;
+  title: string;
+  question: string;
+  description: string;
+  helpContent: {
+    lookFor: string[];
+    warningsSigns: string[];
+    whyMatters: string;
+  };
+  responseOptions: Array<{
+    value: 'yes' | 'unknown' | 'no';
+    label: string;
+    description: string;
+  }>;
+}
+
+export interface ManualAssessmentResults {
+  datasetChecks: DataSuitabilityCheck[];
+  targetLabelChecks: DataSuitabilityCheck[];
+  overallScore: number;
+  datasetScore: number;
+  targetLabelScore: number;
+}
+
+export interface QuestionCardProps {
+  question: ManualAssessmentQuestion | TargetLabelQuestion;
+  currentAnswer: 'yes' | 'no' | 'unknown' | null;
+  isHelpExpanded: boolean;
+  onAnswerSelect: (answer: 'yes' | 'no' | 'unknown') => void;
+  onToggleHelp: () => void;
+}
+
+export interface ManualDatasetAssessmentProps {
+  onComplete: (results: ManualAssessmentResults) => void;
+  onPrevious: () => void;
+}
+
 export const INFRASTRUCTURE_OPTIONS = {
   computing_resources: [
     'cloud_platforms',

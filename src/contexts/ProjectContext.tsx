@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import { useLocation } from "react-router-dom";
 import { api } from "@/lib/api";
 import { ProjectPhase, EthicalConsideration } from "@/types/project";
-import { UseCase, Dataset, DataSuitabilityCheck, TechnicalInfrastructure, InfrastructureAssessment } from "@/types/scoping-phase";
+import { UseCase, Dataset, DataSuitabilityCheck, TechnicalInfrastructure, InfrastructureAssessment, AnalysisState, ManualAssessmentResults } from "@/types/scoping-phase";
 import { 
   EthicalGuardrail, 
   PrototypeMilestone, 
@@ -46,6 +46,16 @@ interface ProjectContextType {
   setTechnicalInfrastructure: React.Dispatch<React.SetStateAction<TechnicalInfrastructure>>;
   infrastructureAssessment: InfrastructureAssessment | null;
   setInfrastructureAssessment: React.Dispatch<React.SetStateAction<InfrastructureAssessment | null>>;
+  
+  datasetAnalysisState: AnalysisState;
+  setDatasetAnalysisState: React.Dispatch<React.SetStateAction<AnalysisState>>;
+  datasetManualResults: ManualAssessmentResults | null;
+  setDatasetManualResults: React.Dispatch<React.SetStateAction<ManualAssessmentResults | null>>;
+  datasetFileSizeWarning: string | null;
+  setDatasetFileSizeWarning: React.Dispatch<React.SetStateAction<string | null>>;
+  datasetShowRawData: boolean;
+  setDatasetShowRawData: React.Dispatch<React.SetStateAction<boolean>>;
+  clearDatasetAnalysis: () => void;
   
   developmentSelectedSolution: AISolution | null;
   setDevelopmentSelectedSolution: React.Dispatch<React.SetStateAction<AISolution | null>>;
@@ -154,6 +164,10 @@ const getDefaultTechnicalInfrastructure = (): TechnicalInfrastructure => ({
   deployment_environment: ""
 });
 
+const getDefaultAnalysisState = (): AnalysisState => ({
+  stage: "upload"
+});
+
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -177,6 +191,11 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [technicalInfrastructure, setTechnicalInfrastructure] = useState<TechnicalInfrastructure>(getDefaultTechnicalInfrastructure());
   const [infrastructureAssessment, setInfrastructureAssessment] = useState<InfrastructureAssessment | null>(null);
   
+  const [datasetAnalysisState, setDatasetAnalysisState] = useState<AnalysisState>(getDefaultAnalysisState());
+  const [datasetManualResults, setDatasetManualResults] = useState<ManualAssessmentResults | null>(null);
+  const [datasetFileSizeWarning, setDatasetFileSizeWarning] = useState<string | null>(null);
+  const [datasetShowRawData, setDatasetShowRawData] = useState<boolean>(false);
+  
   const [developmentSelectedSolution, setDevelopmentSelectedSolution] = useState<AISolution | null>(null);
   const [developmentGeneratedProject, setDevelopmentGeneratedProject] = useState<ProjectGenerationResponse | null>(null);
   const [developmentSolutionSelection, setDevelopmentSolutionSelection] = useState<SolutionSelection | null>(null);
@@ -197,6 +216,14 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const [ethicalConsiderations, setEthicalConsiderations] = useState<EthicalConsideration[]>([]);
   const [ethicalConsiderationsAcknowledged, setEthicalConsiderationsAcknowledged] = useState<boolean>(false);
+
+  const clearDatasetAnalysis = () => {
+    setDatasetAnalysisState(getDefaultAnalysisState());
+    setDatasetManualResults(null);
+    setDatasetFileSizeWarning(null);
+    setDatasetShowRawData(false);
+    setSuitabilityChecks(getDefaultSuitabilityChecks());
+  };
 
   const loadEthicalConsiderations = async (projectId: string) => {
     if (!projectId) {
@@ -273,6 +300,11 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
         technicalInfrastructure,
         infrastructureAssessment,
         
+        datasetAnalysisState,
+        datasetManualResults,
+        datasetFileSizeWarning,
+        datasetShowRawData,
+        
         developmentSelectedSolution,
         developmentGeneratedProject,
         developmentSolutionSelection,
@@ -310,6 +342,8 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
     
     technicalInfrastructure, infrastructureAssessment,
     
+    datasetAnalysisState, datasetManualResults, datasetFileSizeWarning, datasetShowRawData,
+    
     developmentSelectedSolution, developmentGeneratedProject, developmentSolutionSelection,
     
     developmentSelectedPipeline, developmentGuardrails, developmentMilestones,
@@ -339,6 +373,11 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
           
           setTechnicalInfrastructure(localData.technicalInfrastructure || getDefaultTechnicalInfrastructure());
           setInfrastructureAssessment(localData.infrastructureAssessment || null);
+          
+          setDatasetAnalysisState(localData.datasetAnalysisState || getDefaultAnalysisState());
+          setDatasetManualResults(localData.datasetManualResults || null);
+          setDatasetFileSizeWarning(localData.datasetFileSizeWarning || null);
+          setDatasetShowRawData(localData.datasetShowRawData || false);
           
           setDevelopmentSelectedSolution(localData.developmentSelectedSolution || null);
           setDevelopmentGeneratedProject(localData.developmentGeneratedProject || null);
@@ -397,6 +436,8 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
                   if (sd.finalDecision) setScopingFinalDecision(sd.finalDecision);
                   if (sd.technicalInfrastructure) setTechnicalInfrastructure(sd.technicalInfrastructure);
                   if (sd.infrastructureAssessment) setInfrastructureAssessment(sd.infrastructureAssessment);
+                  if (sd.datasetAnalysisState) setDatasetAnalysisState(sd.datasetAnalysisState);
+                  if (sd.datasetManualResults) setDatasetManualResults(sd.datasetManualResults);
                 }
                 
                 if (apiData.development_data) {
@@ -473,6 +514,12 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
       
       technicalInfrastructure, setTechnicalInfrastructure,
       infrastructureAssessment, setInfrastructureAssessment,
+      
+      datasetAnalysisState, setDatasetAnalysisState,
+      datasetManualResults, setDatasetManualResults,
+      datasetFileSizeWarning, setDatasetFileSizeWarning,
+      datasetShowRawData, setDatasetShowRawData,
+      clearDatasetAnalysis,
       
       developmentSelectedSolution, setDevelopmentSelectedSolution,
       developmentGeneratedProject, setDevelopmentGeneratedProject,

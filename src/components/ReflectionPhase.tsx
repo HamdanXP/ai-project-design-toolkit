@@ -7,9 +7,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, ArrowRight, AlertTriangle, RefreshCw } from "lucide-react";
 import { useProject } from "@/contexts/ProjectContext";
 import { useToast } from "@/hooks/use-toast";
-import { Question, ProjectReadinessAssessment } from "@/types/reflection-phase";
+import { Question, EthicalReadinessAssessment } from "@/types/reflection-phase";
 import { QuestionGuidance } from "@/components/reflection/QuestionGuidance";
-import { ProjectReadinessModal } from "@/components/reflection/ProjectReadinessModal";
+import { EthicalReadinessModal } from "@/components/reflection/EthicalReadinessModal";
 import { api } from "@/lib/api";
 import { REFLECTION_MAX_CHARS, REFLECTION_MIN_CHARS } from "@/config";
 import { useLocation } from "react-router-dom";
@@ -31,7 +31,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   const [isRetrying, setIsRetrying] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAdvancing, setIsAdvancing] = useState(false);
-  const [projectReadinessAssessment, setProjectReadinessAssessment] = useState<ProjectReadinessAssessment | null>(null);
+  const [EthicalReadinessAssessment, setEthicalReadinessAssessment] = useState<EthicalReadinessAssessment | null>(null);
   const location = useLocation();
   const { toast } = useToast();
 
@@ -209,8 +209,8 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
       const response = await api.backend.reflection.completePhase(projectId, answers);
       
       if (response.success) {
-        // Map the response to ProjectReadinessAssessment format
-        const assessment: ProjectReadinessAssessment = {
+        // Map the response to EthicalReadinessAssessment format
+        const assessment: EthicalReadinessAssessment = {
           ethical_score: response.data.ethical_score,
           ethical_summary: response.data.summary,
           ai_appropriateness_score: response.data.ai_appropriateness_score || 0.5,
@@ -226,7 +226,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
           can_proceed: response.data.can_proceed
         };
         
-        setProjectReadinessAssessment(assessment);
+        setEthicalReadinessAssessment(assessment);
         setAssessmentDialogOpen(true);
       }
     } catch (error) {
@@ -391,10 +391,10 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   return (
     <div className="flex flex-col h-full">
       {/* Project Readiness Assessment Modal */}
-      <ProjectReadinessModal
+      <EthicalReadinessModal
         isOpen={assessmentDialogOpen}
         onOpenChange={setAssessmentDialogOpen}
-        assessment={projectReadinessAssessment}
+        assessment={EthicalReadinessAssessment}
         onProceed={handleProceedToNextPhase}
         onRevise={handleReviseAnswers}
         isAdvancing={isAdvancing}

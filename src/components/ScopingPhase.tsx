@@ -2,7 +2,7 @@ import { useProject } from "@/contexts/ProjectContext";
 import { TechnicalInfrastructureAssessment } from "@/components/scoping/TechnicalInfrastructureAssessment";
 import { UseCaseExplorer } from "@/components/scoping/UseCaseExplorer";
 import { DatasetDiscovery } from "@/components/scoping/DatasetDiscovery";
-import { SuitabilityChecklist } from "@/components/scoping/SuitabilityChecklist";
+import { DatasetAnalyzer } from "@/components/scoping/DatasetAnalyzer";
 import { ProjectReadinessSummary } from "@/components/scoping/ProjectReadinessSummary";
 import { ScopingPhaseHeader } from "@/components/scoping/ScopingPhaseHeader";
 import { useScopingPhaseData } from "@/hooks/useScopingPhaseData";
@@ -29,7 +29,6 @@ export const ScopingPhase = ({
     selectedDataset,
     setSelectedDataset,
     suitabilityChecks,
-    setSuitabilityChecks,
     scopingFinalDecision,
     setScopingFinalDecision,
     phases,
@@ -93,16 +92,6 @@ export const ScopingPhase = ({
       setHasSearchedDatasetsState(false);
     }
   }, [scopingActiveStep]);
-
-  const handleSuitabilityUpdate = (id: string, answer: 'yes' | 'no' | 'unknown') => {
-    if (effectiveStatus === "completed") return;
-    
-    setSuitabilityChecks(prevChecks => 
-      prevChecks.map(check => 
-        check.id === id ? { ...check, answer } : check
-      )
-    );
-  };
 
   const handleSelectDatasetWrapper = (dataset: Dataset | null) => {
     if (effectiveStatus === "completed") return;
@@ -203,10 +192,7 @@ export const ScopingPhase = ({
       )}
       
       {scopingActiveStep === 4 && (
-        <SuitabilityChecklist
-          suitabilityChecks={suitabilityChecks}
-          handleSuitabilityUpdate={handleSuitabilityUpdate}
-          suitabilityScore={suitabilityScore}
+        <DatasetAnalyzer
           moveToPreviousStep={moveToPreviousStep}
           moveToNextStep={moveToNextStep}
         />

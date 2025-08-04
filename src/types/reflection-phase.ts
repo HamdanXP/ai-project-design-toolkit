@@ -34,7 +34,7 @@ export interface AlternativeSolutions {
   reasoning: string;
 }
 
-export interface ProjectReadinessAssessment {
+export interface EthicalReadinessAssessment {
   ethical_score: number;
   ethical_summary: string;  
   ai_appropriateness_score: number;
@@ -56,4 +56,4 @@ export interface ProjectReadinessAssessment {
   can_proceed: boolean;
 }
 
-export interface EthicalAssessment extends ProjectReadinessAssessment {}
+export interface EthicalAssessment extends EthicalReadinessAssessment {}

@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { UseCase, Dataset } from "@/types/scoping-phase";
 import { useProject } from "@/contexts/ProjectContext";
-import { scopingApi, convertApiUseCase, convertApiDataset } from "@/lib/scoping-api";
+import {
+  scopingApi,
+  convertApiUseCase,
+  convertApiDataset,
+} from "@/lib/scoping-api";
 
 export const useScopingPhaseData = () => {
   const [useCases, setUseCases] = useState<UseCase[]>([]);
@@ -9,7 +13,7 @@ export const useScopingPhaseData = () => {
   const [errorUseCases, setErrorUseCases] = useState<string | null>(null);
   const [noUseCasesFound, setNoUseCasesFound] = useState(false);
   const [hasSearchedUseCases, setHasSearchedUseCases] = useState(false);
-  
+
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [filteredDatasets, setFilteredDatasets] = useState<Dataset[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -18,80 +22,92 @@ export const useScopingPhaseData = () => {
   const [errorDatasets, setErrorDatasets] = useState<string | null>(null);
   const [noDatasets, setNoDatasets] = useState(false);
   const [hasSearchedDatasets, setHasSearchedDatasets] = useState(false);
-  
+
   const [suitabilityScore, setSuitabilityScore] = useState<number>(0);
 
-  const { 
-    suitabilityChecks, 
+  const {
+    suitabilityChecks,
     selectedUseCase,
     setSelectedUseCase,
     selectedDataset,
     setSelectedDataset,
     scopingActiveStep,
     technicalInfrastructure,
-    infrastructureAssessment
+    infrastructureAssessment,
   } = useProject();
 
   const searchParams = new URLSearchParams(location.search);
-  const projectId = searchParams.get('projectId');
+  const projectId = searchParams.get("projectId");
 
   const loadUseCases = async () => {
     setLoadingUseCases(true);
     setErrorUseCases(null);
     setNoUseCasesFound(false);
     setHasSearchedUseCases(true);
-    
+
     try {
-      console.log('Loading AI-focused use cases with infrastructure context...');
-      
-      const apiUseCases = await scopingApi.getUseCases(projectId, technicalInfrastructure);
-      
-      if (!Array.isArray(apiUseCases)) {
-        throw new Error('Invalid use cases data format');
-      }
-      
-      if (apiUseCases.length === 0) {
-        console.log('No AI use cases found from search');
-        setUseCases([]);
-        setNoUseCasesFound(true);
-        setErrorUseCases(null);
-        return;
-      }
-      
-      const convertedUseCases = apiUseCases.map(convertApiUseCase);
-      console.log(`Converted ${convertedUseCases.length} AI use cases successfully`);
-      
-      const validUseCases = convertedUseCases.filter(uc => 
-        uc.title && 
-        uc.title !== 'Use Case' && 
-        uc.description && 
-        uc.description !== 'Description not available'
+      console.log(
+        "Loading AI-focused use cases with infrastructure context..."
       );
-      
-      if (validUseCases.length === 0) {
-        console.log('No valid use cases after conversion');
+
+      const apiUseCases = await scopingApi.getUseCases(
+        projectId,
+        technicalInfrastructure
+      );
+
+      if (!Array.isArray(apiUseCases)) {
+        throw new Error("Invalid use cases data format");
+      }
+
+      if (apiUseCases.length === 0) {
+        console.log("No AI use cases found from search");
         setUseCases([]);
         setNoUseCasesFound(true);
         setErrorUseCases(null);
         return;
       }
-      
+
+      const convertedUseCases = apiUseCases.map(convertApiUseCase);
+      console.log(
+        `Converted ${convertedUseCases.length} AI use cases successfully`
+      );
+
+      const validUseCases = convertedUseCases.filter(
+        (uc) =>
+          uc.title &&
+          uc.title !== "Use Case" &&
+          uc.description &&
+          uc.description !== "Description not available"
+      );
+
+      if (validUseCases.length === 0) {
+        console.log("No valid use cases after conversion");
+        setUseCases([]);
+        setNoUseCasesFound(true);
+        setErrorUseCases(null);
+        return;
+      }
+
       setUseCases(validUseCases);
       setNoUseCasesFound(false);
       setErrorUseCases(null);
-      
     } catch (error) {
-      console.error('Failed to load AI use cases:', error);
-      
+      console.error("Failed to load AI use cases:", error);
+
       setUseCases([]);
       setNoUseCasesFound(false);
-      
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        setErrorUseCases('Unable to connect to search services. Please check your connection and try again.');
+
+      if (error instanceof TypeError && error.message.includes("fetch")) {
+        setErrorUseCases(
+          "Unable to connect to search services. Please check your connection and try again."
+        );
       } else {
-        setErrorUseCases(error instanceof Error ? error.message : 'Unknown error occurred while searching');
+        setErrorUseCases(
+          error instanceof Error
+            ? error.message
+            : "Unknown error occurred while searching"
+        );
       }
-      
     } finally {
       setLoadingUseCases(false);
     }
@@ -105,142 +121,245 @@ export const useScopingPhaseData = () => {
       setSelectedDataset(null);
       return;
     }
-    
+
     setSelectedDataset(null);
     setLoadingDatasets(true);
     setErrorDatasets(null);
     setNoDatasets(false);
     setHasSearchedDatasets(true);
-    
+
     try {
       console.log(`Loading datasets for use case: ${selectedUseCase.title}`);
-      
+
       const apiDatasets = await scopingApi.getRecommendedDatasets(
-        projectId, 
+        projectId,
         selectedUseCase.id,
         selectedUseCase.title,
         selectedUseCase.description
       );
-      
+
       if (!Array.isArray(apiDatasets) || apiDatasets.length === 0) {
-        console.log('No datasets found from humanitarian sources');
+        console.log("No datasets found from humanitarian sources");
         setDatasets([]);
         setFilteredDatasets([]);
         setNoDatasets(true);
         setSelectedDataset(null);
         return;
       }
-      
+
       const convertedDatasets = apiDatasets.map(convertApiDataset);
       setDatasets(convertedDatasets);
       setFilteredDatasets(convertedDatasets);
       setNoDatasets(false);
-      console.log(`Loaded ${convertedDatasets.length} datasets from humanitarian sources`);
-      
-      if (selectedDataset && !convertedDatasets.find(d => d.id === selectedDataset.id)) {
+      console.log(
+        `Loaded ${convertedDatasets.length} datasets from humanitarian sources`
+      );
+
+      if (
+        selectedDataset &&
+        !convertedDatasets.find((d) => d.id === selectedDataset.id)
+      ) {
         setSelectedDataset(null);
       }
-      
     } catch (error) {
-      console.error('Failed to load datasets:', error);
+      console.error("Failed to load datasets:", error);
       setDatasets([]);
       setFilteredDatasets([]);
       setNoDatasets(true);
       setSelectedDataset(null);
-      setErrorDatasets(error instanceof Error ? error.message : 'Unknown error occurred while searching for datasets');
+      setErrorDatasets(
+        error instanceof Error
+          ? error.message
+          : "Unknown error occurred while searching for datasets"
+      );
     } finally {
       setLoadingDatasets(false);
     }
   };
 
-
-
-
-
   useEffect(() => {
-    const calculateHumanitarianSuitabilityScore = () => {
-      const weights = {
-        privacy_ethics: 0.35,
-        population_representativeness: 0.30,
-        data_completeness: 0.20,
-        quality_sufficiency: 0.15
-      };
-      
-      const calculateQuestionScore = (questionId: string, answer: string): number => {
-        switch (questionId) {
-          case 'privacy_ethics':
-          case 'privacy':
-            if (answer === 'yes') return 1.0;
-            if (answer === 'unknown') return 0.4;
-            return 0.0;
-            
-          case 'population_representativeness':
-          case 'representativeness':
-            if (answer === 'yes') return 1.0;
-            if (answer === 'unknown') return 0.6;
-            return 0.2;
-            
-          case 'data_completeness':
-          case 'completeness':
-            if (answer === 'yes') return 1.0;
-            if (answer === 'unknown') return 0.7;
-            return 0.3;
-            
-          case 'quality_sufficiency':
-          case 'sufficiency':
-            if (answer === 'yes') return 1.0;
-            if (answer === 'unknown') return 0.6;
-            return 0.2;
-            
-          default:
-            if (answer === 'yes') return 1.0;
-            if (answer === 'unknown') return 0.5;
-            return 0.0;
+    const calculateSuitabilityScore = () => {
+      if (suitabilityChecks.length === 0) {
+        setSuitabilityScore(0);
+        return;
+      }
+
+      const hasTargetLabelChecks = suitabilityChecks.some((check) =>
+        ["target_ethics", "target_actionability"].includes(check.id)
+      );
+
+      if (hasTargetLabelChecks) {
+        const datasetChecks = suitabilityChecks.filter((check) =>
+          [
+            "data_completeness",
+            "population_representativeness",
+            "privacy_ethics",
+            "quality_sufficiency",
+          ].includes(check.id)
+        );
+        const targetLabelChecks = suitabilityChecks.filter((check) =>
+          [
+            "target_clarity",
+            "target_variation",
+            "target_ethics",
+            "target_actionability",
+          ].includes(check.id)
+        );
+
+        const scoreAnswer = (answer: string): number => {
+          switch (answer) {
+            case "yes":
+              return 100;
+            case "unknown":
+              return 50;
+            case "no":
+              return 0;
+            default:
+              return 0;
+          }
+        };
+
+        const datasetScore =
+          datasetChecks.length > 0
+            ? Math.round(
+                datasetChecks.reduce(
+                  (sum, check) => sum + scoreAnswer(check.answer),
+                  0
+                ) / datasetChecks.length
+              )
+            : 0;
+        const targetLabelScore =
+          targetLabelChecks.length > 0
+            ? Math.round(
+                targetLabelChecks.reduce(
+                  (sum, check) => sum + scoreAnswer(check.answer),
+                  0
+                ) / targetLabelChecks.length
+              )
+            : 0;
+
+        const overallScore = Math.round(
+          datasetScore * 0.7 + targetLabelScore * 0.3
+        );
+        setSuitabilityScore(overallScore);
+      } else {
+        const aiOverallCheck = suitabilityChecks.find(
+          (check) =>
+            check.id === "ai_overall_score" &&
+            check.description &&
+            check.description.startsWith("AI analysis overall score:")
+        );
+
+        if (aiOverallCheck && aiOverallCheck.description) {
+          const scoreMatch = aiOverallCheck.description.match(/(\d+)%/);
+          if (scoreMatch) {
+            setSuitabilityScore(parseInt(scoreMatch[1]));
+            return;
+          }
         }
-      };
-      
-      let weightedScore = 0;
-      let totalWeight = 0;
-      
-      const idMapping = {
-        'completeness': 'data_completeness',
-        'representativeness': 'population_representativeness', 
-        'privacy': 'privacy_ethics',
-        'sufficiency': 'quality_sufficiency'
-      };
-      
-      Object.entries(weights).forEach(([newId, weight]) => {
-        const oldId = Object.keys(idMapping).find(key => idMapping[key] === newId);
-        const check = suitabilityChecks.find(c => c.id === newId || c.id === oldId);
-        
-        if (check) {
-          const score = calculateQuestionScore(newId, check.answer);
-          weightedScore += score * weight;
-          totalWeight += weight;
+
+        const completedChecks = suitabilityChecks.filter(
+          (check) => check.answer !== "unknown"
+        );
+        if (completedChecks.length === 0) {
+          setSuitabilityScore(0);
+          return;
         }
-      });
-      
-      return totalWeight > 0 ? Math.round((weightedScore / totalWeight) * 100) : 0;
+
+        const weights = {
+          privacy_ethics: 0.35,
+          population_representativeness: 0.3,
+          data_completeness: 0.2,
+          quality_sufficiency: 0.15,
+        };
+
+        const calculateQuestionScore = (
+          questionId: string,
+          answer: string
+        ): number => {
+          switch (questionId) {
+            case "privacy_ethics":
+            case "privacy":
+              if (answer === "yes") return 1.0;
+              if (answer === "unknown") return 0.4;
+              return 0.0;
+
+            case "population_representativeness":
+            case "representativeness":
+              if (answer === "yes") return 1.0;
+              if (answer === "unknown") return 0.6;
+              return 0.2;
+
+            case "data_completeness":
+            case "completeness":
+              if (answer === "yes") return 1.0;
+              if (answer === "unknown") return 0.7;
+              return 0.3;
+
+            case "quality_sufficiency":
+            case "sufficiency":
+              if (answer === "yes") return 1.0;
+              if (answer === "unknown") return 0.6;
+              return 0.2;
+
+            default:
+              if (answer === "yes") return 1.0;
+              if (answer === "unknown") return 0.5;
+              return 0.0;
+          }
+        };
+
+        let weightedScore = 0;
+        let totalWeight = 0;
+
+        const idMapping = {
+          completeness: "data_completeness",
+          representativeness: "population_representativeness",
+          privacy: "privacy_ethics",
+          sufficiency: "quality_sufficiency",
+        };
+
+        Object.entries(weights).forEach(([newId, weight]) => {
+          const oldId = Object.keys(idMapping).find(
+            (key) => idMapping[key] === newId
+          );
+          const check = suitabilityChecks.find(
+            (c) => c.id === newId || c.id === oldId
+          );
+
+          if (check) {
+            const score = calculateQuestionScore(newId, check.answer);
+            weightedScore += score * weight;
+            totalWeight += weight;
+          }
+        });
+
+        const finalScore =
+          totalWeight > 0 ? Math.round((weightedScore / totalWeight) * 100) : 0;
+        setSuitabilityScore(finalScore);
+      }
     };
-    
-    const newScore = calculateHumanitarianSuitabilityScore();
-    setSuitabilityScore(newScore);
+
+    calculateSuitabilityScore();
   }, [suitabilityChecks]);
 
   const filterDatasets = (term: string, category: string) => {
     let filtered = datasets;
-    
+
     if (term) {
-      filtered = filtered.filter(ds => 
-        ds.title.toLowerCase().includes(term.toLowerCase()) || 
-        ds.description.toLowerCase().includes(term.toLowerCase())
+      filtered = filtered.filter(
+        (ds) =>
+          ds.title.toLowerCase().includes(term.toLowerCase()) ||
+          ds.description.toLowerCase().includes(term.toLowerCase())
       );
     }
-    
+
     if (category) {
-      filtered = filtered.filter(ds => ds.title.toLowerCase().includes(category.toLowerCase()));
+      filtered = filtered.filter((ds) =>
+        ds.title.toLowerCase().includes(category.toLowerCase())
+      );
     }
-    
+
     setFilteredDatasets(filtered);
   };
 
@@ -248,18 +367,21 @@ export const useScopingPhaseData = () => {
     setSearchTerm(term);
     filterDatasets(term, selectedCategory);
   };
-  
+
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
     filterDatasets(searchTerm, category);
   };
 
-  const handleSelectUseCase = (useCase: UseCase | null, setSelectedUseCaseFunc: (useCase: UseCase | null) => void) => {
+  const handleSelectUseCase = (
+    useCase: UseCase | null,
+    setSelectedUseCaseFunc: (useCase: UseCase | null) => void
+  ) => {
     setSelectedUseCaseFunc(useCase);
-    setUseCases(prevUseCases => 
-      prevUseCases.map(uc => ({
+    setUseCases((prevUseCases) =>
+      prevUseCases.map((uc) => ({
         ...uc,
-        selected: useCase ? uc.id === useCase.id : false
+        selected: useCase ? uc.id === useCase.id : false,
       }))
     );
 
@@ -268,10 +390,12 @@ export const useScopingPhaseData = () => {
         selected_use_case: useCase,
         available_use_cases: useCases,
         timestamp: new Date().toISOString(),
-        reasoning: useCase ? `Selected ${useCase.title} for project goals` : 'Unselected use case'
+        reasoning: useCase
+          ? `Selected ${useCase.title} for project goals`
+          : "Unselected use case",
       };
-      
-      console.log('Storing use case selection:', selectionData);
+
+      console.log("Storing use case selection:", selectionData);
     }
   };
 
@@ -286,9 +410,9 @@ export const useScopingPhaseData = () => {
       const datasetData = {
         selected_dataset: dataset,
         available_datasets: datasets,
-        timestamp: new Date().toISOString()
-      };      
-      console.log('Storing dataset selection:', datasetData);
+        timestamp: new Date().toISOString(),
+      };
+      console.log("Storing dataset selection:", datasetData);
     }
   };
 
@@ -296,22 +420,24 @@ export const useScopingPhaseData = () => {
     setSelectedUseCase({
       id: "no_use_case_selected",
       title: "Proceeding without specific use case",
-      description: "Continuing with general AI principles and custom solution development",
+      description:
+        "Continuing with general AI principles and custom solution development",
       tags: ["Custom Solution"],
       selected: true,
       type: "custom",
-      category: "General"
+      category: "General",
     });
-    
+
     if (projectId) {
       const selectionData = {
         selected_use_case: null,
         available_use_cases: useCases,
         timestamp: new Date().toISOString(),
-        reasoning: "User chose to proceed without selecting a specific use case - will develop custom AI solution"
+        reasoning:
+          "User chose to proceed without selecting a specific use case - will develop custom AI solution",
       };
-      
-      console.log('Storing no use case selection:', selectionData);
+
+      console.log("Storing no use case selection:", selectionData);
     }
   };
 
@@ -342,12 +468,12 @@ export const useScopingPhaseData = () => {
     noDatasets,
     errorDatasets,
     hasSearchedDatasets,
-    
+
     loadingUseCases,
     loadingDatasets,
-    
+
     suitabilityScore,
-    
+
     handleSearch,
     handleCategorySelect,
     handleSelectUseCase,
@@ -356,8 +482,8 @@ export const useScopingPhaseData = () => {
     handleRetryUseCases,
     handleRetryDatasets,
     filterDatasets,
-    
+
     loadUseCases,
-    loadDatasets
+    loadDatasets,
   };
 };

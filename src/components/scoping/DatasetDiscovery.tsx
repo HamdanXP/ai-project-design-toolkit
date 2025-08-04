@@ -118,13 +118,13 @@ export const DatasetDiscovery = ({
         <Button variant="outline" onClick={moveToPreviousStep}>
           Previous
         </Button>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 px-4">
           <div className="text-sm text-muted-foreground">
             {!loadingDatasets && (
               <>
                 {hasNoDatasets && hasSearchedDatasets ? (
                   "No datasets found - you can continue without one"
-                ) : selectedDataset && hasSearchedDatasets ? (
+                ) : selectedDataset ? (
                   `Dataset selected: ${selectedDataset.title}`
                 ) : hasSearchedDatasets ? (
                   `${filteredDatasets.length} dataset${filteredDatasets.length !== 1 ? 's' : ''} available`
@@ -140,7 +140,7 @@ export const DatasetDiscovery = ({
             onClick={moveToNextStep}
             variant={selectedDataset ? "default" : "outline"}
           >
-            {hasNoDatasets || !selectedDataset ? "Continue Without Dataset" : "Next Step"}
+            {hasNoDatasets && !selectedDataset ? "Continue Without Dataset" : "Next Step"}
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
