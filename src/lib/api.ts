@@ -1,4 +1,3 @@
-import { env } from "./env";
 import { toast } from "sonner";
 import { EthicalConsideration, ProjectPhase } from "@/types/project";
 import { TechnicalInfrastructure, InfrastructureAssessment } from "@/types/scoping-phase";
