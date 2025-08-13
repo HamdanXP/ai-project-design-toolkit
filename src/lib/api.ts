@@ -4,14 +4,6 @@ import { EthicalConsideration, ProjectPhase } from "@/types/project";
 import { TechnicalInfrastructure, InfrastructureAssessment } from "@/types/scoping-phase";
 import { API_BASE_URL } from "@/config";
 
-import {
-  DevelopmentPhaseData,
-  ProjectGenerationRequest,
-  ProjectGenerationResponse,
-  SolutionSelection,
-  DevelopmentStatus,
-} from "@/types/development-phase";
-
 interface ApiRequestOptions extends RequestInit {
   params?: Record<string, string>;
 }
@@ -325,51 +317,6 @@ export const api = {
       },
     },
 
-    development: {
-      getContext: async (
-        projectId: string
-      ): Promise<BackendApiResponse<DevelopmentPhaseData>> => {
-        return await api.get<BackendApiResponse<DevelopmentPhaseData>>(
-          `development/${projectId}/context`
-        );
-      },
-
-      selectSolution: async (
-        projectId: string,
-        solutionData: any
-      ): Promise<
-        BackendApiResponse<{ selected_solution: SolutionSelection }>
-      > => {
-        return await api.post<
-          BackendApiResponse<{ selected_solution: SolutionSelection }>
-        >(`development/${projectId}/select-solution`, solutionData);
-      },
-
-      generateProject: async (
-        projectId: string,
-        generationRequest: ProjectGenerationRequest
-      ): Promise<BackendApiResponse<ProjectGenerationResponse>> => {
-        return await api.post<BackendApiResponse<ProjectGenerationResponse>>(
-          `development/${projectId}/generate`,
-          generationRequest
-        );
-      },
-
-      downloadFile: async (
-        projectId: string,
-        fileType: string
-      ): Promise<any> => {
-        return await api.get(`development/${projectId}/download/${fileType}`);
-      },
-
-      getStatus: async (
-        projectId: string
-      ): Promise<BackendApiResponse<DevelopmentStatus>> => {
-        return await api.get<BackendApiResponse<DevelopmentStatus>>(
-          `development/${projectId}/status`
-        );
-      },
-    },
     ethicalConsiderations: {
       get: async (
         projectId: string

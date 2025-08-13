@@ -15,7 +15,11 @@ import { Shield } from "lucide-react";
 type ProjectPhaseContentProps = {
   activePhaseId: string;
   handleCompletePhase: (phaseId: string) => void;
-  updatePhaseStatus: (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => void;
+  updatePhaseStatus: (
+    phaseId: string,
+    status: "not-started" | "in-progress" | "completed",
+    progress: number
+  ) => void;
   canAccessPhase: (phaseId: string) => boolean;
   handleReflectionProgress: (completed: number, total: number) => void;
   handleScopingProgress: (completed: number, total: number) => void;
@@ -24,6 +28,7 @@ type ProjectPhaseContentProps = {
   handleCompleteProject: () => void;
   allPhasesCompleted: boolean;
   phases: ProjectPhase[];
+  setActivePhaseId: (phaseId: string) => void;
 };
 
 export const ProjectPhaseContent = ({
@@ -37,24 +42,24 @@ export const ProjectPhaseContent = ({
   handleEvaluationProgress,
   handleCompleteProject,
   allPhasesCompleted,
-  phases
+  phases,
+  setActivePhaseId,
 }: ProjectPhaseContentProps) => {
-  const { 
-    ethicalConsiderations, 
-    ethicalConsiderationsAcknowledged 
-  } = useProject();
-  
+  const { ethicalConsiderations, ethicalConsiderationsAcknowledged, resetDevelopmentPhase } =
+    useProject();
+
   const [showEthicalModal, setShowEthicalModal] = useState(false);
   const [hasShownEthicalModal, setHasShownEthicalModal] = useState(false);
   
-  // Get the current phase status to pass to components
-  const currentPhaseStatus = phases.find(p => p.id === activePhaseId)?.status || "not-started";
+  const currentPhaseStatus =
+    phases.find((p) => p.id === activePhaseId)?.status || "not-started";
 
-  // Show ethical considerations modal when entering reflection phase for the first time
   useEffect(() => {
-    if (activePhaseId === "reflection" && 
-        !ethicalConsiderationsAcknowledged && 
-        !hasShownEthicalModal) {
+    if (
+      activePhaseId === "reflection" &&
+      !ethicalConsiderationsAcknowledged &&
+      !hasShownEthicalModal
+    ) {
       setShowEthicalModal(true);
       setHasShownEthicalModal(true);
     }
@@ -70,7 +75,6 @@ export const ProjectPhaseContent = ({
 
   return (
     <>
-      {/* Ethical Considerations Modal */}
       <EthicalConsiderationsModal
         isOpen={showEthicalModal}
         onOpenChange={setShowEthicalModal}
@@ -79,7 +83,6 @@ export const ProjectPhaseContent = ({
 
       {activePhaseId === "reflection" && (
         <div className="space-y-4">
-          {/* Ethical Considerations Summary Bar (always visible in reflection phase) */}
           <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -92,7 +95,9 @@ export const ProjectPhaseContent = ({
                     {ethicalConsiderations.length > 0 ? (
                       <>
                         {ethicalConsiderations.length} considerations identified
-                        {ethicalConsiderationsAcknowledged ? " (reviewed)" : " (needs review)"}
+                        {ethicalConsiderationsAcknowledged
+                          ? " (reviewed)"
+                          : " (needs review)"}
                       </>
                     ) : (
                       "No specific considerations found for this project"
@@ -111,17 +116,16 @@ export const ProjectPhaseContent = ({
             </div>
           </div>
 
-          {/* Reflection Phase Content */}
-          <ReflectionPhase 
+          <ReflectionPhase
             onUpdateProgress={handleReflectionProgress}
-            onCompletePhase={() => handleCompletePhase("reflection")} 
+            onCompletePhase={() => handleCompletePhase("reflection")}
           />
         </div>
       )}
-      
-      {activePhaseId === "scoping" && (
-        canAccessPhase("scoping") ? (
-          <ScopingPhase 
+
+      {activePhaseId === "scoping" &&
+        (canAccessPhase("scoping") ? (
+          <ScopingPhase
             onUpdateProgress={handleScopingProgress}
             onCompletePhase={() => handleCompletePhase("scoping")}
             updatePhaseStatus={updatePhaseStatus}
@@ -129,37 +133,38 @@ export const ProjectPhaseContent = ({
           />
         ) : (
           <PhaseLockedMessage phaseName="Scoping" />
-        )
-      )}
-      
-      {activePhaseId === "development" && (
-        canAccessPhase("development") ? (
-          <DevelopmentPhase 
+        ))}
+
+      {activePhaseId === "development" &&
+        (canAccessPhase("development") ? (
+          <DevelopmentPhase
             onUpdateProgress={handleDevelopmentProgress}
-            onCompletePhase={() => handleCompletePhase("development")} 
+            onCompletePhase={() => handleCompletePhase("development")}
           />
         ) : (
           <PhaseLockedMessage phaseName="Development" />
-        )
-      )}
-      
-      {activePhaseId === "evaluation" && (
-        canAccessPhase("evaluation") ? (
-          <EvaluationPhase 
+        ))}
+
+      {activePhaseId === "evaluation" &&
+        (canAccessPhase("evaluation") ? (
+          <EvaluationPhase
             onUpdateProgress={handleEvaluationProgress}
             onCompletePhase={() => handleCompletePhase("evaluation")}
+            onReturnToDevelopment={() => {
+              resetDevelopmentPhase();
+              setActivePhaseId("development");
+            }}
           />
         ) : (
           <PhaseLockedMessage phaseName="Evaluation" />
-        )
-      )}
-      
+        ))}
+
       {allPhasesCompleted && (
         <div className="mt-8 flex justify-center">
           <CompleteProjectButton onClick={handleCompleteProject} />
         </div>
       )}
-      
+
       <AIAssistant />
     </>
   );

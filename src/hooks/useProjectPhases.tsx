@@ -17,28 +17,23 @@ export const useProjectPhases = () => {
     setScopingFinalDecision 
   } = useProject();
   
-  // Explicitly set the status of a phase - this is the ONLY function that should update phase status
   const updatePhaseStatus = (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => {
-    // Special handling for scoping "ready to proceed" (100%) vs "revise approach" (80%)
     if (phaseId === "scoping") {
       if (status === "in-progress") {
-        if (progress === 100) {
+        if (progress >= 100) {
           setScopingFinalDecision('proceed');
-        } else if (progress === 80) {
+        } else if (progress >= 80) {
           setScopingFinalDecision('revise');
         }
       }
       
-      // If status is completed, ensure scopingFinalDecision is 'proceed'
       if (status === "completed") {
         setScopingFinalDecision('proceed');
       }
     }
     
-    // Get current phase to check if update is needed
     const currentPhase = phases.find(p => p.id === phaseId);
     
-    // Skip update if values haven't changed
     if (currentPhase && 
         currentPhase.status === status && 
         currentPhase.progress === progress) {
@@ -51,13 +46,12 @@ export const useProjectPhases = () => {
     setPhases(prevPhases => 
       prevPhases.map(phase => {
         if (phase.id === phaseId) {
-          // Calculate completedSteps based on the provided progress percentage
           const completedSteps = status === "completed" ? phase.totalSteps : Math.round((progress / 100) * phase.totalSteps);
           
           const updatedPhase = {
             ...phase,
             status,
-            progress: status === "completed" ? 100 : progress, // Ensure completed phases show 100%
+            progress: status === "completed" ? 100 : progress,
             completedSteps
           };
           
@@ -69,14 +63,11 @@ export const useProjectPhases = () => {
     );
   };
 
-  // This is now the ONLY function that completes a phase and moves to the next phase
   const handleCompletePhase = (phaseId: string) => {
     console.log(`Completing phase: ${phaseId}`);
     
-    // Mark the phase as completed - this is critical
     updatePhaseStatus(phaseId, "completed", 100);
     
-    // Store phase data
     const phaseData = {
       phaseId,
       projectPrompt,
@@ -86,17 +77,14 @@ export const useProjectPhases = () => {
     
     console.log("Phase completed with data:", phaseData);
     
-    // Determine the next phase to activate
-    const phaseOrder = ["reflection", "scoping", "development", "evaluation"];
+    const phaseOrder = phases.map(p => p.id);
     const currentIndex = phaseOrder.indexOf(phaseId);
     
     if (currentIndex < phaseOrder.length - 1) {
       const nextPhaseId = phaseOrder[currentIndex + 1];
       
-      // Update the next phase to in-progress 
-      updatePhaseStatus(nextPhaseId, "in-progress", 5);
+      updatePhaseStatus(nextPhaseId, "in-progress", Math.min(10, 100 / phases.length));
       
-      // Move to the next phase
       setActivePhaseId(nextPhaseId);
       
       toast({
@@ -106,21 +94,16 @@ export const useProjectPhases = () => {
     }
   };
 
-  // These functions provide a simple interface for updating progress without changing status
   const updatePhaseProgress = (phaseId: string, completed: number, total: number) => {
-    // Get the current phase
     const currentPhase = phases.find(p => p.id === phaseId);
     
-    // Don't update if the phase is already completed
     if (currentPhase?.status === "completed") {
       console.log(`Phase ${phaseId} is already completed. Not updating progress.`);
       return;
     }
     
-    // Calculate the progress percentage
     const progress = Math.round((completed / total) * 100);
     
-    // Don't update if progress hasn't changed
     if (currentPhase?.progress === progress) {
       console.log(`Progress for phase ${phaseId} hasn't changed (${progress}%). Skipping update.`);
       return;
@@ -128,11 +111,9 @@ export const useProjectPhases = () => {
     
     console.log(`Updating progress for phase ${phaseId}: ${completed}/${total} = ${progress}%`);
     
-    // Update the phase with the new progress, keeping the current status
     updatePhaseStatus(phaseId, currentPhase?.status || "in-progress", progress);
   };
 
-  // Phase-specific progress handlers that use the central updatePhaseProgress function
   const handleReflectionProgress = (completed: number, total: number) => {
     updatePhaseProgress("reflection", completed, total);
   };
@@ -150,7 +131,6 @@ export const useProjectPhases = () => {
   };
 
   const handleCompleteProject = () => {
-    // Save all project data before completion
     const projectData = {
       prompt: projectPrompt,
       files: projectFiles,
@@ -162,17 +142,15 @@ export const useProjectPhases = () => {
     navigate('/project-completion');
   };
 
-  // Check if all phases are completed
   const allPhasesCompleted = phases.every(phase => phase.status === "completed");
   
-  // Check if the current phase is accessible
   const canAccessPhase = (phaseId: string) => {
-    if (phaseId === "reflection") return true;
+    const phaseOrder = phases.map(p => p.id);
     
-    const phaseOrder = ["reflection", "scoping", "development", "evaluation"];
+    if (phaseId === phaseOrder[0]) return true;
+    
     const targetIndex = phaseOrder.indexOf(phaseId);
     
-    // Check if all previous phases are completed
     for (let i = 0; i < targetIndex; i++) {
       const previousPhase = phases.find(p => p.id === phaseOrder[i]);
       if (previousPhase?.status !== "completed") {

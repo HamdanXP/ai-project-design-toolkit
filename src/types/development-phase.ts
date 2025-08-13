@@ -1,9 +1,6 @@
-// types/development-phase.ts - Complete type definitions for development phase with split loading
-
-// Core AI and Deployment Types
-export type AITechnique = 
+export type AITechnique =
   | "classification"
-  | "computer_vision" 
+  | "computer_vision"
   | "nlp"
   | "llm"
   | "time_series"
@@ -15,7 +12,7 @@ export type AITechnique =
   | "multi_modal"
   | "reinforcement_learning";
 
-export type DeploymentStrategy = 
+export type DeploymentStrategy =
   | "local_processing"
   | "cloud_native"
   | "api_integration"
@@ -24,9 +21,20 @@ export type DeploymentStrategy =
   | "federated_learning"
   | "serverless";
 
-export type ComplexityLevel = "simple" | "moderate" | "advanced" | "enterprise";
+export interface RequiredFeature {
+  name: string;
+  description: string;
+  data_type: string;
+  humanitarian_purpose: string;
+}
 
-// Project and Context Types
+export interface TabularDataRequirements {
+  required_features: RequiredFeature[];
+  optional_features: RequiredFeature[];
+  minimum_rows: number;
+  data_types: Record<string, string>;
+}
+
 export interface ProjectRecommendation {
   type: string;
   title: string;
@@ -46,12 +54,12 @@ export interface EthicalSafeguard {
 export interface TechnicalArchitecture {
   ai_technique: AITechnique;
   deployment_strategy: DeploymentStrategy;
-  frontend: string;
-  backend: string;
-  ai_components: string[];
-  data_processing: string;
-  deployment: string;
-  monitoring: string;
+  implementation: string;
+  ai_component: string;
+  data_input: string;
+  output_format: string;
+  user_interface: string;
+  deployment_method: string;
 }
 
 export interface ResourceRequirement {
@@ -59,15 +67,7 @@ export interface ResourceRequirement {
   storage_needs: string;
   internet_dependency: string;
   technical_expertise: string;
-  budget_estimate: string;
-}
-
-// Legacy technical specs interface for backward compatibility
-export interface TechnicalSpecs {
-  frontend: string;
-  backend: string;
-  deployment: string;
-  data: string;
+  setup_time: string;
 }
 
 export interface AISolution {
@@ -75,33 +75,24 @@ export interface AISolution {
   title: string;
   description: string;
   ai_technique: AITechnique;
-  complexity_level: ComplexityLevel;
   deployment_strategy: DeploymentStrategy;
   recommended: boolean;
   confidence_score: number;
-
-  // Capabilities and features
+  needs_dataset: boolean;
+  dataset_type?: 'tabular' | 'text' | 'image' | 'audio' | 'video' | 'none';
+  tabular_requirements?: TabularDataRequirements;
   capabilities: string[];
   key_features: string[];
   technical_architecture: TechnicalArchitecture;
   resource_requirements: ResourceRequirement;
-
-  // Context and suitability
   best_for: string;
   use_case_alignment: string;
-  deployment_considerations: string[];
-
-  // Ethical and practical considerations
+  implementation_notes: string[];
   ethical_safeguards: EthicalSafeguard[];
-  implementation_timeline: string;
+  estimated_setup_time: string;
   maintenance_requirements: string[];
-
-  // API and integration options
-  external_apis?: string[];
-  integration_complexity?: string;
-
-  // Legacy compatibility
-  technical_specs?: TechnicalSpecs;
+  data_requirements: string[];
+  output_examples: string[];
 }
 
 export interface ProjectContext {
@@ -111,14 +102,13 @@ export interface ProjectContext {
   problem_domain: string;
   selected_use_case?: any;
   use_case_analysis?: any;
-  deployment_environment?: any;
+  technical_infrastructure?: any;
   deployment_analysis?: any;
   recommendations: ProjectRecommendation[];
   technical_recommendations: string[];
   deployment_recommendations: string[];
 }
 
-// Split Loading Types - NEW
 export interface ProjectContextOnly {
   project_context: ProjectContext;
   ethical_safeguards: EthicalSafeguard[];
@@ -130,24 +120,49 @@ export interface SolutionsData {
   solution_rationale: string;
 }
 
-// Main Development Phase Data
-export interface DevelopmentPhaseData {
-  project_context: ProjectContext;
-  available_solutions: AISolution[];
-  ethical_safeguards: EthicalSafeguard[];
-  solution_rationale: string;
-  
-  // Split loading metadata
-  context_loaded?: boolean;
-  solutions_loaded?: boolean;
-  loading_metadata?: {
-    context_loaded_at?: string;
-    solutions_loaded_at?: string;
-    solutions_generation_time_ms?: number;
-  };
+export interface FileAnalysis {
+  filename: string;
+  purpose: string;
+  content_type: string;
+  key_features: string[];
+  dependencies: string[];
 }
 
-// Project Generation Types
+export interface EthicalGuardrailStatus {
+  category: string;
+  status: string;
+  implementation_details: string[];
+  verification_method: string;
+}
+
+export interface ProductionRequirements {
+  security_requirements: string[];
+  error_handling_patterns: string[];
+  monitoring_approach: string[];
+  compliance_framework: string[];
+  scalability_considerations: string[];
+  ethical_implementation_guide: string[];
+}
+
+export interface HandoverDocumentation {
+  technical_implementation_guide: string;
+  resource_requirements: string;
+  timeline_estimate: string;
+  risk_assessment: string;
+  success_metrics: string[];
+  maintenance_plan: string;
+}
+
+export interface GenerationReport {
+  solution_approach: string;
+  files_generated: FileAnalysis[];
+  ethical_implementation: EthicalGuardrailStatus[];
+  architecture_decisions: string[];
+  deployment_considerations: string[];
+  production_requirements: ProductionRequirements;
+  handover_documentation: HandoverDocumentation;
+}
+
 export interface GeneratedProject {
   id: string;
   title: string;
@@ -162,13 +177,14 @@ export interface GeneratedProject {
   ethical_audit_report: string;
   bias_testing_plan: string;
   monitoring_recommendations: string;
+  generation_report: GenerationReport;
   api_documentation?: string;
   integration_examples?: Record<string, string>;
 }
 
 export interface ProjectGenerationRequest {
   solution_id: string;
-  project_requirements?: Record<string, any>; // Legacy compatibility
+  project_requirements?: Record<string, any>;
   customizations?: Record<string, any>;
   ethical_preferences?: string[];
   deployment_preferences?: Record<string, any>;
@@ -184,7 +200,6 @@ export interface ProjectGenerationResponse {
   alternative_approaches?: string[];
 }
 
-// Selection and Status Types
 export interface SolutionSelection {
   solution_id: string;
   solution_title: string;
@@ -195,18 +210,16 @@ export interface SolutionSelection {
 export interface DevelopmentStatus {
   completed: boolean;
   phase_status: string;
-  
-  // Split loading status - ENHANCED
+
   context_loaded: boolean;
   solutions_generated: boolean;
   solutions_loading?: boolean;
-  
+
   selected_solution?: SolutionSelection;
   generated_project: boolean;
   development_data: any;
   can_proceed: boolean;
-  
-  // Performance metadata
+
   performance_metrics?: {
     context_load_time_ms?: number;
     solutions_generation_time_ms?: number;
@@ -214,7 +227,21 @@ export interface DevelopmentStatus {
   };
 }
 
-// API Response Types
+export interface DevelopmentPhaseData {
+  project_context: ProjectContext;
+  available_solutions: AISolution[];
+  ethical_safeguards: EthicalSafeguard[];
+  solution_rationale: string;
+
+  context_loaded?: boolean;
+  solutions_loaded?: boolean;
+  loading_metadata?: {
+    context_loaded_at?: string;
+    solutions_loaded_at?: string;
+    solutions_generation_time_ms?: number;
+  };
+}
+
 export interface DevelopmentApiResponse<T> {
   success: boolean;
   message: string;
@@ -226,27 +253,6 @@ export interface DevelopmentApiResponse<T> {
   };
 }
 
-// UI and Hook Types
-export interface DevelopmentLoadingState {
-  context: {
-    loading: boolean;
-    loaded: boolean;
-    error: string | null;
-  };
-  solutions: {
-    loading: boolean;
-    loaded: boolean;
-    error: string | null;
-    triggered: boolean; // Has the user requested solutions to be loaded
-  };
-  generation: {
-    loading: boolean;
-    completed: boolean;
-    error: string | null;
-    progress: number;
-  };
-}
-
 export interface DevelopmentPhaseStep {
   id: string;
   title: string;
@@ -254,9 +260,12 @@ export interface DevelopmentPhaseStep {
   canAccess: boolean;
 }
 
-// Enhanced error types for better debugging
 export interface DevelopmentError {
-  type: 'context_loading' | 'solutions_generation' | 'solution_selection' | 'project_generation';
+  type:
+    | "context_loading"
+    | "solutions_generation"
+    | "solution_selection"
+    | "project_generation";
   message: string;
   details?: any;
   timestamp: string;
@@ -265,65 +274,9 @@ export interface DevelopmentError {
   suggested_action?: string;
 }
 
-// Backend model types
-export interface ProjectContextOnlyBackend {
-  project_context: ProjectContext;
-  ethical_safeguards: EthicalSafeguard[];
-  solution_rationale?: string;
-  generated_at: string;
-  performance_metrics: {
-    analysis_time_ms: number;
-    recommendation_time_ms: number;
-    total_time_ms: number;
-  };
-}
-
-export interface SolutionsDataBackend {
-  available_solutions: AISolution[];
-  solution_rationale: string;
-  generated_at: string;
-  performance_metrics: {
-    solution_generation_time_ms: number;
-    llm_calls_count: number;
-    cache_hits: number;
-  };
-  generation_metadata: {
-    use_case_analysis_cached: boolean;
-    deployment_analysis_cached: boolean;
-    solutions_count: number;
-    recommended_count: number;
-  };
-}
-
-// Caching interface for performance optimization
-export interface DevelopmentCache {
-  context: {
-    [projectId: string]: {
-      data: ProjectContextOnly;
-      cached_at: string;
-      expires_at: string;
-    };
-  };
-  use_case_analysis: {
-    [cacheKey: string]: {
-      analysis: any;
-      cached_at: string;
-      expires_at: string;
-    };
-  };
-  deployment_analysis: {
-    [cacheKey: string]: {
-      analysis: any;
-      cached_at: string;
-      expires_at: string;
-    };
-  };
-}
-
-// Performance monitoring types
 export interface DevelopmentMetrics {
   project_id: string;
-  phase: 'context' | 'solutions' | 'generation';
+  phase: "context" | "solutions" | "generation";
   start_time: string;
   end_time: string;
   duration_ms: number;
@@ -339,68 +292,6 @@ export interface DevelopmentMetrics {
   };
 }
 
-// Legacy types for backward compatibility
-export interface PipelineType {
-  id: string;
-  name: string;
-  type: string;
-  description: string;
-  icon: string;
-}
-
-export interface EthicalGuardrail {
-  id: string;
-  name: string;
-  description: string;
-  completed: boolean;
-}
-
-export interface PrototypeMilestone {
-  id: string;
-  name: string;
-  description: string;
-  completed: boolean;
-}
-
-export interface TestResult {
-  id: string;
-  timestamp: string;
-  inputs: string;
-  outputs: string;
-  notes: string;
-}
-
-export interface EvaluationCriteria {
-  id: string;
-  question: string;
-  answer: 'yes' | 'no' | 'partially' | 'unknown';
-  notes: string;
-}
-
-export type DevelopmentDecision = 'proceed' | 'iterate' | 'revisit' | null;
-
-export interface RiskAssessment {
-  id: string;
-  category: string;
-  level: 'low' | 'medium' | 'high' | 'unknown';
-  notes: string;
-}
-
-export interface StakeholderFeedback {
-  id: string;
-  stakeholder: string;
-  feedback: string;
-  priority: 'low' | 'medium' | 'high';
-  addressed: boolean;
-}
-
-export interface ImpactGoalCheck {
-  id: string;
-  question: string;
-  isAligned: boolean;
-  notes: string;
-}
-
 export interface CompleteProjectDownloadResponse {
   message: string;
   files: Record<string, string>;
@@ -410,14 +301,28 @@ export interface SingleFileDownloadResponse {
   content: string;
 }
 
-export type EvaluationDecision = 'deploy' | 'improve' | 'abandon' | null;
+export type DownloadResponse =
+  | CompleteProjectDownloadResponse
+  | SingleFileDownloadResponse;
 
-export type DownloadResponse = CompleteProjectDownloadResponse | SingleFileDownloadResponse;
-
-export const isCompleteProjectResponse = (response: any): response is CompleteProjectDownloadResponse => {
-  return response && typeof response === 'object' && 'files' in response && typeof response.files === 'object';
+export const isCompleteProjectResponse = (
+  response: any
+): response is CompleteProjectDownloadResponse => {
+  return (
+    response &&
+    typeof response === "object" &&
+    "files" in response &&
+    typeof response.files === "object"
+  );
 };
 
-export const isSingleFileResponse = (response: any): response is SingleFileDownloadResponse => {
-  return response && typeof response === 'object' && 'content' in response && typeof response.content === 'string';
+export const isSingleFileResponse = (
+  response: any
+): response is SingleFileDownloadResponse => {
+  return (
+    response &&
+    typeof response === "object" &&
+    "content" in response &&
+    typeof response.content === "string"
+  );
 };

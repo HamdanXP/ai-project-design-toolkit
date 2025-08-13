@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { TopBar } from "@/components/TopBar";
 import { useToast } from "@/hooks/use-toast";
@@ -20,16 +19,13 @@ const ProjectBlueprint = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Get projectId from URL query params - improved handling
   const searchParams = new URLSearchParams(location.search);
   const projectId = searchParams.get('projectId');
   
-  // Log project ID for debugging
   useEffect(() => {
     console.log('ProjectBlueprint loaded with projectId:', projectId);
   }, [projectId]);
   
-  // Get activePhaseId from context
   const { activePhaseId } = useProject();
 
   const {
@@ -47,11 +43,9 @@ const ProjectBlueprint = () => {
   } = useProjectPhases();
 
   useEffect(() => {
-    // Close sidebar by default on mobile
     setSidebarOpen(!isMobile);
   }, [isMobile]);
 
-  // Handle clicks outside the sidebar to close it on mobile
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -77,11 +71,9 @@ const ProjectBlueprint = () => {
   };
 
   const handleSetActivePhase = (phaseId: string) => {
-    // Only allow setting active phase if previous phases are completed
     if (canAccessPhase(phaseId)) {
       setActivePhaseId(phaseId);
       
-      // Close sidebar on mobile after selecting a phase
       if (isMobile) {
         setSidebarOpen(false);
       }
@@ -94,28 +86,23 @@ const ProjectBlueprint = () => {
     }
   };
   
-  // Enhanced complete phase handler with API integration
   const handleCompletePhaseWithApi = async (phaseId: string) => {
     handleCompletePhase(phaseId);
   };
   
-  // Enhanced update phase status handler with API integration
   const handleUpdatePhaseStatusWithApi = async (phaseId: string, status: "not-started" | "in-progress" | "completed", progress: number) => {
     updatePhaseStatus(phaseId, status, progress);
     
   };
   
-  // Enhanced complete project handler with API integration
   const handleCompleteProjectWithApi = async () => {
     handleCompleteProject();
     
-    // Also update via API if we have a project ID
     if (projectId) {
       try {
         await api.projects.completeProject(projectId);
         navigate(`/project-completion?projectId=${projectId}`);
       } catch (error) {
-        // Fallback to default behavior
         navigate('/project-completion');
       }
     } else {
@@ -168,6 +155,7 @@ const ProjectBlueprint = () => {
               handleCompleteProject={handleCompleteProjectWithApi}
               allPhasesCompleted={allPhasesCompleted}
               phases={phases}
+              setActivePhaseId={setActivePhaseId}
             />
           </div>
         </div>

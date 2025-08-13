@@ -1,10 +1,7 @@
-// lib/development-api.ts - Development API with split loading implementation
-
 import { api } from './api';
 import { downloadFileFromContent, createZipDownload, getDownloadInfo, processDownloadResponse } from './download-utils';
 
 import {
-  // Core types
   AISolution,
   ProjectContext,
   DevelopmentPhaseData,
@@ -16,36 +13,112 @@ import {
   DevelopmentApiResponse,
   EthicalSafeguard,
   ProjectRecommendation,
-  TechnicalSpecs,
-  TechnicalArchitecture,
-  
-  // Split loading types
   ProjectContextOnly,
   SolutionsData,
-  
-  // Enhanced types
-  DevelopmentLoadingState,
   DevelopmentError,
   DevelopmentMetrics,
-
-  // Download types
   CompleteProjectDownloadResponse, 
   SingleFileDownloadResponse,
   DownloadResponse 
 } from '@/types/development-phase';
 
-/**
- * Development API with split loading for improved UX
- * 
- * Split approach:
- * 1. getDevelopmentContext() - Fast context loading (~3s)
- * 2. generateSolutions() - Slow solutions generation (~12s, on-demand)
- */
+export interface DevelopmentApiError {
+  type: 'network' | 'server' | 'validation' | 'not_found' | 'timeout' | 'unknown';
+  message: string;
+  userMessage: string;
+  recoverable: boolean;
+  retryable: boolean;
+  suggestedAction?: string;
+}
+
+const createDevelopmentError = (error: any, context: string): DevelopmentApiError => {
+  if (!error) {
+    return {
+      type: 'unknown',
+      message: 'Unknown error occurred',
+      userMessage: 'An unexpected error occurred. Please try again.',
+      recoverable: true,
+      retryable: true,
+      suggestedAction: 'Try refreshing the page or contact support if the problem persists'
+    };
+  }
+
+  const isNetworkError = !navigator.onLine || 
+    error.message?.includes('fetch') || 
+    error.message?.includes('network') ||
+    error.code === 'NETWORK_ERROR';
+
+  const isServerError = error.status >= 500 || error.message?.includes('Internal Server Error');
+  const isNotFound = error.status === 404 || error.message?.includes('not found');
+  const isValidationError = error.status === 400 || error.message?.includes('validation');
+  const isTimeout = error.message?.includes('timeout') || error.code === 'TIMEOUT';
+
+  if (isNetworkError) {
+    return {
+      type: 'network',
+      message: error.message || 'Network connection failed',
+      userMessage: 'Connection problem. Check your internet connection.',
+      recoverable: true,
+      retryable: true,
+      suggestedAction: 'Check your internet connection and try again'
+    };
+  }
+
+  if (isNotFound) {
+    return {
+      type: 'not_found',
+      message: error.message || 'Resource not found',
+      userMessage: 'Project not found or no longer available.',
+      recoverable: false,
+      retryable: false,
+      suggestedAction: 'Return to project list and select a valid project'
+    };
+  }
+
+  if (isValidationError) {
+    return {
+      type: 'validation',
+      message: error.message || 'Invalid request data',
+      userMessage: 'Invalid project data. Some information may be missing.',
+      recoverable: false,
+      retryable: false,
+      suggestedAction: 'Complete the previous phases or start a new project'
+    };
+  }
+
+  if (isTimeout) {
+    return {
+      type: 'timeout',
+      message: error.message || 'Request timed out',
+      userMessage: 'The request is taking longer than expected.',
+      recoverable: true,
+      retryable: true,
+      suggestedAction: 'The AI analysis may take time. Please wait and try again'
+    };
+  }
+
+  if (isServerError) {
+    return {
+      type: 'server',
+      message: error.message || 'Server error',
+      userMessage: 'Server is temporarily unavailable.',
+      recoverable: true,
+      retryable: true,
+      suggestedAction: 'Try again in a few moments'
+    };
+  }
+
+  return {
+    type: 'unknown',
+    message: error.message || 'Unknown error',
+    userMessage: error.message || 'Something went wrong. Please try again.',
+    recoverable: true,
+    retryable: true,
+    suggestedAction: 'Try again or contact support if the problem persists'
+  };
+};
+
 export const developmentApi = {
-  /**
-   * Get basic development context (FAST ~3s) - NO solution generation
-   * Returns project overview, recommendations, and basic ethical safeguards
-   */
   getDevelopmentContext: async (projectId: string): Promise<ProjectContextOnly> => {
     const startTime = performance.now();
     
@@ -62,7 +135,6 @@ export const developmentApi = {
         
         console.log(`Successfully fetched basic development context in ${Math.round(duration)}ms`);
         
-        // Track performance metrics
         trackDevelopmentMetrics({
           project_id: projectId,
           phase: 'context',
@@ -85,7 +157,6 @@ export const developmentApi = {
       
       console.error('API failed to get development context:', error);
       
-      // Track error metrics
       trackDevelopmentMetrics({
         project_id: projectId,
         phase: 'context',
@@ -96,22 +167,20 @@ export const developmentApi = {
         error_type: error instanceof Error ? error.message : 'Unknown error'
       });
       
-      throw error;
+      const developmentError = createDevelopmentError(error, 'loading project context');
+      throw developmentError;
     }
   },
 
-  /**
-   * Generate AI solutions (SLOW ~12s) - Called only when user navigates to solutions step
-   * Returns 5 tailored AI solutions with full analysis
-   */
-  generateSolutions: async (projectId: string): Promise<SolutionsData> => {
+  generateSolutionsWithFeedback: async (projectId: string, requestData?: { feedback?: string }): Promise<SolutionsData> => {
     const startTime = performance.now();
     
     try {
-      console.log(`Generating AI solutions for project: ${projectId}`);
+      console.log(`Generating AI solutions for project: ${projectId}${requestData?.feedback ? ' with user feedback' : ''}`);
       
       const response = await api.post<DevelopmentApiResponse<SolutionsData>>(
-        `development/${projectId}/solutions`
+        `development/${projectId}/solutions`,
+        requestData || {}
       );
       
       if (response.success && response.data) {
@@ -120,7 +189,6 @@ export const developmentApi = {
         
         console.log(`Successfully generated ${response.data.available_solutions.length} AI solutions in ${Math.round(duration)}ms`);
         
-        // Track performance metrics
         trackDevelopmentMetrics({
           project_id: projectId,
           phase: 'solutions',
@@ -144,7 +212,6 @@ export const developmentApi = {
       
       console.error('API failed to generate solutions:', error);
       
-      // Track error metrics
       trackDevelopmentMetrics({
         project_id: projectId,
         phase: 'solutions',
@@ -155,47 +222,15 @@ export const developmentApi = {
         error_type: error instanceof Error ? error.message : 'Unknown error'
       });
       
-      throw error;
+      const developmentError = createDevelopmentError(error, 'generating AI solutions');
+      throw developmentError;
     }
   },
 
-  /**
-   * Legacy method for backward compatibility - generates everything at once
-   * Use getDevelopmentContext() + generateSolutions() for better UX
-   */
-  getDevelopmentContextLegacy: async (projectId: string): Promise<DevelopmentPhaseData> => {
-    try {
-      console.log(`[LEGACY] Fetching full development context for project: ${projectId}`);
-      
-      // Get context first (fast)
-      const contextData = await developmentApi.getDevelopmentContext(projectId);
-      
-      // Then generate solutions (slow)
-      const solutionsData = await developmentApi.generateSolutions(projectId);
-      
-      // Combine for legacy compatibility
-      return {
-        project_context: contextData.project_context,
-        available_solutions: solutionsData.available_solutions,
-        ethical_safeguards: contextData.ethical_safeguards,
-        solution_rationale: solutionsData.solution_rationale,
-        context_loaded: true,
-        solutions_loaded: true,
-        loading_metadata: {
-          context_loaded_at: new Date().toISOString(),
-          solutions_loaded_at: new Date().toISOString()
-        }
-      };
-      
-    } catch (error) {
-      console.error('Failed to get legacy development context:', error);
-      throw error;
-    }
+  generateSolutions: async (projectId: string): Promise<SolutionsData> => {
+    return developmentApi.generateSolutionsWithFeedback(projectId);
   },
 
-  /**
-   * Select an AI solution for the project
-   */
   selectSolution: async (
     projectId: string, 
     solutionId: string, 
@@ -226,13 +261,11 @@ export const developmentApi = {
       }
     } catch (error) {
       console.error('API failed to select solution:', error);
-      throw error;
+      const developmentError = createDevelopmentError(error, 'selecting AI solution');
+      throw developmentError;
     }
   },
 
-  /**
-   * Generate complete AI project based on selected solution
-   */
   generateProject: async (
     projectId: string,
     generationRequest: ProjectGenerationRequest
@@ -253,7 +286,6 @@ export const developmentApi = {
         
         console.log(`Successfully generated project in ${Math.round(duration)}ms`);
         
-        // Track performance metrics
         trackDevelopmentMetrics({
           project_id: projectId,
           phase: 'generation',
@@ -275,7 +307,6 @@ export const developmentApi = {
       
       console.error('API failed to generate project:', error);
       
-      // Track error metrics
       trackDevelopmentMetrics({
         project_id: projectId,
         phase: 'generation',
@@ -286,13 +317,10 @@ export const developmentApi = {
         error_type: error instanceof Error ? error.message : 'Unknown error'
       });
       
-      throw error;
+      const developmentError = createDevelopmentError(error, 'generating AI prototype');
+      throw developmentError;
     }
   },
-
-  /**
-   * Download specific files from the generated project
-   */
 
   downloadProjectFile: async (
     projectId: string,
@@ -301,34 +329,45 @@ export const developmentApi = {
     try {
       console.log(`Downloading ${fileType} for project: ${projectId}`);
       
-      // Get the raw response from your backend
       const response = await api.get<DownloadResponse>(
         `development/${projectId}/download/${fileType}`
       );
       
-      // Validate response
       if (!response || typeof response !== 'object') {
         throw new Error('Invalid response from server');
       }
       
-      // Process the download using our utility function
       await processDownloadResponse(response, fileType, projectId);
       
     } catch (error) {
       console.error(`Failed to download ${fileType}:`, error);
       
-      // Provide more specific error messages
-      if (error instanceof Error) {
-        throw error;
+      const developmentError = createDevelopmentError(error, `downloading ${fileType}`);
+      throw developmentError;
+    }
+  },
+  
+  resetDevelopmentProgress: async (projectId: string): Promise<void> => {
+    try {
+      console.log(`Resetting development progress for project: ${projectId}`);
+      
+      const response = await api.post<DevelopmentApiResponse<{ reset: boolean; phase: string }>>(
+        `development/${projectId}/reset`
+      );
+      
+      if (response.success) {
+        console.log('Successfully reset development progress');
       } else {
-        throw new Error(`Unknown error occurred while downloading ${fileType}`);
+        throw new Error(response.message || 'Failed to reset development progress');
       }
+      
+    } catch (error) {
+      console.error('API failed to reset development progress:', error);
+      const developmentError = createDevelopmentError(error, 'resetting development progress');
+      throw developmentError;
     }
   },
 
-  /**
-   * Get development phase status and progress
-   */
   getDevelopmentStatus: async (projectId: string): Promise<DevelopmentStatus> => {
     try {
       const response = await api.get<DevelopmentApiResponse<DevelopmentStatus>>(
@@ -343,31 +382,12 @@ export const developmentApi = {
       
     } catch (error) {
       console.error('API failed to get development status:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Clear cached data for a project (useful for development/testing)
-   */
-  clearProjectCache: async (projectId: string): Promise<void> => {
-    try {
-      await api.delete(`development/${projectId}/cache`);
-      console.log(`Cleared cache for project: ${projectId}`);
-    } catch (error) {
-      console.warn('Failed to clear project cache:', error);
-      // Don't throw - cache clearing is not critical
+      const developmentError = createDevelopmentError(error, 'loading development status');
+      throw developmentError;
     }
   }
 };
 
-/**
- * Helper Functions
- */
-
-/**
- * Create default project generation request
- */
 export const createProjectGenerationRequest = (
   solutionId: string,
   ethicalPreferences: string[] = [],
@@ -378,23 +398,21 @@ export const createProjectGenerationRequest = (
     project_requirements: {
       solution_type: solutionId,
       include_documentation: true,
-      include_tests: true,
-      include_deployment_scripts: true,
-      ethical_compliance: true
+      include_setup_guide: true,
+      ethical_protections: true,
+      include_production_guidance: true,
+      include_handover_documentation: true
     },
     ethical_preferences: ethicalPreferences.length > 0 ? ethicalPreferences : [
-      'privacy_preservation',
-      'bias_mitigation', 
+      'privacy_protection',
+      'bias_prevention', 
       'transparency',
-      'user_autonomy'
+      'user_control'
     ],
     customizations: customizations
   };
 };
 
-/**
- * Extract key information from development context for UI display
- */
 export const extractContextSummary = (contextData: ProjectContextOnly | DevelopmentPhaseData) => {
   const project_context = contextData.project_context;
   const available_solutions = 'available_solutions' in contextData ? contextData.available_solutions : [];
@@ -406,216 +424,108 @@ export const extractContextSummary = (contextData: ProjectContextOnly | Developm
     recommendedSolutions: available_solutions.filter(s => s.recommended),
     totalSolutions: available_solutions.length,
     hasUseCase: !!project_context.selected_use_case,
-    hasDeploymentEnv: !!project_context.deployment_environment,
-    keyRecommendations: project_context.recommendations.slice(0, 3)
+    hasTechnicalInfrastructure: !!project_context.technical_infrastructure,
+    keyRecommendations: project_context.recommendations.slice(0, 3),
+    aiTechniques: available_solutions.map(s => s.ai_technique),
+    solutionDiversity: new Set(available_solutions.map(s => s.ai_technique)).size
   };
 };
 
-/**
- * Format technical specs for display (handles both old and new formats)
- */
-export const formatTechnicalSpecs = (solution: AISolution): Array<{label: string, value: string}> => {
-  // Handle both technical_specs (legacy) and technical_architecture (new)
-  const specs = solution.technical_specs || solution.technical_architecture;
+export const analyzeSolutionDiversity = (solutions: AISolution[]): {
+  hasMultipleTechniques: boolean;
+  techniques: string[];
+  diversity_score: number;
+  approach_explanation: string;
+} => {
+  const techniques = solutions.map(s => s.ai_technique);
+  const uniqueTechniques = new Set(techniques);
   
-  if (!specs) {
-    return [
-      { label: 'Frontend', value: 'Not specified' },
-      { label: 'Backend', value: 'Not specified' },
-      { label: 'Deployment', value: 'Not specified' },
-      { label: 'Data Handling', value: 'Not specified' }
-    ];
-  }
-
-  // Handle legacy TechnicalSpecs format
-  if ('data' in specs) {
-    return [
-      { label: 'Frontend', value: specs.frontend || 'Not specified' },
-      { label: 'Backend', value: specs.backend || 'Not specified' },
-      { label: 'Deployment', value: specs.deployment || 'Not specified' },
-      { label: 'Data Handling', value: specs.data || 'Not specified' }
-    ];
-  }
-
-  // Handle new TechnicalArchitecture format
-  return [
-    { label: 'Frontend', value: specs.frontend || 'Not specified' },
-    { label: 'Backend', value: specs.backend || 'Not specified' },
-    { label: 'Deployment', value: specs.deployment || 'Not specified' },
-    { label: 'Data Processing', value: specs.data_processing || 'Not specified' }
-  ];
-};
-
-/**
- * Check if a solution is suitable for the project context
- */
-export const isSolutionSuitable = (
-  solution: AISolution, 
-  projectContext: ProjectContext
-): { suitable: boolean; reasons: string[] } => {
-  const reasons: string[] = [];
-  let suitable = true;
+  const diversity_score = uniqueTechniques.size / Math.max(solutions.length, 1);
   
-  // Check deployment environment compatibility
-  if (projectContext.deployment_environment) {
-    const env = projectContext.deployment_environment;
-    
-    // Check computing resources
-    if (solution.complexity_level === 'enterprise' && 
-        !['enterprise', 'cloud'].includes(env.computing_resources)) {
-      suitable = false;
-      reasons.push('Requires enterprise-level computing resources');
-    }
-    
-    // Check team size
-    if (solution.complexity_level === 'enterprise' && 
-        ['individual', 'small'].includes(env.team_size)) {
-      reasons.push('May be complex for smaller teams');
-    }
-    
-    // Check budget constraints
-    if (solution.resource_requirements?.budget_estimate === 'high' && 
-        env.project_budget === 'limited') {
-      reasons.push('May exceed budget constraints');
-    }
+  const hasMultipleTechniques = uniqueTechniques.size > 1;
+  
+  let approach_explanation = '';
+  if (uniqueTechniques.size === 1) {
+    approach_explanation = `All solutions use ${techniques[0]} as it's the most appropriate technique for this specific problem.`;
+  } else if (uniqueTechniques.size === solutions.length) {
+    approach_explanation = `Each solution uses a different AI technique to address different aspects of your humanitarian problem.`;
+  } else {
+    approach_explanation = `Multiple AI techniques were identified as viable for different aspects of this problem.`;
   }
   
-  // Add positive reasons
-  if (suitable) {
-    if (solution.recommended) {
-      reasons.push('Recommended based on your project characteristics');
-    }
-    reasons.push('Includes built-in ethical safeguards');
-    reasons.push('Tailored for humanitarian use cases');
-  }
-  
-  return { suitable, reasons };
-};
-
-/**
- * Create a loading state manager for development phase
- */
-export const createDevelopmentLoadingState = (): DevelopmentLoadingState => {
   return {
-    context: {
-      loading: false,
-      loaded: false,
-      error: null
-    },
-    solutions: {
-      loading: false,
-      loaded: false,
-      error: null,
-      triggered: false
-    },
-    generation: {
-      loading: false,
-      completed: false,
-      error: null,
-      progress: 0
-    }
+    hasMultipleTechniques,
+    techniques: Array.from(uniqueTechniques),
+    diversity_score,
+    approach_explanation
   };
 };
 
-/**
- * Validate project generation request
- */
-export const validateProjectGenerationRequest = (request: ProjectGenerationRequest): string[] => {
-  const errors: string[] = [];
+export const validateSolutionQuality = (solutions: AISolution[]): {
+  quality_score: number;
+  issues: string[];
+  recommendations: string[];
+} => {
+  const issues: string[] = [];
+  const recommendations: string[] = [];
+  let quality_score = 1.0;
   
-  if (!request.solution_id) {
-    errors.push('Solution ID is required');
+  if (solutions.length === 0) {
+    issues.push("No solutions were generated");
+    quality_score = 0;
+    return { quality_score, issues, recommendations };
   }
   
-  if (request.ethical_preferences && request.ethical_preferences.length === 0) {
-    errors.push('At least one ethical preference must be specified');
+  const diversity = analyzeSolutionDiversity(solutions);
+  if (!diversity.hasMultipleTechniques && solutions.length > 1) {
+    issues.push("All solutions use the same AI technique");
+    recommendations.push("Request different AI approaches that address different aspects of the problem");
+    quality_score -= 0.3;
   }
   
-  return errors;
+  const hasBestForField = solutions.every(s => s.best_for && s.best_for.trim().length > 0);
+  if (!hasBestForField) {
+    issues.push("Some solutions lack clear use case alignment");
+    quality_score -= 0.2;
+  }
+  
+  const hasRecommended = solutions.some(s => s.recommended);
+  if (!hasRecommended) {
+    issues.push("No recommended solution identified");
+    recommendations.push("Look for the solution that best matches your primary use case");
+    quality_score -= 0.1;
+  }
+  
+  const averageConfidence = solutions.reduce((sum, s) => sum + s.confidence_score, 0) / solutions.length;
+  if (averageConfidence < 60) {
+    issues.push("Low confidence in generated solutions");
+    recommendations.push("Provide more specific context about your problem and requirements");
+    quality_score -= 0.2;
+  }
+  
+  return {
+    quality_score: Math.max(0, quality_score),
+    issues,
+    recommendations
+  };
 };
 
-/**
- * Calculate estimated time for solution generation based on complexity
- */
-export const estimateSolutionGenerationTime = (projectComplexity: string): number => {
-  const baseTime = 8000; // 8 seconds base
-  
-  switch (projectComplexity) {
-    case 'simple':
-      return baseTime * 0.8; // 6.4 seconds
-    case 'moderate':
-      return baseTime; // 8 seconds
-    case 'advanced':
-      return baseTime * 1.3; // 10.4 seconds
-    case 'enterprise':
-      return baseTime * 1.6; // 12.8 seconds
-    default:
-      return baseTime;
-  }
-};
-
-/**
- * Track development metrics (client-side)
- */
 const trackDevelopmentMetrics = (metrics: Omit<DevelopmentMetrics, 'user_agent' | 'browser_performance'>) => {
   try {
-    const enhancedMetrics: DevelopmentMetrics = {
+    const developmentMetrics: DevelopmentMetrics = {
       ...metrics,
       user_agent: navigator.userAgent,
       browser_performance: {
         memory_used_mb: (performance as any).memory?.usedJSHeapSize / 1024 / 1024 || undefined,
-        cpu_usage_percent: undefined // Would need additional APIs
+        cpu_usage_percent: undefined
       }
     };
     
-    // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.log('📊 Development Metrics:', enhancedMetrics);
+      console.log('📊 Development Metrics:', developmentMetrics);
     }
-    
-    // Send to analytics service (implement based on your analytics setup)
-    // analytics.track('development_phase_performance', enhancedMetrics);
     
   } catch (error) {
     console.warn('Failed to track development metrics:', error);
   }
 };
-
-/**
- * Create development error with enhanced context
- */
-export const createDevelopmentError = (
-  type: DevelopmentError['type'],
-  message: string,
-  projectId?: string,
-  details?: any
-): DevelopmentError => {
-  return {
-    type,
-    message,
-    details,
-    timestamp: new Date().toISOString(),
-    project_id: projectId,
-    recoverable: type !== 'project_generation', // Most errors are recoverable except generation failures
-    suggested_action: getSuggestedAction(type)
-  };
-};
-
-/**
- * Get suggested action for error recovery
- */
-const getSuggestedAction = (errorType: DevelopmentError['type']): string => {
-  switch (errorType) {
-    case 'context_loading':
-      return 'Check your internet connection and retry loading the project context.';
-    case 'solutions_generation':
-      return 'Our AI service may be busy. Please wait a moment and try generating solutions again.';
-    case 'solution_selection':
-      return 'Try selecting a different solution or refresh the page.';
-    case 'project_generation':
-      return 'Please contact support if this issue persists.';
-    default:
-      return 'Please try again or contact support if the issue persists.';
-  }
-};
-
