@@ -4,6 +4,8 @@ import React, {
   useContext,
   ReactNode,
   useEffect,
+  useCallback,
+  useRef,
 } from "react";
 import { useLocation } from "react-router-dom";
 import { api } from "@/lib/api";
@@ -114,7 +116,6 @@ const getMetaKey = (projectId: string) => `project-${projectId}-meta`;
 
 interface ProjectMetadata {
   lastSync: string;
-  version: number;
 }
 
 const getFromStorage = (projectId: string) => {
@@ -277,6 +278,89 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({
     setEthicalConsiderationsAcknowledged,
   ] = useState<boolean>(false);
 
+  const debounceTimeouts = useRef<{ [key: string]: NodeJS.Timeout }>({});
+
+  const saveDataToStorage = useCallback((data: any) => {
+    if (!projectId || isLoading) return;
+    
+    const { meta } = getFromStorage(projectId);
+    const metadata: ProjectMetadata = {
+      lastSync: meta?.lastSync || new Date().toISOString(),
+    };
+    
+    saveToStorage(projectId, data, metadata);
+  }, [projectId, isLoading]);
+
+  const debouncedSave = useCallback((key: string, data: any, delay: number = 2000) => {
+    if (debounceTimeouts.current[key]) {
+      clearTimeout(debounceTimeouts.current[key]);
+    }
+    
+    debounceTimeouts.current[key] = setTimeout(() => {
+      saveDataToStorage(data);
+      delete debounceTimeouts.current[key];
+    }, delay);
+  }, [saveDataToStorage]);
+
+  const immediateSave = useCallback((data: any) => {
+    saveDataToStorage(data);
+  }, [saveDataToStorage]);
+
+  const getAllData = useCallback(() => ({
+    phases,
+    activePhaseId,
+    projectPrompt,
+    projectFiles,
+    reflectionAnswers,
+    scopingActiveStep,
+    selectedUseCase,
+    selectedDataset,
+    suitabilityChecks,
+    scopingFinalDecision,
+    technicalInfrastructure,
+    infrastructureAssessment,
+    datasetAnalysisState,
+    datasetManualResults,
+    datasetFileSizeWarning,
+    datasetShowRawData,
+    developmentSelectedSolution,
+    developmentGeneratedProject,
+    developmentSolutionSelection,
+    ethicalConsiderations,
+    ethicalConsiderationsAcknowledged,
+  }), [
+    phases, activePhaseId, projectPrompt, projectFiles, reflectionAnswers,
+    scopingActiveStep, selectedUseCase, selectedDataset, suitabilityChecks,
+    scopingFinalDecision, technicalInfrastructure, infrastructureAssessment,
+    datasetAnalysisState, datasetManualResults, datasetFileSizeWarning,
+    datasetShowRawData, developmentSelectedSolution, developmentGeneratedProject,
+    developmentSolutionSelection, ethicalConsiderations, ethicalConsiderationsAcknowledged,
+  ]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    debouncedSave('reflectionAnswers', getAllData());
+  }, [reflectionAnswers, isLoading, debouncedSave, getAllData]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    immediateSave(getAllData());
+  }, [phases, activePhaseId, scopingActiveStep, selectedUseCase, selectedDataset, 
+      scopingFinalDecision, developmentSelectedSolution, developmentGeneratedProject, 
+      isLoading, immediateSave, getAllData]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    debouncedSave('projectPrompt', getAllData());
+  }, [projectPrompt, isLoading, debouncedSave, getAllData]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    immediateSave(getAllData());
+  }, [technicalInfrastructure, infrastructureAssessment, suitabilityChecks,
+      datasetAnalysisState, datasetManualResults, ethicalConsiderations,
+      ethicalConsiderationsAcknowledged, isLoading, immediateSave, getAllData]);
+
   const resetDevelopmentPhase = async () => {
     try {
       await developmentApi.resetDevelopmentProgress(projectId);
@@ -380,74 +464,6 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   useEffect(() => {
-    if (!isLoading) {
-      const allData = {
-        phases,
-        activePhaseId,
-        projectPrompt,
-        projectFiles,
-        reflectionAnswers,
-        scopingActiveStep,
-        selectedUseCase,
-        selectedDataset,
-        suitabilityChecks,
-        scopingFinalDecision,
-
-        technicalInfrastructure,
-        infrastructureAssessment,
-
-        datasetAnalysisState,
-        datasetManualResults,
-        datasetFileSizeWarning,
-        datasetShowRawData,
-
-        developmentSelectedSolution,
-        developmentGeneratedProject,
-        developmentSolutionSelection,
-
-        ethicalConsiderations,
-        ethicalConsiderationsAcknowledged,
-      };
-
-      const { meta } = getFromStorage(projectId);
-      const metadata: ProjectMetadata = {
-        lastSync: meta?.lastSync || new Date().toISOString(),
-        version: (meta?.version ?? 0) + 1,
-      };
-
-      saveToStorage(projectId, allData, metadata);
-    }
-  }, [
-    isLoading,
-    projectId,
-    phases,
-    activePhaseId,
-    projectPrompt,
-    projectFiles,
-    reflectionAnswers,
-    scopingActiveStep,
-    selectedUseCase,
-    selectedDataset,
-    suitabilityChecks,
-    scopingFinalDecision,
-
-    technicalInfrastructure,
-    infrastructureAssessment,
-
-    datasetAnalysisState,
-    datasetManualResults,
-    datasetFileSizeWarning,
-    datasetShowRawData,
-
-    developmentSelectedSolution,
-    developmentGeneratedProject,
-    developmentSolutionSelection,
-
-    ethicalConsiderations,
-    ethicalConsiderationsAcknowledged,
-  ]);
-
-  useEffect(() => {
     const loadData = async () => {
       try {
         const { data: localData } = getFromStorage(projectId);
@@ -518,6 +534,8 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({
               if (apiUpdated > localUpdated) {
                 console.log("API data is newer, syncing...");
 
+                const currentLocalData = getAllData();
+                
                 if (apiData.phases) setPhases(apiData.phases);
 
                 if (apiData.reflection_questions) {
@@ -579,9 +597,8 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({
 
                 const newMetadata: ProjectMetadata = {
                   lastSync: apiData.updated_at,
-                  version: apiData.version ?? Date.now(),
                 };
-                saveToStorage(projectId, localData, newMetadata);
+                saveToStorage(projectId, currentLocalData, newMetadata);
               } else {
                 console.log("Local data is newer or same, keeping local data");
               }
