@@ -62,14 +62,12 @@ export const evaluationApi = {
 
   simulateWithScenarios: async (
     projectId: string,
-    customScenarios?: string[]
   ): Promise<SimulationResult> => {
     try {
       console.log(`Running scenario simulation for project: ${projectId}`);
       
       const requestData: SimulationRequest = {
         simulation_type: 'example_scenarios',
-        custom_scenarios: customScenarios
       };
       
       const response = await api.post<EvaluationApiResponse<SimulationResult>>(

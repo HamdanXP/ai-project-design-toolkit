@@ -13,7 +13,9 @@ import {
   EvaluationContext,
   SimulationResult,
   EvaluationResult,
-  AVAILABLE_DOCUMENTS
+  AVAILABLE_DOCUMENTS,
+  ComponentTransparency,
+  ScenarioResult
 } from "@/types/evaluation-phase";
 
 const getFileExtension = (fileType: string): string => {
@@ -65,7 +67,9 @@ export const useEvaluationPhase = () => {
   const [simulationLoading, setSimulationLoading] = useState(false);
   const [evaluationLoading, setEvaluationLoading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [customScenarios, setCustomScenarios] = useState<string>("");
+
+  const [componentTransparency, setComponentTransparency] = useState<ComponentTransparency | null>(null);
+  const [scenarioResults, setScenarioResults] = useState<ScenarioResult[] | null>(null);
 
   const steps: EvaluationPhaseStep[] = useMemo(() => {
     if (evaluationContext?.simulation_capabilities.evaluation_approach === 'evaluation_bypass') {
@@ -172,6 +176,36 @@ export const useEvaluationPhase = () => {
     setUploadedFile(file);
   };
 
+    const regenerateScenarios = async () => {
+    if (!projectId || !evaluationContext) return;
+
+    try {
+      setSimulationLoading(true);
+      
+      const newScenarios = await evaluationApi.regenerateScenarios(projectId,{});
+      
+      setEvaluationContext({
+        ...evaluationContext,
+        testing_scenarios: newScenarios
+      });
+      
+      toast({
+        title: "Scenarios Regenerated",
+        description: "New test scenarios have been generated for your project",
+      });
+      
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to regenerate scenarios';
+      toast({
+        title: "Regeneration Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setSimulationLoading(false);
+    }
+  };
+
   const runSimulation = async () => {
     if (!projectId) return;
 
@@ -192,27 +226,27 @@ export const useEvaluationPhase = () => {
         const datasetStatistics = await DatasetAnalysisEngine.analyzeDataset(uploadedFile);
         result = await evaluationApi.simulateWithStatistics(projectId, datasetStatistics);
       } else {
-        const customScenariosArray = customScenarios 
-          ? customScenarios.split('\n').filter(s => s.trim()).map(s => s.trim())
-          : undefined;
-        
-        result = await evaluationApi.simulateWithScenarios(projectId, customScenariosArray);
+
+        result = await evaluationApi.simulateWithScenarios(projectId);
       }
       
       setSimulationResult(result);
+      setComponentTransparency(result.component_transparency || null);
+      setScenarioResults(result.scenario_results || null);
       setHasAutoAdvanced(false);
-      if (result.suitability_assessment) {
+      
+      if (result.scenario_results && result.scenario_results.length > 0) {
+        toast({
+          title: "Component Testing Complete",
+          description: `Tested ${result.scenario_results.length} scenarios with your generated ${result.component_transparency?.component_type} component`,
+        });
+      } else if (result.suitability_assessment) {
         if (result.suitability_assessment.is_suitable) {
           toast({
             title: "Dataset Assessment Complete",
             description: `Your dataset is compatible with this AI solution (${Math.round(result.suitability_assessment.overall_score * 100)}% suitability)`,
           });
-        } 
-      } else {
-        toast({
-          title: "Scenario Testing Complete",
-          description: "Your AI solution has been tested with humanitarian scenarios",
-        });
+        }
       }
       
     } catch (err) {
@@ -223,42 +257,6 @@ export const useEvaluationPhase = () => {
         variant: "destructive"
       });
       throw err;
-    } finally {
-      setSimulationLoading(false);
-    }
-  };
-
-  const regenerateScenarios = async () => {
-    if (!projectId || !evaluationContext) return;
-
-    try {
-      setSimulationLoading(true);
-      
-      const customScenariosArray = customScenarios 
-        ? customScenarios.split('\n').filter(s => s.trim()).map(s => s.trim())
-        : undefined;
-      
-      const newScenarios = await evaluationApi.regenerateScenarios(projectId, {
-        custom_scenarios: customScenariosArray
-      });
-      
-      setEvaluationContext({
-        ...evaluationContext,
-        testing_scenarios: newScenarios
-      });
-      
-      toast({
-        title: "Scenarios Regenerated",
-        description: "New test scenarios have been generated for your project",
-      });
-      
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to regenerate scenarios';
-      toast({
-        title: "Regeneration Error",
-        description: errorMessage,
-        variant: "destructive"
-      });
     } finally {
       setSimulationLoading(false);
     }
@@ -395,21 +393,19 @@ export const useEvaluationPhase = () => {
     evaluationLoading,
     simulationLoading,
     uploadedFile,
-    customScenarios,
-    setCustomScenarios,
-    
     steps,
     progressPercentage,
-    
+    regenerateScenarios,
     setCurrentStep: navigateToStep,
     handleFileUpload,
     runSimulation,
-    regenerateScenarios,
     evaluateResults,
     downloadFile,
     retryLoading,
     canProceedToNextPhase,
     canDownloadProject,
-    projectId
+    componentTransparency,
+    scenarioResults,
+    projectId,
   };
 };

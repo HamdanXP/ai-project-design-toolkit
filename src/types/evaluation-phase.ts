@@ -93,12 +93,20 @@ export interface SimulationRequest {
   custom_scenarios?: string[];
 }
 
-export interface ExampleScenario {
+export interface ScenarioResult {
   scenario_name: string;
-  input_description: string;
-  process_description: string;
-  expected_output: string;
-  humanitarian_impact: string;
+  input_provided: string;
+  actual_output: string;
+  component_used: string;
+  execution_time_ms?: number;
+  humanitarian_relevance_assessment: string;
+}
+
+export interface ComponentTransparency {
+  component_type: 'llm' | 'nlp' | 'none';
+  system_prompt?: string;
+  processing_approach?: string;
+  model_used?: string;
 }
 
 export interface SimulationExplanation {
@@ -113,8 +121,9 @@ export interface SimulationResult {
   testing_method: TestingMethod;
   confidence_level: ConfidenceLevel;
   suitability_assessment?: SuitabilityAssessment;
-  scenarios?: ExampleScenario[];
+  scenario_results?: ScenarioResult[];
   evaluation_bypass?: EvaluationBypass;
+  component_transparency?: ComponentTransparency;
   simulation_explanation: SimulationExplanation;
 }
 

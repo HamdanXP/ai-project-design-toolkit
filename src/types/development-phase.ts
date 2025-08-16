@@ -35,6 +35,19 @@ export interface TabularDataRequirements {
   data_types: Record<string, string>;
 }
 
+export interface LLMRequirements {
+  system_prompt: string;
+  suggested_model: string;
+  key_parameters: Record<string, any>;
+}
+
+export interface NLPRequirements {
+  preprocessing_steps: string[];
+  processing_approach: string;
+  feature_extraction: string;
+  expected_input_format: string;
+}
+
 export interface ProjectRecommendation {
   type: string;
   title: string;
@@ -81,6 +94,8 @@ export interface AISolution {
   needs_dataset: boolean;
   dataset_type?: 'tabular' | 'text' | 'image' | 'audio' | 'video' | 'none';
   tabular_requirements?: TabularDataRequirements;
+  llm_requirements?: LLMRequirements;
+  nlp_requirements?: NLPRequirements;
   capabilities: string[];
   key_features: string[];
   technical_architecture: TechnicalArchitecture;

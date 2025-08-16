@@ -11,7 +11,6 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle,
   Circle,
@@ -83,8 +82,6 @@ export const EvaluationPhase = ({
     evaluationLoading,
     simulationLoading,
     uploadedFile,
-    customScenarios,
-    setCustomScenarios,
 
     steps,
     progressPercentage,
@@ -321,15 +318,35 @@ export const EvaluationPhase = ({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <PlayCircle className="h-5 w-5" />
-                  Test Your AI Solution
+                  Test Your AI Solution Components
                 </CardTitle>
                 <CardDescription>
-                  {evaluationContext.simulation_capabilities.explanation}
+                  {evaluationContext.simulation_capabilities.testing_method === "dataset"
+                    ? evaluationContext.simulation_capabilities.explanation
+                    : "Test your generated AI components with realistic humanitarian scenarios to see actual outputs"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {evaluationContext.simulation_capabilities.testing_method ===
-                "dataset" ? (
+
+                {evaluationContext.selected_solution?.llm_requirements && (
+                  <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
+                    <Brain className="h-4 w-4" />
+                    <AlertDescription className="text-blue-800 dark:text-blue-200">
+                      <strong>LLM Component Testing:</strong> We'll test your generated system prompt with real scenarios using OpenAI LLM models to show you actual outputs.
+                    </AlertDescription>
+                  </Alert>
+                )}
+                
+                {evaluationContext.selected_solution?.nlp_requirements && (
+                  <Alert className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700">
+                    <Brain className="h-4 w-4" />
+                    <AlertDescription className="text-green-800 dark:text-green-200">
+                      <strong>NLP Component Testing:</strong> We'll simulate your {evaluationContext.selected_solution.nlp_requirements.processing_approach} pipeline with real scenarios to show expected processing results.
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {evaluationContext.simulation_capabilities.testing_method === "dataset" ? (
                   <Card className="border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary transition-colors">
                     <CardContent className="p-6">
                       <div className="text-center space-y-4">
@@ -411,11 +428,10 @@ export const EvaluationPhase = ({
                           <Brain className="h-8 w-8 mx-auto text-blue-500" />
                           <div>
                             <h3 className="font-medium mb-2">
-                              Test with Scenarios
+                              Component Testing Ready
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                              Evaluate your AI solution with realistic
-                              humanitarian scenarios
+                              Test your generated AI components with realistic scenarios to see how they perform with actual humanitarian inputs
                             </p>
 
                             <Button
@@ -426,10 +442,10 @@ export const EvaluationPhase = ({
                               {simulationLoading ? (
                                 <>
                                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                  Testing...
+                                  Testing Components...
                                 </>
                               ) : (
-                                "Test with Scenarios"
+                                "Test AI Components"
                               )}
                             </Button>
                           </div>
@@ -441,9 +457,7 @@ export const EvaluationPhase = ({
                       evaluationContext.testing_scenarios.length > 0 && (
                         <div>
                           <div className="flex items-center justify-between mb-3">
-                            <h4 className="font-medium">
-                              Available Test Scenarios
-                            </h4>
+                            <h4 className="font-medium">Scenarios for Component Testing</h4>
                             <Button
                               variant="outline"
                               size="sm"
@@ -453,6 +467,9 @@ export const EvaluationPhase = ({
                               <RefreshCw className="h-3 w-3 mr-1" />
                               Regenerate
                             </Button>
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                            These scenarios will be processed through your generated {evaluationContext.selected_solution?.llm_requirements ? 'LLM system prompt' : 'NLP pipeline'} to show real outputs:
                           </div>
                           <div className="grid gap-3">
                             {evaluationContext.testing_scenarios.map(
@@ -470,57 +487,19 @@ export const EvaluationPhase = ({
                                     </p>
                                     <div className="text-xs space-y-1">
                                       <p>
-                                        <span className="font-medium">
-                                          Input:
-                                        </span>{" "}
-                                        {scenario.input_description}
+                                        <span className="font-medium">Test Input:</span> {scenario.input_description}
                                       </p>
                                       <p>
-                                        <span className="font-medium">
-                                          Process:
-                                        </span>{" "}
-                                        {scenario.process_description}
+                                        <span className="font-medium">Expected Processing:</span> {scenario.process_description}
                                       </p>
                                       <p>
-                                        <span className="font-medium">
-                                          Expected:
-                                        </span>{" "}
-                                        {scenario.expected_outcome}
-                                      </p>
-                                      <p>
-                                        <span className="font-medium">
-                                          Impact:
-                                        </span>{" "}
-                                        {scenario.humanitarian_impact}
+                                        <span className="font-medium">Humanitarian Purpose:</span> {scenario.humanitarian_impact}
                                       </p>
                                     </div>
                                   </CardContent>
                                 </Card>
                               )
                             )}
-                          </div>
-
-                          <div className="mt-4">
-                            <Label
-                              htmlFor="custom-scenarios"
-                              className="text-sm font-medium"
-                            >
-                              Custom Scenarios (Optional)
-                            </Label>
-                            <Textarea
-                              id="custom-scenarios"
-                              placeholder="Describe specific scenarios you'd like to test, separated by new lines..."
-                              value={customScenarios}
-                              onChange={(e) =>
-                                setCustomScenarios(e.target.value)
-                              }
-                              className="mt-2"
-                              rows={3}
-                            />
-                            <p className="text-xs text-gray-500 mt-1">
-                              Enter custom scenarios to test specific situations
-                              relevant to your project
-                            </p>
                           </div>
                         </div>
                       )}
@@ -622,15 +601,105 @@ export const EvaluationPhase = ({
                   <BarChart3 className="h-5 w-5" />
                   {simulationResult.testing_method === "dataset"
                     ? "Dataset Assessment Results"
-                    : "Scenario Testing Results"}
+                    : "Component Testing Results"}
                 </CardTitle>
                 <CardDescription>
                   {simulationResult.testing_method === "dataset"
                     ? "Review the compatibility assessment for your dataset and AI solution"
-                    : "Review the scenario testing results for your AI solution"}
+                    : "Review the actual testing results from your generated AI components"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+
+                {simulationResult.component_transparency && (
+                  <Card className="border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/10">
+                    <CardHeader>
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Settings className="h-4 w-4" />
+                        Component Being Tested
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {simulationResult.component_transparency.component_type === 'llm' && (
+                        <div className="space-y-3">
+                          <div>
+                            <span className="font-medium text-sm">System Prompt:</span>
+                            <pre className="bg-white dark:bg-gray-800 p-3 rounded text-xs mt-1 overflow-auto max-h-32 border">
+                              {simulationResult.component_transparency.system_prompt}
+                            </pre>
+                          </div>
+                          <div>
+                            <span className="font-medium text-sm">Model Used:</span>
+                            <span className="ml-2 text-sm">{simulationResult.component_transparency.model_used}</span>
+                          </div>
+                        </div>
+                      )}
+                      {simulationResult.component_transparency.component_type === 'nlp' && (
+                        <div>
+                          <span className="font-medium text-sm">Processing Approach:</span>
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            {simulationResult.component_transparency.processing_approach}
+                          </p>
+                        </div>
+                      )}
+                      {simulationResult.component_transparency.component_type === 'none' && (
+                        <Alert className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700">
+                          <AlertCircle className="h-4 w-4" />
+                          <AlertDescription className="text-amber-800 dark:text-amber-200">
+                            This solution doesn't have testable components for automated evaluation. 
+                            The results below are theoretical - you'll need to test the actual generated code manually.
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {simulationResult.scenario_results && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <Target className="h-4 w-4" />
+                        Real Testing Results
+                      </CardTitle>
+                      <CardDescription>
+                        Actual outputs from your generated {simulationResult.component_transparency?.component_type?.toUpperCase()} component
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {simulationResult.scenario_results.map((result, index) => (
+                        <Card key={index} className="border-gray-200 dark:border-gray-700">
+                          <CardContent className="p-4">
+                            <h5 className="font-medium mb-3">{result.scenario_name}</h5>
+                            <div className="space-y-3">
+                              <div>
+                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Input:</span>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{result.input_provided}</p>
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Actual Output:</span>
+                                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded mt-1 border border-blue-200 dark:border-blue-700">
+                                  <p className="text-sm text-blue-800 dark:text-blue-200">{result.actual_output}</p>
+                                </div>
+                              </div>
+                              <div>
+                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Assessment:</span>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{result.humanitarian_relevance_assessment}</p>
+                              </div>
+                              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <span>Component: {result.component_used}</span>
+                                {result.execution_time_ms && (
+                                  <span>Processed in {result.execution_time_ms.toFixed(0)}ms</span>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+
                 {simulationResult.suitability_assessment && (
                   <div className="space-y-4">
                     <div
@@ -838,48 +907,6 @@ export const EvaluationPhase = ({
                   </div>
                 )}
 
-                {simulationResult.scenarios && (
-                  <div className="space-y-4">
-                    <h4 className="font-medium mb-2">
-                      Scenario Testing Results
-                    </h4>
-                    <div className="space-y-3">
-                      {simulationResult.scenarios
-                        .slice(0, 3)
-                        .map((scenario, index) => (
-                          <Card
-                            key={index}
-                            className="border-gray-200 dark:border-gray-700"
-                          >
-                            <CardContent className="p-4">
-                              <h5 className="font-medium text-sm mb-2">
-                                {scenario.scenario_name}
-                              </h5>
-                              <div className="text-xs space-y-1 text-muted-foreground">
-                                <p>
-                                  <span className="font-medium">Input:</span>{" "}
-                                  {scenario.input_description}
-                                </p>
-                                <p>
-                                  <span className="font-medium">
-                                    Expected Output:
-                                  </span>{" "}
-                                  {scenario.expected_output}
-                                </p>
-                                <p>
-                                  <span className="font-medium">
-                                    Humanitarian Impact:
-                                  </span>{" "}
-                                  {scenario.humanitarian_impact}
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                    </div>
-                  </div>
-                )}
-
                 <Card className="border-gray-200 dark:border-gray-700">
                   <CardHeader>
                     <CardTitle className="text-sm flex items-center gap-2">
@@ -902,7 +929,7 @@ export const EvaluationPhase = ({
                     </div>
                     <div>
                       <span className="font-medium text-sm">
-                        Assessment Basis:
+                        Testing Basis:
                       </span>
                       <ul className="text-sm text-gray-600 dark:text-gray-400 list-disc list-inside">
                         {simulationResult.simulation_explanation.calculation_basis.map(
@@ -1119,9 +1146,7 @@ export const EvaluationPhase = ({
                 <Alert className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700">
                   <CheckCircle className="h-4 w-4" />
                   <AlertDescription className="text-green-800 dark:text-green-200">
-                    🎉 <strong>Congratulations!</strong> Your AI project has
-                    been successfully generated and evaluated. The solution
-                    meets your requirements and is ready for deployment.
+                    Your AI project has been successfully generated and evaluated. The solution meets your requirements and is ready for deployment.
                   </AlertDescription>
                 </Alert>
               )}
