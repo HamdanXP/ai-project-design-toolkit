@@ -21,9 +21,9 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/useMobile";
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/useToast";
 
 interface TopBarProps {
   // In a real app, this would come from authentication
@@ -110,92 +110,6 @@ export function TopBar({ onSignIn, onSignUp }: TopBarProps) {
 
       <div className="flex items-center gap-2 sm:gap-4">
         <ThemeSwitcher />
-
-        {isLoggedIn && mockUser ? (
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="text-sm font-medium text-foreground hidden sm:block">
-              {mockUser.name}
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Avatar 
-                  className="cursor-pointer h-8 w-8 sm:h-10 sm:w-10 border-2 border-primary/50 hover:border-primary transition-all"
-                >
-                  <AvatarImage src={mockUser.image} />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    <User size={isMobile ? 16 : 20} />
-                  </AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleNavigate('/profile')} className="cursor-pointer">
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigate('/settings')} className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigate('/faq')} className="cursor-pointer">
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  <span>FAQ</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        ) : (
-          <>
-            {isMobile ? (
-              <Drawer>
-                <DrawerTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </DrawerTrigger>
-                <DrawerContent>
-                  <div className="p-4 flex flex-col gap-2">
-                    <Button 
-                      variant="ghost" 
-                      className="w-full justify-start"
-                      onClick={handleSignIn}
-                    >
-                      Sign in
-                    </Button>
-                    <Button 
-                      className="w-full"
-                      onClick={handleSignUp}
-                    >
-                      Sign up
-                    </Button>
-                  </div>
-                </DrawerContent>
-              </Drawer>
-            ) : (
-              <div className="flex items-center gap-3">
-                <Button 
-                  variant="ghost" 
-                  className="topbar-button"
-                  onClick={handleSignIn}
-                >
-                  Sign in
-                </Button>
-                <Button 
-                  className="rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
-                  onClick={handleSignUp}
-                >
-                  Sign up
-                </Button>
-              </div>
-            )}
-          </>
-        )}
       </div>
     </div>
   );

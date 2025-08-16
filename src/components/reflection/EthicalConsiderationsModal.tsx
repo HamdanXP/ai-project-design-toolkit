@@ -25,7 +25,7 @@ import {
   Heart
 } from "lucide-react";
 import { useProject } from "@/contexts/ProjectContext";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { useLocation } from "react-router-dom";
 import { EthicalConsideration } from "@/types/project";
 

@@ -37,7 +37,7 @@ import {
   Rocket,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { useEvaluationPhase } from "@/hooks/useEvaluationPhase";
 import { AVAILABLE_DOCUMENTS } from "@/types/evaluation-phase";
 

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useProject } from "@/contexts/ProjectContext";
 import { ProjectPhase } from "@/types/project";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 
 export const useProjectPhases = () => {
   const navigate = useNavigate();

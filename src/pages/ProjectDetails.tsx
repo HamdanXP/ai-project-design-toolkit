@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Calendar, Clock, ArrowRight, Edit2, Check, X, Tag } from "lucide-react";
 import { Footer } from "@/components/Footer";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { api, Project } from "@/lib/api";
 
 const formatDate = (dateString: string): string => {

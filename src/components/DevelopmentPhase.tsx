@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDevelopmentPhase } from "@/hooks/useDevelopmentPhase";
 import { AISolution } from "@/types/development-phase";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { DevelopmentApiError } from "@/lib/development-api";
 
 interface DevelopmentPhaseProps {

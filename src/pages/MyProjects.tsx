@@ -1,26 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TopBar } from "@/components/TopBar";
 import { useNavigate } from "react-router-dom";
 import { BackButton } from "@/components/BackButton";
 import { Footer } from "@/components/Footer";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import { projectStorage, StoredProject } from "@/lib/project-storage";
+import { ArrowRight } from "lucide-react";
 
 const MyProjects = () => {
-  const navigate = useNavigate();
-  
-  // Example of projects data - would come from an API in a real app
-  const [projects] = useState([
-    { id: 1, name: "Portfolio Website", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Portfolio" },
-    { id: 2, name: "Recipe Finder App", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Recipes" },
-    { id: 3, name: "Task Manager", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Tasks" },
-    { id: 4, name: "Weather Dashboard", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Weather" },
-    { id: 5, name: "E-commerce Store", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=E-commerce" },
-    { id: 6, name: "Blog Platform", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Blog" },
-    { id: 7, name: "Chat Application", image: "https://via.placeholder.com/300x200/3B82F6/FFFFFF?text=Chat" },
-    { id: 8, name: "Analytics Dashboard", image: "https://via.placeholder.com/300x200/10B981/FFFFFF?text=Analytics" },
-  ]);
+  usePageTitle("My Projects");
 
-  const handleProjectClick = (projectId: number) => {
-    navigate(`/project/${projectId}`);
+  const navigate = useNavigate();
+  const [projects, setProjects] = useState<StoredProject[]>([]);
+
+  useEffect(() => {
+    const storedProjects = projectStorage.getAll();
+    setProjects(storedProjects);
+  }, []);
+
+  const handleProjectClick = (projectId: string) => {
+    navigate(`/project-blueprint?projectId=${projectId}`);
   };
 
   return (
@@ -29,24 +28,50 @@ const MyProjects = () => {
       <div className="container mx-auto px-4 py-12 pt-24 flex-grow">
         <div className="flex items-center mb-8">
           <BackButton />
-          <h1 className="text-3xl font-bold text-foreground ml-3">My Projects</h1>
+          <h1 className="text-3xl font-bold text-foreground ml-3">
+            My Projects
+          </h1>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {/* Existing Projects */}
           {projects.map((project) => (
-            <div 
+            <div
               key={project.id}
-              className="rounded-lg overflow-hidden border border-border hover:border-primary/50 transition-all cursor-pointer bg-card shadow-card-light dark:shadow-card-dark"
+              className="group rounded-lg border border-border hover:border-primary/50 transition-all cursor-pointer bg-card shadow-card-light dark:shadow-card-dark hover:shadow-lg"
               onClick={() => handleProjectClick(project.id)}
             >
-              <img 
-                src={project.image} 
-                alt={project.name} 
-                className="w-full h-40 object-cover"
-              />
-              <div className="p-4">
-                <h3 className="text-lg font-medium text-foreground">{project.name}</h3>
+              <div className="p-4 md:p-6">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="w-3 h-3 rounded-full bg-gradient-to-r from-primary to-primary/60 flex-shrink-0 mt-1"></div>
+                  <time className="text-xs text-muted-foreground font-medium">
+                    {new Date(project.createdAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </time>
+                </div>
+
+                <h3 className="text-base md:text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
+                  {project.title}
+                </h3>
+
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                  {project.description}
+                </p>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Ready to continue
+                    </span>
+                  </div>
+
+                  <div className="text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                </div>
               </div>
             </div>
           ))}

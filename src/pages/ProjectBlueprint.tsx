@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { TopBar } from "@/components/TopBar";
-import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/useToast";
+import { useIsMobile } from "@/hooks/useMobile";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { useProjectPhases } from "@/hooks/useProjectPhases";
 import { ProjectBlueprintSidebar } from "@/components/project-blueprint/ProjectBlueprintSidebar";
 import { ProjectPhaseContent } from "@/components/project-blueprint/ProjectPhaseContent";
 import { ProjectPhaseHeader } from "@/components/project-blueprint/ProjectPhaseHeader";
 import { useProject } from "@/contexts/ProjectContext";
+import { projectStorage } from "@/lib/project-storage";
 import { api } from "@/lib/api";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -14,6 +16,7 @@ const ProjectBlueprint = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const [projectTitle, setProjectTitle] = useState("Project");
   const sidebarRef = useRef<HTMLDivElement>(null);
   const toggleBtnRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
@@ -22,8 +25,17 @@ const ProjectBlueprint = () => {
   const searchParams = new URLSearchParams(location.search);
   const projectId = searchParams.get('projectId');
   
+  usePageTitle(projectTitle);
+  
   useEffect(() => {
     console.log('ProjectBlueprint loaded with projectId:', projectId);
+    
+    if (projectId) {
+      const storedProject = projectStorage.getAll().find(p => p.id === projectId);
+      if (storedProject) {
+        setProjectTitle(storedProject.title);
+      }
+    }
   }, [projectId]);
   
   const { activePhaseId } = useProject();

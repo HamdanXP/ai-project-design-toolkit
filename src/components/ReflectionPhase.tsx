@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, ArrowRight, AlertTriangle, RefreshCw } from "lucide-react";
 import { useProject } from "@/contexts/ProjectContext";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/useToast";
 import { Question, EthicalReadinessAssessment } from "@/types/reflection-phase";
 import { QuestionGuidance } from "@/components/reflection/QuestionGuidance";
 import { EthicalReadinessModal } from "@/components/reflection/EthicalReadinessModal";
@@ -70,7 +70,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
       if (!projectId) {
         throw new Error('Project ID is required');
       }
-
+      
       // Try to get cached enhanced questions first
       const cachedQuestions = localStorage.getItem(`project-${projectId}-reflection-questions`);
       
@@ -86,7 +86,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
           guidanceSources: data.guidance_sources || []
         }));
         setQuestions(convertedQuestions);
-        updatePhaseSteps("reflection", convertedQuestions.length);
+        updatePhaseSteps("reflection", convertedQuestions.length || 0);
         return;
       }
 
@@ -107,7 +107,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
           guidanceSources: data.guidance_sources || []
         }));
         setQuestions(convertedQuestions);
-        updatePhaseSteps("reflection", convertedQuestions.length);
+        updatePhaseSteps("reflection", convertedQuestions.length || 0);
       } else {
         throw new Error(response.message || 'Failed to fetch questions');
       }

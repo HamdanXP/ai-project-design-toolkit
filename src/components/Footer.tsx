@@ -1,4 +1,3 @@
-
 import { Github, Twitter, Linkedin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -17,54 +16,63 @@ export const Footer = () => {
               </div>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              An AI-powered assistant that helps professionals design AI solutions
+              An AI-powered assistant that helps professionals design AI
+              solutions
             </p>
-            <div className="flex space-x-2">
-              <Button variant="ghost" size="icon">
-                <Github className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Twitter className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <Linkedin className="h-4 w-4" />
-              </Button>
-            </div>
           </div>
-          
+
           <div className="col-span-1">
             <h3 className="font-semibold mb-4">Resources</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-muted-foreground hover:text-foreground">Documentation</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground">Tutorials</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground">Case Studies</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground">AI Governance</a></li>
-            </ul>
-          </div>
-          
-          <div className="col-span-1">
-            <h3 className="font-semibold mb-4">Company</h3>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-muted-foreground hover:text-foreground">About Us</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground">Blog</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground">Careers</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground">Contact</a></li>
-            </ul>
-          </div>
-          
-          <div className="col-span-1">
-            <h3 className="font-semibold mb-4">Legal</h3>
-            <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-muted-foreground hover:text-foreground">Privacy Policy</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground">Terms of Service</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground">AI Ethics Statement</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground">Responsible AI</a></li>
+              <li>
+                <a
+                  href="https://www.unesco.org/en/artificial-intelligence/recommendation-ethics"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  UNESCO AI Ethics Standards
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://nethope.org/toolkits/humanitarian-ai-code-of-conduct/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  Humanitarian AI Code of Conduct
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://www.microsoft.com/en-us/ai/ai-for-humanitarian-action-projects"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  AI Case Studies & Examples
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://reliefweb.int/topic/artificial-intelligence-humanitarian-action"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  AI in Humanitarian Action Hub
+                </a>
+              </li>
             </ul>
           </div>
         </div>
-        
+
         <div className="border-t border-border mt-8 pt-6 text-sm text-muted-foreground text-center">
-          <p>© {new Date().getFullYear()} AI Project Design Toolkit. All rights reserved.</p>
+          <p>
+            © {new Date().getFullYear()} AI Project Design Toolkit. All rights
+            reserved.
+          </p>
         </div>
       </div>
     </footer>

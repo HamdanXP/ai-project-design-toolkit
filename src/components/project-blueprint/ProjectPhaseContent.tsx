@@ -6,8 +6,6 @@ import { EvaluationPhase } from "@/components/EvaluationPhase";
 import { PhaseLockedMessage } from "@/components/PhaseLockedMessage";
 import { EthicalConsiderationsModal } from "@/components/reflection/EthicalConsiderationsModal";
 import { ProjectPhase } from "@/types/project";
-import { AIAssistant } from "@/components/AIAssistant";
-import { CompleteProjectButton } from "./CompleteProjectButton";
 import { useProject } from "@/contexts/ProjectContext";
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
@@ -159,13 +157,7 @@ export const ProjectPhaseContent = ({
           <PhaseLockedMessage phaseName="Evaluation" />
         ))}
 
-      {allPhasesCompleted && (
-        <div className="mt-8 flex justify-center">
-          <CompleteProjectButton onClick={handleCompleteProject} />
-        </div>
-      )}
 
-      <AIAssistant />
     </>
   );
 };
