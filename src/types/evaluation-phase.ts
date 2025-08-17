@@ -100,6 +100,7 @@ export interface ScenarioResult {
   component_used: string;
   execution_time_ms?: number;
   humanitarian_relevance_assessment: string;
+  relevance_score?: number;
 }
 
 export interface ComponentTransparency {
@@ -116,11 +117,36 @@ export interface SimulationExplanation {
   limitations: string[];
 }
 
+export interface ScenarioPerformance {
+  scenario_name: string;
+  relevance_score: number;
+  performance_level: 'excellent' | 'good' | 'acceptable' | 'poor';
+  key_insights: string;
+}
+
+export interface ComponentEffectiveness {
+  component_type: string;
+  overall_effectiveness: number;
+  strengths: string[];
+  weaknesses: string[];
+}
+
+export interface ScenarioSuitabilityAssessment {
+  is_suitable: boolean;
+  overall_score: number;
+  scenario_performances: ScenarioPerformance[];
+  component_effectiveness: ComponentEffectiveness;
+  humanitarian_relevance: number;
+  recommendations: SuitabilityRecommendation[];
+  performance_summary: string;
+}
+
 export interface SimulationResult {
   simulation_type: SimulationType;
   testing_method: TestingMethod;
   confidence_level: ConfidenceLevel;
   suitability_assessment?: SuitabilityAssessment;
+  scenario_suitability_assessment?: ScenarioSuitabilityAssessment;
   scenario_results?: ScenarioResult[];
   evaluation_bypass?: EvaluationBypass;
   component_transparency?: ComponentTransparency;

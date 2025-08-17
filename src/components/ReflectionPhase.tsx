@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -43,20 +43,41 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   
   const fetchingRef = useRef(false);
   const initializedRef = useRef(false);
+  
+  const validationTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // FIXED: Character count status now uses trimmed text
-  const getCharacterCountStatus = (text: string) => {
-    const trimmedLength = text.trim().length; // Use trimmed length
+  const getCharacterCountStatus = useCallback((text: string) => {
+    const trimmedLength = text.trim().length;
     if (trimmedLength < MIN_CHARACTERS) {
       return { status: 'below-min', color: 'text-amber-600' };
     } else if (trimmedLength >= MAX_CHARACTERS) {
       return { status: 'at-max', color: 'text-red-600' };
-    } else if (trimmedLength >= MAX_CHARACTERS - 100) { // Warning zone (last 100 chars)
+    } else if (trimmedLength >= MAX_CHARACTERS - 100) {
       return { status: 'approaching-max', color: 'text-orange-600' };
     } else {
       return { status: 'valid', color: 'text-green-600' };
     }
-  };
+  }, [MIN_CHARACTERS, MAX_CHARACTERS]);
+
+  const progressData = useMemo(() => {
+    const answeredCount = Object.keys(reflectionAnswers).filter(key => {
+      const answer = reflectionAnswers[key]?.trim() || "";
+      return answer.length >= MIN_CHARACTERS;
+    }).length;
+    const totalQuestions = questions.length;
+    const isComplete = answeredCount === totalQuestions;
+    return { answeredCount, totalQuestions, isComplete };
+  }, [reflectionAnswers, questions.length, MIN_CHARACTERS]);
+
+  const debouncedUpdateProgress = useCallback(() => {
+    if (validationTimeoutRef.current) {
+      clearTimeout(validationTimeoutRef.current);
+    }
+    
+    validationTimeoutRef.current = setTimeout(() => {
+      onUpdateProgress(progressData.answeredCount, progressData.totalQuestions);
+    }, 200);
+  }, [onUpdateProgress, progressData.answeredCount, progressData.totalQuestions]);
 
   const fetchQuestions = async () => {
     if (fetchingRef.current) return;
@@ -71,7 +92,6 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
         throw new Error('Project ID is required');
       }
       
-      // Try to get cached enhanced questions first
       const cachedQuestions = localStorage.getItem(`project-${projectId}-reflection-questions`);
       
       if (cachedQuestions) {
@@ -128,9 +148,18 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
     fetchQuestions();
   }, [projectId]);
 
+  useEffect(() => {
+    debouncedUpdateProgress();
+    
+    return () => {
+      if (validationTimeoutRef.current) {
+        clearTimeout(validationTimeoutRef.current);
+      }
+    };
+  }, [debouncedUpdateProgress]);
+
   const handleRetry = async () => {
     setIsRetrying(true);
-    // Clear cache to force fresh fetch
     if (projectId) {
       localStorage.removeItem(`project-${projectId}-reflection-questions`);
     }
@@ -144,39 +173,21 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
     if (currentQuestionIndex < totalQuestions - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     }
-    updateProgress();
   };
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
-    updateProgress();
   };
 
-  // FIXED: Progress calculation uses trimmed length consistently
-  const updateProgress = () => {
-    const completedCount = Object.keys(reflectionAnswers).filter(key => {
-      const answer = reflectionAnswers[key]?.trim() || "";
-      return answer.length >= MIN_CHARACTERS; // This already uses trimmed length
-    }).length;
-    onUpdateProgress(completedCount, totalQuestions);
-  };
-
-  useEffect(() => {
-    updateProgress();
-  }, [reflectionAnswers, totalQuestions]);
-
-  // IMPROVED: Handle character limit based on trimmed length
-  const handleAnswerChange = (value: string) => {
+  const handleAnswerChange = useCallback((value: string) => {
     if (!questions[currentQuestionIndex]) return;
     
-    // Allow typing but enforce max limit on trimmed content
     const trimmedValue = value.trim();
     
-    // If trimmed content exceeds max, don't allow the change
+    // Prevent input if trimmed content exceeds max
     if (trimmedValue.length > MAX_CHARACTERS) {
-      // Find the last valid position by trimming to max length
       const truncated = trimmedValue.slice(0, MAX_CHARACTERS);
       setReflectionAnswers(prev => ({
         ...prev,
@@ -185,31 +196,27 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
       return;
     }
     
-    // Allow the change (including trailing spaces for user experience)
-    // but the validation will be based on trimmed content
     const currentQuestion = questions[currentQuestionIndex];
     setReflectionAnswers(prev => ({
       ...prev,
       [currentQuestion.key]: value
     }));
-  };
+  }, [questions, currentQuestionIndex, setReflectionAnswers, MAX_CHARACTERS]);
 
   const handleCompletePhase = async () => {
     if (!projectId) return;
     
     setIsAnalyzing(true);
     try {
-      // FIXED: Build answers object with trimmed values
       const answers: Record<string, string> = {};
       questions.forEach(q => {
         const answer = reflectionAnswers[q.key] || '';
-        answers[q.key] = answer.trim(); // Send trimmed answers to backend
+        answers[q.key] = answer.trim();
       });
       
       const response = await api.backend.reflection.completePhase(projectId, answers);
       
       if (response.success) {
-        // Map the response to EthicalReadinessAssessment format
         const assessment: EthicalReadinessAssessment = {
           ethical_score: response.data.ethical_score,
           ethical_summary: response.data.summary,
@@ -257,7 +264,6 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
         setAssessmentDialogOpen(false);
         
         if (onCompletePhase) {
-          updateProgress();
           onCompletePhase();
         }
       }
@@ -277,13 +283,11 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
     setAssessmentDialogOpen(false);
   };
 
-  // Helper to get question title from key
   const getQuestionTitle = (key: string) => {
     const question = questions.find(q => q.key === key);
     return question ? question.text : key;
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex flex-col h-full">
@@ -298,7 +302,6 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
     );
   }
 
-  // Error state
   if (hasError) {
     return (
       <div className="flex flex-col h-full">
@@ -341,7 +344,6 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
     );
   }
 
-  // No questions available
   if (questions.length === 0) {
     return (
       <div className="flex flex-col h-full">
@@ -376,21 +378,12 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
   const currentAnswer = reflectionAnswers[currentQuestion.key] || "";
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
   
-  // FIXED: Use trimmed length for all validations
-  const answeredQuestionsCount = Object.keys(reflectionAnswers).filter(key => {
-    const answer = reflectionAnswers[key]?.trim() || "";
-    return answer.length >= MIN_CHARACTERS;
-  }).length;
-  const isPhaseComplete = answeredQuestionsCount === totalQuestions;
-  
-  // FIXED: Character status and remaining chars based on trimmed content
   const trimmedAnswer = currentAnswer.trim();
   const charStatus = getCharacterCountStatus(currentAnswer);
   const remainingChars = MAX_CHARACTERS - trimmedAnswer.length;
 
   return (
     <div className="flex flex-col h-full">
-      {/* Project Readiness Assessment Modal */}
       <EthicalReadinessModal
         isOpen={assessmentDialogOpen}
         onOpenChange={setAssessmentDialogOpen}
@@ -435,7 +428,6 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
               guidanceSources={currentQuestion.guidanceSources || []}
             />
             
-            {/* FIXED: Character counter shows trimmed length */}
             <div className={`text-sm ${charStatus.color}`}>
               {trimmedAnswer.length}/{MAX_CHARACTERS}
               {trimmedAnswer.length < MIN_CHARACTERS && (
@@ -464,7 +456,7 @@ export const ReflectionPhase = ({ onUpdateProgress, onCompletePhase }: Reflectio
         {isLastQuestion ? (
           <Button
             onClick={handleCompletePhase}
-            disabled={!isPhaseComplete || isAnalyzing}
+            disabled={!progressData.isComplete || isAnalyzing}
           >
             {isAnalyzing ? 'Analyzing...' : 'Complete Phase'}
           </Button>

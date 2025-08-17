@@ -24,15 +24,12 @@ export const PhaseItem = ({
   const [renderedPhase, setRenderedPhase] = useState(phase);
   const initialRender = useRef(true);
   
-  // Only update the rendered phase when the phase prop changes AND it's not a completed phase transitioning to in-progress
   useEffect(() => {
-    // Skip the first render to avoid unintended state resets
     if (initialRender.current) {
       initialRender.current = false;
       return;
     }
     
-    // Check for invalid status transitions
     const isInvalidTransition = renderedPhase.status === "completed" && phase.status === "in-progress";
     
     if (!isInvalidTransition) {
@@ -41,9 +38,8 @@ export const PhaseItem = ({
     } else {
       console.warn(`Prevented invalid transition for ${phase.id}: completed -> in-progress`);
     }
-  }, [phase, renderedPhase.status]);
+  }, [phase]);
   
-  // Determine if the phase is completed
   const isCompleted = renderedPhase.status === "completed";
   
   return (

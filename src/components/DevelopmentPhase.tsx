@@ -197,7 +197,7 @@ export const DevelopmentPhase = ({ onUpdateProgress, onCompletePhase }: Developm
       setGenerationProgress(0);
       interval = window.setInterval(() => {
         setGenerationProgress(prev => {
-          const increment = Math.random() * 0.5 + 0.25;
+          const increment = Math.random() * 1 + 0.5;
           const newProgress = Math.min(prev + increment, 95);
           return newProgress;
         });

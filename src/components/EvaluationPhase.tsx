@@ -90,6 +90,7 @@ export const EvaluationPhase = ({
     handleFileUpload,
     runSimulation,
     regenerateScenarios,
+    regeneratingScenarios,
     evaluateResults,
     downloadFile,
     retryLoading,
@@ -310,154 +311,166 @@ export const EvaluationPhase = ({
         </div>
       )}
 
-      {currentStep === 1 &&
-        evaluationContext.simulation_capabilities.evaluation_approach !==
-          "evaluation_bypass" && (
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <PlayCircle className="h-5 w-5" />
-                  Test Your AI Solution Components
-                </CardTitle>
-                <CardDescription>
-                  {evaluationContext.simulation_capabilities.testing_method === "dataset"
-                    ? evaluationContext.simulation_capabilities.explanation
-                    : "Test your generated AI components with realistic humanitarian scenarios to see actual outputs"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+      {currentStep === 1 && !evaluationContext.evaluation_bypass && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <PlayCircle className="h-5 w-5" />
+                Test Your AI Solution Components
+              </CardTitle>
+              <CardDescription>
+                {evaluationContext.simulation_capabilities.testing_method ===
+                "dataset"
+                  ? evaluationContext.simulation_capabilities.explanation
+                  : "Test your generated AI components with realistic humanitarian scenarios to see actual outputs"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {evaluationContext.selected_solution?.llm_requirements && (
+                <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
+                  <Brain className="h-4 w-4" />
+                  <AlertDescription className="text-blue-800 dark:text-blue-200">
+                    <strong>LLM Component Testing:</strong> We'll test your
+                    generated system prompt with real scenarios using OpenAI LLM
+                    models to show you actual outputs.
+                  </AlertDescription>
+                </Alert>
+              )}
 
-                {evaluationContext.selected_solution?.llm_requirements && (
-                  <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700">
-                    <Brain className="h-4 w-4" />
-                    <AlertDescription className="text-blue-800 dark:text-blue-200">
-                      <strong>LLM Component Testing:</strong> We'll test your generated system prompt with real scenarios using OpenAI LLM models to show you actual outputs.
-                    </AlertDescription>
-                  </Alert>
-                )}
-                
-                {evaluationContext.selected_solution?.nlp_requirements && (
-                  <Alert className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700">
-                    <Brain className="h-4 w-4" />
-                    <AlertDescription className="text-green-800 dark:text-green-200">
-                      <strong>NLP Component Testing:</strong> We'll simulate your {evaluationContext.selected_solution.nlp_requirements.processing_approach} pipeline with real scenarios to show expected processing results.
-                    </AlertDescription>
-                  </Alert>
-                )}
+              {evaluationContext.selected_solution?.nlp_requirements && (
+                <Alert className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700">
+                  <Brain className="h-4 w-4" />
+                  <AlertDescription className="text-green-800 dark:text-green-200">
+                    <strong>NLP Component Testing:</strong> We'll simulate your{" "}
+                    {
+                      evaluationContext.selected_solution.nlp_requirements
+                        .processing_approach
+                    }{" "}
+                    pipeline with real scenarios to show expected processing
+                    results.
+                  </AlertDescription>
+                </Alert>
+              )}
 
-                {evaluationContext.simulation_capabilities.testing_method === "dataset" ? (
-                  <Card className="border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary transition-colors">
+              {evaluationContext.simulation_capabilities.testing_method ===
+              "dataset" ? (
+                <Card className="border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-primary transition-colors">
+                  <CardContent className="p-6">
+                    <div className="text-center space-y-4">
+                      <Upload className="h-8 w-8 mx-auto text-primary" />
+                      <div>
+                        <h3 className="font-medium mb-2">
+                          Assess Dataset Compatibility
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                          Upload your dataset to check compatibility with this
+                          AI solution and get suitability recommendations
+                        </p>
+
+                        <div className="space-y-3">
+                          <Label
+                            htmlFor="dataset-upload"
+                            className="cursor-pointer"
+                          >
+                            <Input
+                              id="dataset-upload"
+                              type="file"
+                              onChange={handleFileChange}
+                              accept={evaluationContext.simulation_capabilities.data_formats_supported
+                                .map((f) => `.${f}`)
+                                .join(",")}
+                              className="hidden"
+                            />
+                            <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 hover:border-primary transition-colors">
+                              {uploadedFile ? (
+                                <div className="text-sm">
+                                  <p className="font-medium">
+                                    {uploadedFile.name}
+                                  </p>
+                                  <p className="text-gray-500">
+                                    {(uploadedFile.size / 1024 / 1024).toFixed(
+                                      2
+                                    )}{" "}
+                                    MB
+                                  </p>
+                                </div>
+                              ) : (
+                                <p className="text-gray-500">
+                                  Click to upload dataset (
+                                  {evaluationContext.simulation_capabilities.data_formats_supported.join(
+                                    ", "
+                                  )}
+                                  )
+                                </p>
+                              )}
+                            </div>
+                          </Label>
+
+                          <Button
+                            onClick={handleRunSimulation}
+                            disabled={!uploadedFile || simulationLoading}
+                            className="w-full"
+                          >
+                            {simulationLoading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Assessing Compatibility...
+                              </>
+                            ) : (
+                              "Assess Dataset Compatibility"
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-6">
+                  <Card className="border-blue-200 dark:border-blue-700">
                     <CardContent className="p-6">
                       <div className="text-center space-y-4">
-                        <Upload className="h-8 w-8 mx-auto text-primary" />
+                        <Brain className="h-8 w-8 mx-auto text-blue-500" />
                         <div>
                           <h3 className="font-medium mb-2">
-                            Assess Dataset Compatibility
+                            Component Testing Ready
                           </h3>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                            Upload your dataset to check compatibility with this
-                            AI solution and get suitability recommendations
+                            Test your generated AI components with realistic
+                            scenarios to see how they perform with actual
+                            humanitarian inputs
                           </p>
 
-                          <div className="space-y-3">
-                            <Label
-                              htmlFor="dataset-upload"
-                              className="cursor-pointer"
-                            >
-                              <Input
-                                id="dataset-upload"
-                                type="file"
-                                onChange={handleFileChange}
-                                accept={evaluationContext.simulation_capabilities.data_formats_supported
-                                  .map((f) => `.${f}`)
-                                  .join(",")}
-                                className="hidden"
-                              />
-                              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 hover:border-primary transition-colors">
-                                {uploadedFile ? (
-                                  <div className="text-sm">
-                                    <p className="font-medium">
-                                      {uploadedFile.name}
-                                    </p>
-                                    <p className="text-gray-500">
-                                      {(
-                                        uploadedFile.size /
-                                        1024 /
-                                        1024
-                                      ).toFixed(2)}{" "}
-                                      MB
-                                    </p>
-                                  </div>
-                                ) : (
-                                  <p className="text-gray-500">
-                                    Click to upload dataset (
-                                    {evaluationContext.simulation_capabilities.data_formats_supported.join(
-                                      ", "
-                                    )}
-                                    )
-                                  </p>
-                                )}
-                              </div>
-                            </Label>
-
-                            <Button
-                              onClick={handleRunSimulation}
-                              disabled={!uploadedFile || simulationLoading}
-                              className="w-full"
-                            >
-                              {simulationLoading ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                  Assessing Compatibility...
-                                </>
-                              ) : (
-                                "Assess Dataset Compatibility"
-                              )}
-                            </Button>
-                          </div>
+                          <Button
+                            onClick={handleRunSimulation}
+                            disabled={
+                              regeneratingScenarios || simulationLoading
+                            }
+                            className="w-full"
+                          >
+                            {simulationLoading ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                Testing Components...
+                              </>
+                            ) : (
+                              "Test AI Components"
+                            )}
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                ) : (
-                  <div className="space-y-6">
-                    <Card className="border-blue-200 dark:border-blue-700">
-                      <CardContent className="p-6">
-                        <div className="text-center space-y-4">
-                          <Brain className="h-8 w-8 mx-auto text-blue-500" />
-                          <div>
-                            <h3 className="font-medium mb-2">
-                              Component Testing Ready
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                              Test your generated AI components with realistic scenarios to see how they perform with actual humanitarian inputs
-                            </p>
 
-                            <Button
-                              onClick={handleRunSimulation}
-                              disabled={simulationLoading}
-                              className="w-full"
-                            >
-                              {simulationLoading ? (
-                                <>
-                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                  Testing Components...
-                                </>
-                              ) : (
-                                "Test AI Components"
-                              )}
-                            </Button>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {evaluationContext.testing_scenarios &&
-                      evaluationContext.testing_scenarios.length > 0 && (
-                        <div>
-                          <div className="flex items-center justify-between mb-3">
-                            <h4 className="font-medium">Scenarios for Component Testing</h4>
+                  {evaluationContext.testing_scenarios &&
+                    evaluationContext.testing_scenarios.length > 0 && (
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-medium">
+                            Scenarios for Component Testing
+                          </h4>
+                          {!regeneratingScenarios && (
                             <Button
                               variant="outline"
                               size="sm"
@@ -467,54 +480,88 @@ export const EvaluationPhase = ({
                               <RefreshCw className="h-3 w-3 mr-1" />
                               Regenerate
                             </Button>
-                          </div>
-                          <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                            These scenarios will be processed through your generated {evaluationContext.selected_solution?.llm_requirements ? 'LLM system prompt' : 'NLP pipeline'} to show real outputs:
-                          </div>
-                          <div className="grid gap-3">
-                            {evaluationContext.testing_scenarios.map(
-                              (scenario: any, index: number) => (
-                                <Card
-                                  key={index}
-                                  className="border-gray-200 dark:border-gray-700"
-                                >
-                                  <CardContent className="p-4">
-                                    <h5 className="font-medium mb-1">
-                                      {scenario.name}
-                                    </h5>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                      {scenario.description}
-                                    </p>
-                                    <div className="text-xs space-y-1">
-                                      <p>
-                                        <span className="font-medium">Test Input:</span> {scenario.input_description}
-                                      </p>
-                                      <p>
-                                        <span className="font-medium">Expected Processing:</span> {scenario.process_description}
-                                      </p>
-                                      <p>
-                                        <span className="font-medium">Humanitarian Purpose:</span> {scenario.humanitarian_impact}
-                                      </p>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              )
-                            )}
-                          </div>
+                          )}
                         </div>
-                      )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={() => setCurrentStep(0)}>
-                Back to Review
-              </Button>
-            </div>
+                        {regeneratingScenarios ? (
+                          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <div className="text-center">
+                              <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+                                Regenerating Scenarios
+                              </p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">
+                                Creating new test scenarios for your AI
+                                components...
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                              These scenarios will be processed through your
+                              generated{" "}
+                              {evaluationContext.selected_solution
+                                ?.llm_requirements
+                                ? "LLM system prompt"
+                                : "NLP pipeline"}{" "}
+                              to show real outputs:
+                            </div>
+                            <div className="grid gap-3">
+                              {evaluationContext.testing_scenarios.map(
+                                (scenario: any, index: number) => (
+                                  <Card
+                                    key={index}
+                                    className="border-gray-200 dark:border-gray-700"
+                                  >
+                                    <CardContent className="p-4">
+                                      <h5 className="font-medium mb-1">
+                                        {scenario.name}
+                                      </h5>
+                                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                        {scenario.description}
+                                      </p>
+                                      <div className="text-xs space-y-1">
+                                        <p>
+                                          <span className="font-medium">
+                                            Test Input:
+                                          </span>{" "}
+                                          {scenario.input_description}
+                                        </p>
+                                        <p>
+                                          <span className="font-medium">
+                                            Expected Processing:
+                                          </span>{" "}
+                                          {scenario.process_description}
+                                        </p>
+                                        <p>
+                                          <span className="font-medium">
+                                            Humanitarian Purpose:
+                                          </span>{" "}
+                                          {scenario.humanitarian_impact}
+                                        </p>
+                                      </div>
+                                    </CardContent>
+                                  </Card>
+                                )
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={() => setCurrentStep(0)}>
+              Back to Review
+            </Button>
           </div>
-        )}
+        </div>
+      )}
 
       {currentStep === 1 && evaluationContext.evaluation_bypass && (
         <div className="space-y-6">
@@ -610,7 +657,6 @@ export const EvaluationPhase = ({
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-
                 {simulationResult.component_transparency && (
                   <Card className="border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/10">
                     <CardHeader>
@@ -620,34 +666,56 @@ export const EvaluationPhase = ({
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {simulationResult.component_transparency.component_type === 'llm' && (
+                      {simulationResult.component_transparency
+                        .component_type === "llm" && (
                         <div className="space-y-3">
                           <div>
-                            <span className="font-medium text-sm">System Prompt:</span>
+                            <span className="font-medium text-sm">
+                              System Prompt:
+                            </span>
                             <pre className="bg-white dark:bg-gray-800 p-3 rounded text-xs mt-1 overflow-auto max-h-32 border">
-                              {simulationResult.component_transparency.system_prompt}
+                              {
+                                simulationResult.component_transparency
+                                  .system_prompt
+                              }
                             </pre>
                           </div>
                           <div>
-                            <span className="font-medium text-sm">Model Used:</span>
-                            <span className="ml-2 text-sm">{simulationResult.component_transparency.model_used}</span>
+                            <span className="font-medium text-sm">
+                              Model Used:
+                            </span>
+                            <span className="ml-2 text-sm">
+                              {
+                                simulationResult.component_transparency
+                                  .model_used
+                              }
+                            </span>
                           </div>
                         </div>
                       )}
-                      {simulationResult.component_transparency.component_type === 'nlp' && (
+                      {simulationResult.component_transparency
+                        .component_type === "nlp" && (
                         <div>
-                          <span className="font-medium text-sm">Processing Approach:</span>
+                          <span className="font-medium text-sm">
+                            Processing Approach:
+                          </span>
                           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                            {simulationResult.component_transparency.processing_approach}
+                            {
+                              simulationResult.component_transparency
+                                .processing_approach
+                            }
                           </p>
                         </div>
                       )}
-                      {simulationResult.component_transparency.component_type === 'none' && (
+                      {simulationResult.component_transparency
+                        .component_type === "none" && (
                         <Alert className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700">
                           <AlertCircle className="h-4 w-4" />
                           <AlertDescription className="text-amber-800 dark:text-amber-200">
-                            This solution doesn't have testable components for automated evaluation. 
-                            The results below are theoretical - you'll need to test the actual generated code manually.
+                            This solution doesn't have testable components for
+                            automated evaluation. The results below are
+                            theoretical - you'll need to test the actual
+                            generated code manually.
                           </AlertDescription>
                         </Alert>
                       )}
@@ -655,7 +723,8 @@ export const EvaluationPhase = ({
                   </Card>
                 )}
 
-                {simulationResult.scenario_results && (
+                {simulationResult.scenario_results &&
+                simulationResult.scenario_results.length > 0 ? (
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-sm flex items-center gap-2">
@@ -663,41 +732,84 @@ export const EvaluationPhase = ({
                         Real Testing Results
                       </CardTitle>
                       <CardDescription>
-                        Actual outputs from your generated {simulationResult.component_transparency?.component_type?.toUpperCase()} component
+                        Actual outputs from your generated{" "}
+                        {simulationResult.component_transparency?.component_type?.toUpperCase()}{" "}
+                        component
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {simulationResult.scenario_results.map((result, index) => (
-                        <Card key={index} className="border-gray-200 dark:border-gray-700">
-                          <CardContent className="p-4">
-                            <h5 className="font-medium mb-3">{result.scenario_name}</h5>
-                            <div className="space-y-3">
-                              <div>
-                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Input:</span>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{result.input_provided}</p>
-                              </div>
-                              <div>
-                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Actual Output:</span>
-                                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded mt-1 border border-blue-200 dark:border-blue-700">
-                                  <p className="text-sm text-blue-800 dark:text-blue-200">{result.actual_output}</p>
+                      {simulationResult.scenario_results.map(
+                        (result, index) => (
+                          <Card
+                            key={index}
+                            className="border-gray-200 dark:border-gray-700"
+                          >
+                            <CardContent className="p-4">
+                              <h5 className="font-medium mb-3">
+                                {result.scenario_name}
+                              </h5>
+                              <div className="space-y-3">
+                                <div>
+                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    Input:
+                                  </span>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                    {result.input_provided}
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    Actual Output:
+                                  </span>
+                                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded mt-1 border border-blue-200 dark:border-blue-700">
+                                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                                      {result.actual_output}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div>
+                                  <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                    Assessment:
+                                  </span>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                    {result.humanitarian_relevance_assessment}
+                                  </p>
+                                </div>
+                                {result.relevance_score !== undefined && (
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Relevance Score:{" "}
+                                    {(result.relevance_score * 100).toFixed(0)}%
+                                  </div>
+                                )}
+                                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                  <span>
+                                    Component: {result.component_used}
+                                  </span>
+                                  {result.execution_time_ms && (
+                                    <span>
+                                      Processed in{" "}
+                                      {(
+                                        result.execution_time_ms / 1000
+                                      ).toFixed(1)}
+                                      s
+                                    </span>
+                                  )}
                                 </div>
                               </div>
-                              <div>
-                                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Assessment:</span>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{result.humanitarian_relevance_assessment}</p>
-                              </div>
-                              <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                                <span>Component: {result.component_used}</span>
-                                {result.execution_time_ms && (
-                                  <span>Processed in {result.execution_time_ms.toFixed(0)}ms</span>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            </CardContent>
+                          </Card>
+                        )
+                      )}
                     </CardContent>
                   </Card>
+                ) : (
+                  <Alert className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription className="text-amber-800 dark:text-amber-200">
+                      This solution doesn't have testable components for
+                      automated evaluation.
+                    </AlertDescription>
+                  </Alert>
                 )}
 
                 {simulationResult.suitability_assessment && (
@@ -866,6 +978,133 @@ export const EvaluationPhase = ({
                         <CardContent>
                           <div className="space-y-3">
                             {simulationResult.suitability_assessment.recommendations.map(
+                              (rec, idx) => (
+                                <div
+                                  key={idx}
+                                  className={`p-3 rounded border ${
+                                    rec.priority === "high"
+                                      ? "border-red-200 bg-red-50 dark:bg-red-900/10"
+                                      : rec.priority === "medium"
+                                      ? "border-amber-200 bg-amber-50 dark:bg-amber-900/10"
+                                      : "border-blue-200 bg-blue-50 dark:bg-blue-900/10"
+                                  }`}
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <Badge
+                                      variant={
+                                        rec.priority === "high"
+                                          ? "destructive"
+                                          : "secondary"
+                                      }
+                                      className="text-xs"
+                                    >
+                                      {rec.priority}
+                                    </Badge>
+                                    <div className="flex-1">
+                                      <p className="font-medium text-sm">
+                                        {rec.issue}
+                                      </p>
+                                      <p className="text-sm text-muted-foreground mt-1">
+                                        {rec.suggestion}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
+
+                {simulationResult.scenario_suitability_assessment && (
+                  <div className="space-y-4">
+                    <div className={`p-4 rounded-lg border ${
+                      simulationResult.scenario_suitability_assessment.is_suitable
+                        ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700"
+                        : "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700"
+                    }`}>
+                      <div className="flex items-center gap-2 mb-2">
+                        {simulationResult.scenario_suitability_assessment.is_suitable ? (
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-amber-600" />
+                        )}
+                        <Badge variant={
+                          simulationResult.scenario_suitability_assessment.is_suitable ? "default" : "secondary"
+                        }>
+                          {Math.round(simulationResult.scenario_suitability_assessment.overall_score * 100)}% Performance
+                        </Badge>
+                      </div>
+                      <p className={`text-sm ${
+                        simulationResult.scenario_suitability_assessment.is_suitable
+                          ? "text-green-800 dark:text-green-200"
+                          : "text-amber-800 dark:text-amber-200"
+                      }`}>
+                        {simulationResult.scenario_suitability_assessment.performance_summary}
+                      </p>
+                    </div>
+
+                    <Card className="border-blue-200 dark:border-blue-700">
+                      <CardHeader>
+                        <CardTitle className="text-sm flex items-center gap-2">
+                          <Target className="h-4 w-4" />
+                          Component Effectiveness
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          <div className="flex justify-between text-sm">
+                            <span>Overall Effectiveness:</span>
+                            <span className="font-medium">
+                              {(simulationResult.scenario_suitability_assessment.component_effectiveness.overall_effectiveness * 100).toFixed(0)}%
+                            </span>
+                          </div>
+                          
+                          {simulationResult.scenario_suitability_assessment.component_effectiveness.strengths.length > 0 && (
+                            <div>
+                              <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">Strengths</h4>
+                              <ul className="text-sm space-y-1">
+                                {simulationResult.scenario_suitability_assessment.component_effectiveness.strengths.map((strength, idx) => (
+                                  <li key={idx} className="flex items-center gap-2">
+                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                    <span>{strength}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {simulationResult.scenario_suitability_assessment.component_effectiveness.weaknesses.length > 0 && (
+                            <div>
+                              <h4 className="font-medium text-amber-800 dark:text-amber-200 mb-2">Areas for Improvement</h4>
+                              <ul className="text-sm space-y-1">
+                                {simulationResult.scenario_suitability_assessment.component_effectiveness.weaknesses.map((weakness, idx) => (
+                                  <li key={idx} className="flex items-center gap-2">
+                                    <AlertCircle className="h-3 w-3 text-amber-500" />
+                                    <span>{weakness}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {simulationResult.scenario_suitability_assessment.recommendations.length > 0 && (
+                                            <Card className="border-orange-200 dark:border-orange-700">
+                        <CardHeader>
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Lightbulb className="h-4 w-4" />
+                            Recommendations
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            {simulationResult.scenario_suitability_assessment.recommendations.map(
                               (rec, idx) => (
                                 <div
                                   key={idx}
@@ -1146,7 +1385,9 @@ export const EvaluationPhase = ({
                 <Alert className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700">
                   <CheckCircle className="h-4 w-4" />
                   <AlertDescription className="text-green-800 dark:text-green-200">
-                    Your AI project has been successfully generated and evaluated. The solution meets your requirements and is ready for deployment.
+                    Your AI project has been successfully generated and
+                    evaluated. The solution meets your requirements and is ready
+                    for deployment.
                   </AlertDescription>
                 </Alert>
               )}

@@ -66,6 +66,7 @@ export const useEvaluationPhase = () => {
 
   const [simulationLoading, setSimulationLoading] = useState(false);
   const [evaluationLoading, setEvaluationLoading] = useState(false);
+  const [regeneratingScenarios, setRegeneratingScenarios] = useState(false); 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const [componentTransparency, setComponentTransparency] = useState<ComponentTransparency | null>(null);
@@ -135,8 +136,35 @@ export const useEvaluationPhase = () => {
             limitations: ["Generated code ready for specialist testing"]
           }
         };
+
+        // Create minimal evaluation result for bypass
+        const bypassEvaluationResult: EvaluationResult = {
+          status: "ready_for_deployment",
+          evaluation_summary: {
+            overall_assessment: "Project ready for specialist evaluation",
+            solution_performance: {
+              testing_method: "bypass",
+              confidence_level: "medium",
+              suitability_score: null
+            },
+            deployment_readiness: true,
+            recommendation: "Download and proceed with specialist evaluation",
+            key_strengths: ["Generated code is complete", "Ready for specialist testing"],
+            areas_for_improvement: ["Requires domain-specific evaluation"]
+          },
+          simulation_results: bypassResult,
+          development_feedback: null,
+          decision_options: ["proceed_with_solution"],
+          next_steps: [
+            "Download the generated project files",
+            "Consult with specialists for proper evaluation",
+            "Test with real data in specialized environment"
+          ],
+          evaluation_timestamp: new Date().toISOString()
+        };
         
         setSimulationResult(bypassResult);
+        setEvaluationResult(bypassEvaluationResult);
         setCurrentStep(1);
         
         toast({
@@ -180,7 +208,7 @@ export const useEvaluationPhase = () => {
     if (!projectId || !evaluationContext) return;
 
     try {
-      setSimulationLoading(true);
+      setRegeneratingScenarios(true);
       
       const newScenarios = await evaluationApi.regenerateScenarios(projectId,{});
       
@@ -202,7 +230,7 @@ export const useEvaluationPhase = () => {
         variant: "destructive"
       });
     } finally {
-      setSimulationLoading(false);
+      setRegeneratingScenarios(false);
     }
   };
 
@@ -212,6 +240,11 @@ export const useEvaluationPhase = () => {
     try {
       setSimulationLoading(true);
       setHasAutoAdvanced(false);
+
+      setSimulationResult(null);
+      setEvaluationResult(null);
+      setComponentTransparency(null);
+      setScenarioResults(null);
 
       const testingMethod = evaluationContext?.simulation_capabilities.testing_method;
       const evaluationApproach = evaluationContext?.simulation_capabilities.evaluation_approach;
@@ -396,6 +429,7 @@ export const useEvaluationPhase = () => {
     steps,
     progressPercentage,
     regenerateScenarios,
+    regeneratingScenarios,
     setCurrentStep: navigateToStep,
     handleFileUpload,
     runSimulation,
